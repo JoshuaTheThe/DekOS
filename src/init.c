@@ -58,7 +58,7 @@ typedef struct
         } color_info;
 } multiboot_info_t;
 
-void main(uint32_t magic, uint32_t mbinfo_ptr, )
+void main(uint32_t magic, uint32_t mbinfo_ptr)
 {
         cli();
         while (magic != 0x2BADB002)
