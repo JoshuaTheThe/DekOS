@@ -18,6 +18,8 @@ uint32_t tty_y = 0, tty_x = 0;
 uint32_t tty_bg = rgb(128, 0, 128);
 uint32_t tty_fg = rgb(255, 128, 255);
 
+int mx,my;
+
 void hang()
 {
         cli();
@@ -243,6 +245,8 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         framebuffer = (uint32_t *)mbi->framebuffer_addr;
         framebuffer_width = mbi->framebuffer_width;
         framebuffer_height = mbi->framebuffer_height;
+        mx = framebuffer_width / 2;
+        my = framebuffer_height / 2;
         memset(system_output, 0, sizeof(system_output));
 
         /* Init e.g. GDT, IDT, PIT, etc. */
@@ -263,8 +267,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
                 hang();
         }
         ps2_initialize_mouse();
-        int x = framebuffer_width / 2, y = framebuffer_height / 2;
-        int px = x, py = y;
+        int px = mx, py = my;
         int buttons;
 
         while (1)
@@ -275,13 +278,13 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
                 {
                         k_print("%c", ch);
                 }
-                
+
                 if (buttons & MOUSE_LEFT_BUTTON)
                 {
                         restore_pixels(prev_save_x, prev_save_y);
-                        put_character('!', x, y, 0xFF000000, 0xFFFFFFFF);
+                        put_character('!', mx, my, 0xFF000000, 0xFFFFFFFF);
                         save_pixels(prev_save_x, prev_save_y);
                 }
-                mouse_get(&x, &y, &px, &py, &buttons);
+                mouse_get(&mx, &my, &px, &py, &buttons);
         }
 }
