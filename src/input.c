@@ -449,28 +449,21 @@ bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet)
         static uint8_t packet_index = 0;
         static uint8_t packet_size = 3;
 
-        // Check if there's data available
         if (!(ps2_read_status() & PS2_STATUS_OUTPUT_FULL))
                 return false;
 
-        // Read status and check if it's from mouse (bit 5 set)
         uint8_t status = ps2_read_status();
         if (!(status & (1 << 5)))
         {
-                // Keyboard data, read and discard immediately
-                (void)ps2_read_data();
                 return false;
         }
 
-        // Now read the mouse data
         uint8_t data = ps2_read_data();
 
-        // Check if this is a valid packet start (bit 3 should be set for first byte)
         if (packet_index == 0)
         {
                 if (!(data & (1 << 3)))
                 {
-                        // Invalid start byte, discard and reset
                         packet_index = 0;
                         return false;
                 }
@@ -482,18 +475,15 @@ bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet)
         {
                 packet_index = 0;
 
-                // Parse the complete packet
                 packet->flags = packet_data[0];
                 packet->x_movement = packet_data[1];
                 packet->y_movement = packet_data[2];
 
-                // Handle overflow
                 if (packet_data[0] & (1 << 6))
                         packet->x_movement = 0;
                 if (packet_data[0] & (1 << 7))
                         packet->y_movement = 0;
 
-                // Handle sign extension
                 if (packet_data[0] & (1 << 4))
                         packet->x_movement -= 256;
                 if (packet_data[0] & (1 << 5))
@@ -507,7 +497,7 @@ bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet)
                 if (packet_data[0] & (1 << 2))
                         packet->buttons |= MOUSE_MIDDLE_BUTTON;
 
-                packet->z_movement = 0; // Default for 3-byte packets
+                packet->z_movement = 0;
 
                 return true;
         }
