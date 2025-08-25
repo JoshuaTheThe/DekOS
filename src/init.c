@@ -1,6 +1,10 @@
 #pragma pack(1)
 #include <stdint.h>
 #include <stdbool.h>
+#include <text.h>
+#include <idt.h>
+#include <gdt.h>
+#include <ps2.h>
 
 #define cli() __asm("cli")
 #define sti() __asm("sti")
@@ -60,17 +64,28 @@ typedef struct
 
 void main(uint32_t magic, uint32_t mbinfo_ptr)
 {
-        cli();
+	__asm("cli;");
         while (magic != 0x2BADB002)
         {
                 hlt();
         }
 
         multiboot_info_t *mbi = (multiboot_info_t *)mbinfo_ptr;
-
-        /* Init e.g. GDT, IDT, HPET, etc. */
+        uint64_t memory_size = mbi->mem_upper * 1024 + mbi->mem_lower * 1024;
+        for (unsigned int y = 0; y < mbi->framebuffer_height; ++y)
+                for (unsigned int x = 0; x < mbi->framebuffer_width; ++x)
+                        ((uint32_t *)mbi->framebuffer_addr)[y * mbi->framebuffer_width + x] = 0xFF;
+	framebuffer = mbi->framebuffer_addr;
+	framebuffer_width = mbi->framebuffer_width;
+	framebuffer_height = mbi->framebuffer_height;
+        /* Init e.g. GDT, IDT, PIT, etc. */
+	gdt_init();
+	idt_init();
+	sti();
+	set_active_font(&font_8x8);
+	write("Hello, World!", 13, 16, 16);
         while (1)
         {
-                hlt();
+		hlt();
         }
 }

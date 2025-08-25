@@ -28,5 +28,5 @@ _start:
         .section .bss
         .align 16
 stack_bottom:
-        .skip 65536 # 64 KiB
+        .skip 65536*2
 stack_top:
