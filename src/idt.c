@@ -14,13 +14,6 @@ void idt_set_entry(uint8_t n, void *handler, idt_entry *idt)
 
 void default_handler(void)
 {
-        outb(0x20, 0xA0);
-        outb(0x20, 0x20);
-}
-
-void keyboard_handler(void)
-{
-        //print("keyboard interrupt", 0, 0);
         outb(0x20, 0x20);
 }
 
@@ -32,13 +25,6 @@ __asm(
     "cli;"
     "pusha;"
     "call default_handler;"
-    "popa;"
-    "sti;"
-    "iret;"
-    "keyboard_handler_wrapper:"
-    "cli;"
-    "pusha;"
-    "call keyboard_handler;"
     "popa;"
     "sti;"
     "iret;");
@@ -61,9 +47,9 @@ void idt_init(void)
         {
                 idt_set_entry(i, (void *)default_handler_wrapper, idt);
         }
-        idt_set_entry(0x21, (void *)keyboard_handler_wrapper, idt);
 
         idtp.limit = (sizeof(idt_entry) * IDT_ENTRIES) - 1;
         idtp.base = (uint32_t)idt;
         __asm("lidt (%0)" : : "r"(&idtp));
+        k_print("idt initialized\n");
 }

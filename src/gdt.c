@@ -34,4 +34,5 @@ void gdt_init(void)
             :
             :
             : "memory", "eax");
+        k_print("gdt initialized\n");
 }

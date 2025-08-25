@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <text.h>
 #include <fonts.h>
+#include <utils.h>
 
 // PS/2 Port Definitions
 #define PS2_DATA_PORT 0x60
@@ -74,8 +75,11 @@ void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons);
 void save_pixels(int x, int y);
 void restore_pixels(int x, int y);
 int min(int a, int b);
+uint8_t keyboard_get(volatile bool *hit);
 
 extern char mouse_icon;
 extern int prev_save_x, prev_save_y;
+extern volatile uint8_t character;
+extern volatile bool key_pressed;
 
 #endif

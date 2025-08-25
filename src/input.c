@@ -6,6 +6,101 @@ uint32_t cursor_backbuffer[CURSOR_WIDTH * CURSOR_HEIGHT];
 
 char mouse_icon = 0;
 
+volatile uint8_t character = 0;
+volatile bool key_pressed = false;
+
+char getchar(void)
+{
+        key_pressed = false;
+        while (!key_pressed)
+        {
+                character = keyboard_get(&key_pressed);
+        }
+        char x = character;
+        key_pressed = false;
+        return x;
+}
+
+uint8_t keyboard_map[256] =
+    {
+        0x00, 0x7F, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
+        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0x80, 'a', 's',
+        'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0x00, '\\', 'z', 'x', 'c', 'v',
+        'b', 'n', 'm', ',', '.', '/', 0x81, '*', 0x81, ' ',
+        0x80, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E,
+        0x8F, 0x90, '-', 0x91, '5', 0x92, '+', 0x93, 0x94, 0x95, 0x96, 0x97, '\n',
+        0x81, '\\', 0x98, 0x99};
+
+uint8_t keyboard_map_shifted[256] =
+    {
+        0x00, 0x7F, '!', '"', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0x80, 'A', 'S',
+        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '@', '`', 0x00, '|', 'Z', 'X', 'C', 'V',
+        'B', 'N', 'M', '<', '>', '?', 0x81, '*', 0x81, ' ',
+        0x80, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, '/', '7',
+        0x8F, 0x90, '-', 0x91, '5', 0x92, '+', 0x93, 0x94, 0x95, 0x96, 0x97, '\n',
+        0x81, '\\', 0x98, 0x99};
+
+uint8_t keyboard_get(volatile bool *hit)
+{
+        static uint32_t shifted = 0;
+        static uint32_t ctrl = 0;
+        *hit = false;
+
+        if (!(inb(0x64) & 0x01))
+                return 0;
+
+        uint8_t status = inb(0x64);
+        if (status & (1 << 5))
+        {
+                return 0;
+        }
+
+        uint16_t scancode = inb(0x60);
+
+        if (scancode == 0x2a || scancode == 0x36)
+        {
+                shifted = 1;
+                return 0;
+        }
+        else if (scancode == 0xaa || scancode == 0xb6)
+        {
+                shifted = 0;
+                return 0;
+        }
+        if (scancode == 0x1d)
+        {
+                ctrl = 1;
+                return 0;
+        }
+        else if (scancode == 0x9d)
+        {
+                ctrl = 0;
+                return 0;
+        }
+        if (scancode & 0x80)
+                return 0;
+        if (scancode >= 128)
+                return 0;
+
+        uint8_t key = shifted ? keyboard_map_shifted[scancode] : keyboard_map[scancode];
+
+        *hit = true;
+        if (ctrl)
+        {
+                if (key >= 'a' && key <= 'z')
+                {
+                        return key - 'a' + 1;
+                }
+                else if (key >= 'A' && key <= 'Z')
+                {
+                        return key - 'A' + 1;
+                }
+        }
+
+        return key;
+}
+
 void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
 {
         ps2_mouse_packet_t packet;
@@ -16,8 +111,9 @@ void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
         static float smoothing_factor = 0.5f;
         static float dx_smooth = 0, dy_smooth = 0;
 
-        if (ps2_read_mouse_packet(&packet))
+        while (ps2_read_mouse_packet(&packet))
         {
+                // Process the packet
                 if (cursor_saved)
                 {
                         restore_pixels(prev_save_x, prev_save_y);
@@ -70,6 +166,7 @@ void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 }
 
                 *buttons = packet.buttons;
+                break;
         }
 }
 
@@ -260,7 +357,7 @@ bool is_mouse_present(void)
         for (volatile int i = 0; i < 10000; i++)
                 __asm volatile("nop");
 
-        // Read the configuration byte
+        // Read the configuration uint8_t
         ps2_write_command(PS2_CMD_READ_CONFIG);
         if (!ps2_wait_output())
         {
@@ -339,7 +436,7 @@ void ps2_initialize_mouse(void)
         ps2_write_command(PS2_CMD_ENABLE_PORT2);
         for (volatile int i = 0; i < 10000; i++)
                 __asm volatile("nop");
-        ps2_enable_mouse_interrupts();
+        // ps2_enable_mouse_interrupts();
         ps2_send_device_command(2, PS2_DEV_ENABLE_SCAN);
         ps2_send_device_command(2, 0xF3); // Set sample rate
         ps2_send_device_command(2, 100);  // 100 samples/sec
@@ -350,18 +447,33 @@ bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet)
 {
         static uint8_t packet_data[4];
         static uint8_t packet_index = 0;
-        static uint8_t packet_size = 3; // Default to 3-byte packets
+        static uint8_t packet_size = 3;
 
+        // Check if there's data available
         if (!(ps2_read_status() & PS2_STATUS_OUTPUT_FULL))
+                return false;
+
+        // Read status and check if it's from mouse (bit 5 set)
+        uint8_t status = ps2_read_status();
+        if (!(status & (1 << 5)))
         {
-                return false; // No data available
+                // Keyboard data, read and discard immediately
+                (void)ps2_read_data();
+                return false;
         }
 
+        // Now read the mouse data
         uint8_t data = ps2_read_data();
-        if (packet_index == 0 && !(data & (1 << 3)))
+
+        // Check if this is a valid packet start (bit 3 should be set for first byte)
+        if (packet_index == 0)
         {
-                // Not a valid packet start, discard
-                return false;
+                if (!(data & (1 << 3)))
+                {
+                        // Invalid start byte, discard and reset
+                        packet_index = 0;
+                        return false;
+                }
         }
 
         packet_data[packet_index++] = data;
@@ -370,27 +482,22 @@ bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet)
         {
                 packet_index = 0;
 
+                // Parse the complete packet
                 packet->flags = packet_data[0];
                 packet->x_movement = packet_data[1];
                 packet->y_movement = packet_data[2];
 
+                // Handle overflow
                 if (packet_data[0] & (1 << 6))
-                {
-                        packet->x_movement = 0; // X overflow
-                }
+                        packet->x_movement = 0;
                 if (packet_data[0] & (1 << 7))
-                {
-                        packet->y_movement = 0; // Y overflow
-                }
+                        packet->y_movement = 0;
 
+                // Handle sign extension
                 if (packet_data[0] & (1 << 4))
-                {
-                        packet->x_movement -= 256; // X is negative
-                }
+                        packet->x_movement -= 256;
                 if (packet_data[0] & (1 << 5))
-                {
-                        packet->y_movement -= 256; // Y is negative
-                }
+                        packet->y_movement -= 256;
 
                 packet->buttons = 0;
                 if (packet_data[0] & (1 << 0))
@@ -400,18 +507,7 @@ bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet)
                 if (packet_data[0] & (1 << 2))
                         packet->buttons |= MOUSE_MIDDLE_BUTTON;
 
-                if (packet_size == 4)
-                {
-                        packet->z_movement = (int8_t)(packet_data[3] & 0x0F);
-                        if (packet_data[3] & 0x08)
-                        {
-                                packet->z_movement -= 16;
-                        }
-                }
-                else
-                {
-                        packet->z_movement = 0;
-                }
+                packet->z_movement = 0; // Default for 3-byte packets
 
                 return true;
         }
