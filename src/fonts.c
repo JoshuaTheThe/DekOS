@@ -1529,14 +1529,14 @@ unsigned char console_font_8x8[] = {
     /*
      * code=127, hex=0x7F, ascii="^?"
      */
-    0x00, /* 00000000 */
-    0x10, /* 00010000 */
-    0x38, /* 00111000 */
-    0x6C, /* 01101100 */
-    0xC6, /* 11000110 */
-    0xC6, /* 11000110 */
-    0xFE, /* 11111110 */
-    0x00, /* 00000000 */
+    0xE0, /* 11100000 */
+    0x98, /* 10011000 */
+    0x84, /* 10000100 */
+    0x82, /* 10000010 */
+    0x8E, /* 10001110 */
+    0xA4, /* 10100100 */
+    0xE4, /* 11100100 */
+    0x18, /* 00011000 */
 
     /*
      * code=128, hex=0x80, ascii="!^@"
@@ -3075,4 +3075,19 @@ unsigned char console_font_8x8[] = {
     0x00, /* 00000000 */
 };
 
+unsigned char gui_font_cursors[] = {
+        /* default cursor */
+        0b11000000,
+        0b10100000,
+        0b10010000,
+        0b10001000,
+        0b10000100,
+        0b10000010,
+        0b10001110,
+        0b10100100,
+        0b11100100,
+        0b00011000,
+};
+
 font_t font_8x8 = {.char_height = 8, .char_width = 8, .first_char = 0, .last_char = 255, .font_name = "8x8", .font_bitmap = console_font_8x8};
+font_t cursors = {.char_height = 10, .char_width = 8, .first_char = 0, .last_char = 1, .font_name = "cursors", .font_bitmap = gui_font_cursors};

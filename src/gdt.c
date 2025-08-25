@@ -35,5 +35,3 @@ void gdt_init(void)
             :
             : "memory", "eax");
 }
-
-

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define GDT_SIZE 3 
+#define GDT_SIZE 3
 
 typedef struct __attribute__((packed))
 {
@@ -25,4 +25,3 @@ typedef struct __attribute__((packed))
 extern void gdt_init(void);
 
 #endif
-

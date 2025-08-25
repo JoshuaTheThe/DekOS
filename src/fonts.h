@@ -12,5 +12,6 @@ typedef struct
 } font_t;
 
 extern font_t font_8x8;
+extern font_t cursors;
 
 #endif

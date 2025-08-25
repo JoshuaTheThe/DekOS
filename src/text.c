@@ -11,7 +11,7 @@ void set_active_font(font_t *new_font)
         font = new_font;
 }
 
-void put_character(char chr, int px, int py)
+void put_character(char chr, int px, int py, int bg, int fg)
 {
         if (framebuffer_height == 0 || framebuffer_width == 0)
                 return;
@@ -32,7 +32,12 @@ void put_character(char chr, int px, int py)
                         if (px + x < 0 || px + x >= framebuffer_width)
                                 continue;
                         bool status = bitmap_byte & (1 << (7 - (x % 8)));
-                        framebuffer[(py + y) * framebuffer_width + (px + x)] = status ? 0xFFFFFFFF : 0;
+                        if ((!status && bg == 0x00000000) || (status && fg == 0x00000000))
+                        {
+                                continue;
+                        }
+
+                        framebuffer[(py + y) * framebuffer_width + (px + x)] = status ? fg : bg;
                 }
         }
 }
@@ -41,9 +46,24 @@ void write(const char *text, int length, int px, int py)
 {
         if (length == 0 || length < 0 || !text)
                 return;
+        int fg=0xFFFFFFFF;
+        int bg=0xFF000000;
         for (int i = 0; i < length; ++i)
         {
-                put_character(text[i], px + (i * font->char_width), py);
+                put_character(text[i], px + (i * font->char_width), py, bg, fg);
         }
 }
 
+void print(const char *text, int px, int py)
+{
+        if (!text)
+                return;
+        int i = 0;
+        int fg=0xFFFFFFFF;
+        int bg=0xFF000000;
+        while (*text)
+        {
+                put_character(*text, px + (i * font->char_width), py, bg, fg);
+                ++i, ++text;
+        }
+}

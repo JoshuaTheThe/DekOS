@@ -13,4 +13,3 @@ extern void insl(uint16_t port, void *addr, uint32_t count);
 extern void insw(uint16_t port, void *addr, uint32_t count);
 
 #endif
-
