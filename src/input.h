@@ -6,7 +6,6 @@
 #include <text.h>
 #include <fonts.h>
 #include <utils.h>
-#include <math.h>
 #include <io.h>
 
 // PS/2 Port Definitions
