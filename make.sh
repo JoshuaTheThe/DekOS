@@ -17,8 +17,9 @@ clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/disk.c" -o "obj/disk.o" 
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/iso9660.c" -o "obj/iso9660.o" 
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/memory.c" -o "obj/memory.o" 
+clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/rtc.c" -o "obj/rtc.o" 
  
-ld -m elf_i386 -T "linker.ld" -o "bin/kernel.elf" -nostdlib "obj/boot.o" "obj/main.o" "obj/memory.o" "obj/fonts.o" "obj/text.o" "obj/input.o" "obj/idt.o" "obj/io.o" "obj/gdt.o" "obj/math.o" "obj/disk.o" "obj/iso9660.o"
+ld -m elf_i386 -T "linker.ld" -o "bin/kernel.elf" -nostdlib "obj/boot.o" "obj/main.o" "obj/memory.o" "obj/rtc.o" "obj/fonts.o" "obj/text.o" "obj/input.o" "obj/idt.o" "obj/io.o" "obj/gdt.o" "obj/math.o" "obj/disk.o" "obj/iso9660.o"
 if grub-file --is-x86-multiboot bin/kernel.elf; then 
         echo multiboot confirmed 
         mkdir -p isodir/boot/grub 
