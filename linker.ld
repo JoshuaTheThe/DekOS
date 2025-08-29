@@ -47,6 +47,11 @@ SECTIONS
 		*(.bss)
 	}
 
+        . = ALIGN(4);
+        _heap_start = .;
+        . = . + 0x10000; /* 64KB heap */
+        _heap_end = .;
+
 	/* The compiler may produce other sections, by default it will put them in
 	   a segment with the same name. Simply add stuff here as needed. */
 }

@@ -43,6 +43,9 @@ void idt_init(void)
         outb(0xA1, 0x01);
         outb(0x21, 0x0);
         outb(0xA1, 0x0);
+
+        outb(0x21, inb(0x21) | 0x02);
+        outb(0xA1, inb(0xA1) | 0x10);
         for (uint32_t i = 0; i < IDT_ENTRIES; ++i)
         {
                 idt_set_entry(i, (void *)default_handler_wrapper, idt);

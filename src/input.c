@@ -216,11 +216,6 @@ void restore_pixels(int x, int y)
         }
 }
 
-int min(int a, int b)
-{
-        return a < b ? a : b;
-}
-
 uint8_t ps2_read_status(void)
 {
         uint8_t status;

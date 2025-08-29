@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <io.h>
 
 #define GDT_SIZE 3
 
