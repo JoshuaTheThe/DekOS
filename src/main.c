@@ -108,20 +108,20 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         cli();
         while (1)
         {
-                bool hit;
-                char ch = keyboard_get(&hit);
-                if (hit)
-                {
-                        k_print("%c", ch);
-                }
-
-                if (buttons & MOUSE_LEFT_BUTTON)
-                {
-                        restore_pixels(prev_save_x, prev_save_y);
-                        put_character('!', mx, my, 0xFF000000, 0xFFFFFFFF);
-                        save_pixels(prev_save_x, prev_save_y);
-                        k_print("(%d,%d)\n", mx, my);
-                }
+                //bool hit;
+                //char ch = keyboard_get(&hit);
+                //if (hit)
+                //{
+                //        k_print("%c", ch);
+                //}
+//
+                //if (buttons & MOUSE_LEFT_BUTTON)
+                //{
+                //        restore_pixels(prev_save_x, prev_save_y);
+                //        put_character('!', mx, my, 0xFF000000, 0xFFFFFFFF);
+                //        save_pixels(prev_save_x, prev_save_y);
+                //        k_print("(%d,%d)\n", mx, my);
+                //}
                 mouse_get(&mx, &my, &px, &py, &buttons);
         }
 }
