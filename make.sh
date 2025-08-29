@@ -6,6 +6,7 @@ rm dekos.iso
 rm ./obj/* 
  
 clang -m32 -c "src/boot.s" -o "obj/boot.o" -march=i386 
+clang -m32 -c "src/isr.s" -o "obj/isr.o" -march=i386 
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/main.c" -o "obj/main.o" 
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/fonts.c" -o "obj/fonts.o" 
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/text.c" -o "obj/text.o" 
@@ -19,7 +20,7 @@ clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/memory.c" -o "obj/memory.o" 
 clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/rtc.c" -o "obj/rtc.o" 
  
-ld -m elf_i386 -T "linker.ld" -o "bin/kernel.elf" -nostdlib "obj/boot.o" "obj/main.o" "obj/memory.o" "obj/rtc.o" "obj/fonts.o" "obj/text.o" "obj/input.o" "obj/idt.o" "obj/io.o" "obj/gdt.o" "obj/math.o" "obj/disk.o" "obj/iso9660.o"
+ld -m elf_i386 -T "linker.ld" -o "bin/kernel.elf" -nostdlib "obj/boot.o" "obj/main.o" "obj/fonts.o" "obj/text.o" "obj/input.o" "obj/idt.o" "obj/io.o" "obj/gdt.o" "obj/math.o" "obj/disk.o" "obj/iso9660.o" "obj/isr.o" "obj/memory.o" "obj/rtc.o"
 if grub-file --is-x86-multiboot bin/kernel.elf; then 
         echo multiboot confirmed 
         mkdir -p isodir/boot/grub 

@@ -1,5 +1,12 @@
 #include <idt.h>
 
+extern void systemcall(void);
+extern void invalid_opcode_handler(void);
+extern void timer_interrupt_handler(void);
+extern void divide_by_zero_handler(void);
+extern void general_protection_fault_handler(void);
+extern void page_fault_handler(void);
+
 idt_entry idt[256];
 idt_ptr idtp;
 
@@ -50,6 +57,12 @@ void idt_init(void)
         {
                 idt_set_entry(i, (void *)default_handler_wrapper, idt);
         }
+        idt_set_entry(0x80, (void*)systemcall, idt);
+        idt_set_entry(0x20, (void*)timer_interrupt_handler, idt);
+        idt_set_entry(0x00, (void*)divide_by_zero_handler, idt);
+        idt_set_entry(0x0E, (void*)page_fault_handler, idt);
+        idt_set_entry(0x0D, (void*)general_protection_fault_handler, idt);
+        idt_set_entry(0x06, (void*)invalid_opcode_handler, idt);
 
         idtp.limit = (sizeof(idt_entry) * IDT_ENTRIES) - 1;
         idtp.base = (uint32_t)idt;

@@ -15,7 +15,21 @@
 
 int mx, my;
 
-void hang()
+extern void transfer(void);
+
+/* called by pit */
+void tick(void)
+{
+        transfer();
+}
+
+/* int 0x80 */
+int sysreply(void)
+{
+        return 0x40;
+}
+
+void hang(void)
 {
         cli();
         while (1)
@@ -91,6 +105,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         data[fil.data_length[0]] = 0;
         k_print("config:\n%s", data);
 
+        cli();
         while (1)
         {
                 bool hit;
@@ -105,6 +120,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
                         restore_pixels(prev_save_x, prev_save_y);
                         put_character('!', mx, my, 0xFF000000, 0xFFFFFFFF);
                         save_pixels(prev_save_x, prev_save_y);
+                        k_print("(%d,%d)\n", mx, my);
                 }
                 mouse_get(&mx, &my, &px, &py, &buttons);
         }
