@@ -42,7 +42,6 @@ int gets(char *b, int max) /* return length */
                 }
                 b[i] = ch;
         }
-
         return i;
 }
 
@@ -69,16 +68,21 @@ uint8_t keyboard_map_shifted[256] =
 
 uint8_t keyboard_get(volatile bool *hit)
 {
+        cli();
         static uint32_t shifted = 0;
         static uint32_t ctrl = 0;
         *hit = false;
 
         if (!(inb(0x64) & 0x01))
+        {
+                sti();
                 return 0;
+        }
 
         uint8_t status = inb(0x64);
         if (status & (1 << 5))
         {
+                sti();
                 return 0;
         }
 
@@ -87,27 +91,37 @@ uint8_t keyboard_get(volatile bool *hit)
         if (scancode == 0x2a || scancode == 0x36)
         {
                 shifted = 1;
+                sti();
                 return 0;
         }
         else if (scancode == 0xaa || scancode == 0xb6)
         {
                 shifted = 0;
+                sti();
                 return 0;
         }
         if (scancode == 0x1d)
         {
                 ctrl = 1;
+                sti();
                 return 0;
         }
         else if (scancode == 0x9d)
         {
                 ctrl = 0;
+                sti();
                 return 0;
         }
         if (scancode & 0x80)
+        {
+                sti();
                 return 0;
+        }
         if (scancode >= 128)
+        {
+                sti();
                 return 0;
+        }
 
         uint8_t key = shifted ? keyboard_map_shifted[scancode] : keyboard_map[scancode];
 
@@ -116,19 +130,22 @@ uint8_t keyboard_get(volatile bool *hit)
         {
                 if (key >= 'a' && key <= 'z')
                 {
+                        sti();
                         return key - 'a' + 1;
                 }
                 else if (key >= 'A' && key <= 'Z')
                 {
+                        sti();
                         return key - 'A' + 1;
                 }
         }
-
+        sti();
         return key;
 }
 
 void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
 {
+        cli();
         ps2_mouse_packet_t packet;
         static float sensitivity = 0.0001f;
         static int acceleration_threshold = 5;
@@ -194,6 +211,7 @@ void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 *buttons = packet.buttons;
                 break;
         }
+        sti();
 }
 
 void save_pixels(int x, int y)

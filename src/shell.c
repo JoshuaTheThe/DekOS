@@ -57,8 +57,9 @@ void shell(void)
         while (1)
         {
                 k_print("\\`(owo`)o -> ");
-                gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
-                keyboard_buffer[SHELL_KBD_BUFF_SIZE - 1] = '\0';
+                memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
+                int len = gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
+                keyboard_buffer[len] = '\0';
                 int argc = parse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
                 if (!strcmp(command_buffer[0], "fetch"))
                 {
