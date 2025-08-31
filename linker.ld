@@ -51,6 +51,12 @@ SECTIONS
         _heap_start = .;
         . = . + 0x100000; /* 1Mb heap */
         _heap_end = .;
+        _heap_map_start = .;
+        . = . + 0x20000;
+        _heap_map_end = .;
+        _allocations = .;
+        . = . + 0x20000;
+        _allocations_end = .;
 
 	/* The compiler may produce other sections, by default it will put them in
 	   a segment with the same name. Simply add stuff here as needed. */

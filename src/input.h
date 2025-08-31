@@ -62,6 +62,7 @@ typedef struct
 #define CURSOR_WIDTH 8
 #define CURSOR_HEIGHT 10
 
+int gets(char *b, int max); /* return length */
 uint8_t ps2_read_status(void);
 uint8_t ps2_read_data(void);
 void ps2_write_data(uint8_t data);

@@ -1,4 +1,6 @@
-#include <memory.h>
+#include <alloc.h>
+
+memory_information_t minfo;
 
 int memcmp(const void *s1, const void *s2, int n)
 {
@@ -42,69 +44,118 @@ int strncmp(const void *s1, const void *s2, int n)
         return 0;
 }
 
-static mem_block_t *free_list = (mem_block_t *)_heap_start;
+void memset(void *d, uint8_t v, uint32_t len)
+{
+        for (int i = 0; i < len; ++i)
+        {
+                ((char *)d)[i] = v;
+        }
+}
 
 // Initialize memory allocator
-void memory_init()
+void memory_init(uint32_t memory_size)
 {
         size_t heap_size = (size_t)(_heap_end - _heap_start);
-        free_list->size = heap_size - sizeof(mem_block_t);
-        free_list->free = 1;
-        free_list->next = NULL;
+        minfo.heap_size = heap_size;
+        minfo.map = _heap_map_start;
+        minfo.raw = _heap_start;
+        minfo.mem_size = memory_size;
+        memset(_allocations, 0, 0x20000);
 }
 
-// Simple first-fit malloc implementation
-void *malloc(int size)
+region_t m_map(uint32_t size)
 {
-        if (size <= 0)
-                return NULL;
-
-        mem_block_t *current = free_list;
-        mem_block_t *previous = NULL;
-
-        // Align size to 4 bytes
-        size = (size + 3) & ~3;
-
-        while (current)
+        region_t empty;
+        empty.ptr = NULL;
+        empty.size = 0;
+        uint32_t aligned = align(size);
+        uint32_t num_bits = aligned / alignment;
+        for (uint32_t i = 0; i < (minfo.heap_size / 8); i++)
         {
-                if (current->free && current->size >= size + sizeof(mem_block_t))
+                if ((minfo.map[i / 8] & (1 << (i % 8))))
+                        continue;
+                bool found = true;
+                for (uint32_t j = 0; j < num_bits; j++)
                 {
-                        // Split block if there's enough space for another block
-                        if (current->size >= size + sizeof(mem_block_t) + 4)
+                        if (i + j >= (minfo.heap_size / 8) || (minfo.map[(i + j) / 8] & (1 << ((i + j) % 8))))
                         {
-                                mem_block_t *new_block = (mem_block_t *)((uint8_t *)current + sizeof(mem_block_t) + size);
-                                new_block->size = current->size - size - sizeof(mem_block_t);
-                                new_block->free = 1;
-                                new_block->next = current->next;
-
-                                current->size = size;
-                                current->next = new_block;
+                                found = false;
+                                break;
                         }
-
-                        current->free = 0;
-                        return (void *)((uint8_t *)current + sizeof(mem_block_t));
                 }
 
-                previous = current;
-                current = current->next;
+                if (found)
+                {
+                        for (uint32_t j = 0; j < num_bits; j++)
+                        {
+                                minfo.map[(i + j) / 8] |= (1 << ((i + j) % 8));
+                        }
+
+                        region_t region;
+                        region.ptr = (uint8_t *)(minfo.raw + i * alignment);
+                        region.size = aligned;
+                        return region;
+                }
         }
 
-        return NULL;
+        return empty;
 }
 
-void free(void *ptr)
+void u_map(region_t region)
 {
-        if (!ptr)
+        if (!region.ptr)
                 return;
 
-        mem_block_t *block = (mem_block_t *)((uint8_t *)ptr - sizeof(mem_block_t));
-        block->free = 1;
+        uint32_t index = (int)((uint8_t *)region.ptr - minfo.raw) / alignment;
+        uint32_t nbits = region.size / alignment;
 
-        if (block->next && block->next->free)
+        for (uint32_t i = 0; i < nbits; i++)
         {
-                block->size += block->next->size + sizeof(mem_block_t);
-                block->next = block->next->next;
+                minfo.map[(index + i) / 8] &= ~(1 << ((index + i) % 8));
         }
+}
+
+region_t *find_empty_allocation(void)
+{
+        region_t *alloc = &_allocations[0];
+        int max = 0x20000 / sizeof(region_t);
+        while ((alloc->ptr && alloc->size) && max)
+        {
+                alloc += sizeof(region_t);
+                max--;
+        }
+
+        return alloc;
+}
+
+region_t *find_allocation_from_address(void *p)
+{
+        if (p == NULL) return NULL;
+        region_t *alloc = &_allocations[0];
+        int max = 0x20000 / sizeof(region_t);
+        while ((alloc->ptr != p) && max)
+        {
+                alloc += sizeof(region_t);
+                max--;
+        }
+
+        return alloc;
+}
+
+void *malloc(int size)
+{
+        region_t region = m_map(size);
+        if (region.size == 0) return NULL;
+        region_t *dest = find_empty_allocation();
+        *dest = region;
+        return region.ptr;
+}
+
+void free(void *p)
+{
+        region_t *src = find_allocation_from_address(p);
+        if (src == NULL) return;
+        u_map(*src);
 }
 
 char *strtok(char *str, const char *delim)

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <disk.h>
 #include <utils.h>
-#include <memory.h>
+#include <alloc.h>
 #include <math.h>
 
 #define ISO9660_IDEN CD001

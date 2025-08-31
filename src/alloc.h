@@ -2,6 +2,7 @@
 #define MEMORY_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 extern int memcmp(const void*,const void*,int);
@@ -9,7 +10,7 @@ extern int memcpy(void*,const void*,int);
 extern int strncmp(const void*,const void*,int);
 extern void *malloc(int);
 extern void free(void*);
-extern void memory_init(void);
+extern void memory_init(uint32_t);
 extern char *strtok(char *str, const char *delim);
 extern char *strchr(const char *str, int c);
 
@@ -21,17 +22,31 @@ char *strtok(char *str, const char *delim);
 char *strchr(const char *s, int c);
 int toupper(int c);
 int tolower(int c);
+void memset(void *d, uint8_t v, uint32_t len);
 
-// Memory allocation structures
-typedef struct mem_block
+typedef struct
 {
-        struct mem_block *next;
-        size_t size;
-        int free;
-} mem_block_t;
+        uint8_t *raw;
+        uint8_t *map;
+        uint32_t heap_size;
+        uint32_t mem_size;
+} memory_information_t;
+
+typedef struct
+{
+        void *ptr;
+        int size;
+} region_t;
+
+#define alignment 16
+#define align(size) (((size) + (alignment - 1)) & ~(alignment - 1))
 
 // Heap boundaries (set by linker script or startup code)
 extern uint8_t _heap_start[];
 extern uint8_t _heap_end[];
+extern uint8_t _heap_map_start[];
+extern uint8_t _heap_map_end[];
+extern region_t _allocations[];
+extern uint8_t _allocations_end[];
 
 #endif

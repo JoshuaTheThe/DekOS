@@ -21,6 +21,32 @@ char getchar(void)
         return x;
 }
 
+int gets(char *b, int max) /* return length */
+{
+        if (!b) return 0;
+        int i, ch;
+        for (i=0; i<max; ++i)
+        {
+                ch = getchar();
+                k_putch(ch);
+                k_display();
+                if (ch == '\b')
+                {
+                        i -= 2;
+                        b[i+1] = '\0';
+                        continue;
+                }
+                else if (ch == '\n' || ch == '\r')
+                {
+                        break;
+                }
+                b[i] = ch;
+        }
+
+        return i;
+}
+
+/* magic nums oh no */
 uint8_t keyboard_map[256] =
     {
         0x00, 0x7F, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',

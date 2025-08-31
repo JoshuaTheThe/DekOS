@@ -416,7 +416,6 @@ bool iso9660_find_in_directory(uint32_t directory_lba, const char *filename, iso
         uint32_t offset = 0;
         char search_name[256];
 
-        // Convert search filename to uppercase
         strncpy(search_name, filename, sizeof(search_name) - 1);
         for (char *p = search_name; *p; p++)
                 *p = toupper(*p);
@@ -433,17 +432,14 @@ bool iso9660_find_in_directory(uint32_t directory_lba, const char *filename, iso
                 char *name = (char *)(dir_data + offset + sizeof(iso9660_directory));
                 uint8_t name_length = dir_entry->length_of_dir_ident;
 
-                // Handle version suffix (e.g., ;1)
                 char clean_name[256];
                 memcpy(clean_name, name, name_length);
                 clean_name[name_length] = '\0';
 
-                // Remove version suffix if present
                 char *semicolon = strchr(clean_name, ';');
                 if (semicolon)
                         *semicolon = '\0';
 
-                // Convert to uppercase
                 for (char *p = clean_name; *p; p++)
                         *p = toupper(*p);
 
@@ -456,6 +452,5 @@ bool iso9660_find_in_directory(uint32_t directory_lba, const char *filename, iso
                 offset += dir_entry->length_of_dir;
         }
 
-        k_print("File not found in directory: %s\n", filename);
         return false;
 }

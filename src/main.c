@@ -11,7 +11,8 @@
 #include <stdarg.h>
 #include <disk.h>
 #include <iso9660.h>
-#include <memory.h>
+#include <alloc.h>
+#include <shell.h>
 
 int mx, my;
 
@@ -35,14 +36,6 @@ void hang(void)
         while (1)
         {
                 hlt();
-        }
-}
-
-void memset(void *d, uint8_t v, uint32_t len)
-{
-        for (int i = 0; i < len; ++i)
-        {
-                ((char *)d)[i] = v;
         }
 }
 
@@ -70,7 +63,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         set_active_font(&font_8x8);
         gdt_init();
         idt_init();
-        memory_init();
+        memory_init(memory_size);
         bool fs_valid = iso9660_init();
         if (fs_valid)
         {
@@ -104,23 +97,25 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         char *data = iso9660_read_file(&fil);
         data[fil.data_length[0]] = 0;
         k_print("config:\n%s", data);
+        free(data);
 
-        cli();
-        while (1)
-        {
-                bool hit;
-                char ch = keyboard_get(&hit);
-                if (hit)
-                {
-                        k_print("%c", ch);
-                }
-
-                if (buttons & MOUSE_LEFT_BUTTON)
-                {
-                        restore_pixels(prev_save_x, prev_save_y);
-                        put_character('!', mx, my, 0xFF000000, 0xFFFFFFFF);
-                        save_pixels(prev_save_x, prev_save_y);
-                }
-                mouse_get(&mx, &my, &px, &py, &buttons);
-        }
+        sti();
+        shell();
+        //while (1)
+        //{
+        //        bool hit;
+        //        char ch = keyboard_get(&hit);
+        //        if (hit)
+        //        {
+        //                k_print("%c", ch);
+        //        }
+//
+        //        if (buttons & MOUSE_LEFT_BUTTON)
+        //        {
+        //                restore_pixels(prev_save_x, prev_save_y);
+        //                put_character('!', mx, my, 0xFF000000, 0xFFFFFFFF);
+        //                save_pixels(prev_save_x, prev_save_y);
+        //        }
+        //        mouse_get(&mx, &my, &px, &py, &buttons);
+        //}
 }
