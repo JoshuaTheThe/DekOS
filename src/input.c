@@ -23,25 +23,43 @@ char getchar(void)
 
 int gets(char *b, int max) /* return length */
 {
-        if (!b) return 0;
-        int i, ch;
-        for (i=0; i<max; ++i)
+        if (!b || max <= 0)
+                return 0;
+
+        int i = 0, ch;
+
+        while (i < max - 1) // Leave space for null terminator
         {
                 ch = getchar();
-                k_putch(ch);
-                k_display();
-                if (ch == '\b')
+
+                if (ch == '\b' || ch == 127) // Handle backspace and delete
                 {
-                        i -= 2;
-                        b[i+1] = '\0';
-                        continue;
+                        if (i > 0)
+                        {
+                                i--;
+                                k_putch('\b');
+                                k_putch(' ');
+                                k_putch('\b');
+                                k_display();
+                                b[i] = '\0';
+                        }
                 }
                 else if (ch == '\n' || ch == '\r')
                 {
+                        k_putch(ch);
+                        k_display();
                         break;
                 }
-                b[i] = ch;
+                else if (ch >= 32 && ch <= 126) // Printable characters only
+                {
+                        k_putch(ch);
+                        k_display();
+                        b[i] = ch;
+                        i++;
+                }
         }
+
+        b[i] = '\0'; // Always null-terminate
         return i;
 }
 

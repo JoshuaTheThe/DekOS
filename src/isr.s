@@ -6,6 +6,7 @@
         .global page_fault_handler
         .global transfer
         .extern tick
+        .extern scheduler
         .extern sysreply
 
         .equ TEMP_REG  , 0x1000
@@ -27,9 +28,23 @@
         .equ TEMP_FLGS , TEMP_REG+(15*4)
         .equ TEMP_STCK , 0x4000
 systemcall:
+        cli
+        mov %esp, [TEMP_ESP]
+        mov %esp, TEMP_STCK
+        pushl %edi
+        pushl %edx
+        pushl %ebx
+        pushl %eax
         call sysreply
+        popl %ebx
+        popl %ebx
+        popl %edx
+        popl %edi
+        mov [TEMP_ESP], %esp
+        sti
         iret
 transfer:
+        cli
         # Segments
         movw [TEMP_DS],%ax
         movw [TEMP_SS],%bx
@@ -93,7 +108,7 @@ timer_interrupt_handler:
         movw %ax,%es
         movw %ax,%fs
         movw %ax,%gs
-        jmp tick
+        jmp scheduler
 invalid_opcode_handler:
 divide_by_zero_handler:
 general_protection_fault_handler:

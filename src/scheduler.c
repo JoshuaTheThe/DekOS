@@ -28,7 +28,6 @@ static void schedule_next(void)
         SCHED_FS = processes[current_pid.num].regs.fs;
         SCHED_GS = processes[current_pid.num].regs.gs;
         SCHED_DS = processes[current_pid.num].regs.ds;
-        transfer();
 }
 
 int find_free_process_slot()
@@ -74,32 +73,34 @@ uint32_t clone_process(pid_t pid)
 
 void save_context(void)
 {
-        processes[current_pid.num].regs.eax = SCHED_EAX;
-        processes[current_pid.num].regs.ebx = SCHED_EBX;
-        processes[current_pid.num].regs.ecx = SCHED_ECX;
-        processes[current_pid.num].regs.edx = SCHED_EDX;
-        processes[current_pid.num].regs.esi = SCHED_ESI;
-        processes[current_pid.num].regs.edi = SCHED_EDI;
-        processes[current_pid.num].regs.esp = SCHED_ESP;
-        processes[current_pid.num].regs.ebp = SCHED_EBP;
-        processes[current_pid.num].regs.eip = SCHED_EIP;
-        processes[current_pid.num].regs.flags = SCHED_EFL | 0x200;
-        processes[current_pid.num].regs.cs = 0x08;
-        processes[current_pid.num].regs.ss = 0x10;
-        processes[current_pid.num].regs.es = 0x10;
-        processes[current_pid.num].regs.fs = 0x10;
-        processes[current_pid.num].regs.gs = 0x10;
-        processes[current_pid.num].regs.ds = 0x10;
+        if (processes[current_pid.num].valid)
+        {
+                processes[current_pid.num].regs.eax = SCHED_EAX;
+                processes[current_pid.num].regs.ebx = SCHED_EBX;
+                processes[current_pid.num].regs.ecx = SCHED_ECX;
+                processes[current_pid.num].regs.edx = SCHED_EDX;
+                processes[current_pid.num].regs.esi = SCHED_ESI;
+                processes[current_pid.num].regs.edi = SCHED_EDI;
+                processes[current_pid.num].regs.esp = SCHED_ESP;
+                processes[current_pid.num].regs.ebp = SCHED_EBP;
+                processes[current_pid.num].regs.eip = SCHED_EIP;
+                processes[current_pid.num].regs.flags = SCHED_EFL | 0x200;
+                processes[current_pid.num].regs.cs = 0x08;
+                processes[current_pid.num].regs.ss = 0x10;
+                processes[current_pid.num].regs.es = 0x10;
+                processes[current_pid.num].regs.fs = 0x10;
+                processes[current_pid.num].regs.gs = 0x10;
+                processes[current_pid.num].regs.ds = 0x10;
+        }
 }
 
 void scheduler(void)
 {
         tick_counter++;
-        if (current_pid.valid)
-        {
-                save_context();
-                schedule_next();
-        }
+        save_context();
+        schedule_next();
+        outb(0x20, 0x20);
+        transfer();
 }
 
 void sched_init(void)

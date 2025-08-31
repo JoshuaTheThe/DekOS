@@ -78,8 +78,7 @@ void shell(void)
                         {
                                 k_print("file size=%d\n", file.data_length[0]);
                                 char *data = iso9660_read_file(&file);
-                                data[file.data_length[0]] = 0;
-                                k_print("data:\n%s\n", data);
+                                execute(command_buffer[0], data, file.data_length[0]);
                                 free(data);
                         }
                         else

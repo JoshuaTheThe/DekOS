@@ -14,23 +14,15 @@
 #include <alloc.h>
 #include <shell.h>
 #include <scheduler.h>
+#include <ex.h>
 
 int mx, my;
 
-extern void transfer(void);
-
-/* called by pit */
-void tick(void)
+enum
 {
-        outb(0x20, 0x20);
-        scheduler();
-}
-
-/* int 0x80 */
-int sysreply(void)
-{
-        return 0x40;
-}
+        INT80_EXIT,
+        INT80_PUTCHAR,
+};
 
 void hang(void)
 {
@@ -39,6 +31,25 @@ void hang(void)
         {
                 hlt();
         }
+}
+
+/* int 0x80 */
+int sysreply(uint32_t eax, uint32_t ebx, uint32_t edx, uint32_t edi)
+{
+        switch (eax)
+        {
+                case INT80_EXIT:
+                {
+                        kill_process(current_pid);
+                        scheduler();
+                        while(1);
+                        break;
+                }
+                case INT80_PUTCHAR:
+                        k_print("%c",ebx);
+                        break;
+        }
+        return eax;
 }
 
 #define PIT_FREQUENCY 1193180
@@ -79,7 +90,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         gdt_init();
         idt_init();
         sched_init();
-        pit_init(100);
+        pit_init(1000);
         memory_init(memory_size);
         bool fs_valid = iso9660_init();
         if (fs_valid)
