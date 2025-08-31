@@ -70,7 +70,7 @@ void shell(void)
                         k_print("|              -josh |\n");
                         k_print("\\--------------------/\n\n");
                 }
-                else
+                else if (strlen(command_buffer[0]) != 0)
                 {
                         bool success = iso9660_find_file(command_buffer[0], &file);
                         if (success)

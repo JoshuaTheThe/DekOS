@@ -2,6 +2,14 @@
 
 memory_information_t minfo;
 
+size_t strlen(const char *x)
+{
+        const char *p = x;
+        while (*p)
+                ++p;
+        return (size_t)p-(size_t)x;
+}
+
 int memcmp(const void *s1, const void *s2, int n)
 {
         const unsigned char *p1 = (unsigned char *)s1;
