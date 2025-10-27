@@ -16,12 +16,10 @@ program:
         dd 64
 .text:
 .main:
-        mov eax, 1
-        mov ebx, 65
-        int 0x80
         mov eax, 0
+        mov ebx, 1
         int 0x80
-        jmp $
+        hlt
 .relocations:
 .funtable:
         db "main", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

@@ -1,31 +1,113 @@
-mkdir -p bin 
-mkdir -p obj 
- 
-rm ./bin/kernel.elf 
-rm dekos.iso 
-rm ./obj/* 
- 
-nasm examples/example.s -f bin -o examples/example.ex 
+#!/bin/bash
 
-clang -m32 -c "src/boot.s" -o "obj/boot.o" -march=i386 
-clang -m32 -c "src/isr.s" -o "obj/isr.o" -march=i386 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/main.c" -o "obj/main.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/fonts.c" -o "obj/fonts.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/text.c" -o "obj/text.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/input.c" -o "obj/input.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/idt.c" -o "obj/idt.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/io.c" -o "obj/io.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/gdt.c" -o "obj/gdt.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/math.c" -o "obj/math.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/disk.c" -o "obj/disk.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/iso9660.c" -o "obj/iso9660.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/alloc.c" -o "obj/alloc.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/rtc.c" -o "obj/rtc.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/shell.c" -o "obj/shell.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/scheduler.c" -o "obj/scheduler.o" 
-clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "src/ex.c" -o "obj/ex.o" 
- 
-ld -m elf_i386 -T "linker.ld" -o "bin/kernel.elf" -nostdlib "obj/boot.o" "obj/main.o" "obj/fonts.o" "obj/text.o" "obj/input.o" "obj/idt.o" "obj/scheduler.o" "obj/io.o" "obj/gdt.o" "obj/math.o" "obj/disk.o" "obj/iso9660.o" "obj/isr.o" "obj/alloc.o" "obj/rtc.o" "obj/shell.o" "obj/ex.o"
+declare -a all_object_files
+declare -a init_files heap_files isr_files pci_files drivers_files tty_files prog_files other_files
+
+# Function to categorize object files based on directory structure
+categorize_object_file() {
+    local file="$1"
+    
+    case "$file" in
+        obj/init/*|obj/boot/*|obj/gdt/*|obj/idt/*)
+            init_files+=("$file")
+            ;;
+        obj/heap/*)
+            heap_files+=("$file")
+            ;;
+        obj/isr/*)
+            isr_files+=("$file")
+            ;;
+        obj/pci/*)
+            pci_files+=("$file")
+            ;;
+        obj/drivers/*)
+            drivers_files+=("$file")
+            ;;
+        obj/tty/*)
+            tty_files+=("$file")
+            ;;
+        obj/programs/*)
+            prog_files+=("$file")
+            ;;
+        *)
+            other_files+=("$file")
+            ;;
+    esac
+}
+
+# Recursive compilation function
+list_files_recursive() {
+    local dir="$1"
+    for file in "$dir"/*; do
+        if [[ -f "$file" && "$file" == *.c ]]; then
+            local base="${file#./src/}"
+            base="${base%.c}"
+            local output_file="obj/$base.o"
+            all_object_files+=("$output_file")
+            
+            echo "Compiling $file -> $output_file"
+            mkdir -p "$(dirname "$output_file")"
+            clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file"
+            
+            # Categorize the object file
+            categorize_object_file "$output_file"
+            
+        elif [[ -f "$file" && "$file" == *.s ]]; then
+            local base="${file#./src/}"
+            base="${base%.s}"
+            local output_file="obj/$base.o"
+            all_object_files+=("$output_file")
+            
+            echo "Assembling $file -> $output_file"
+            mkdir -p "$(dirname "$output_file")"
+            clang -m32 -c "$file" -o "$output_file" -march=i386 
+            
+            # Categorize the object file
+            categorize_object_file "$output_file"
+            
+        elif [ -d "$file" ]; then
+            list_files_recursive "$file"
+        fi
+    done
+}
+
+# Create obj directory
+mkdir -p obj
+
+# Compile everything
+echo "Compiling source files..."
+list_files_recursive "./src"
+
+# Print categorized files
+echo ""
+echo "=== Categorized Object Files ==="
+echo "Init files: ${init_files[@]}"
+echo "Heap files: ${heap_files[@]}"
+echo "ISR files: ${isr_files[@]}"
+echo "PCI files: ${pci_files[@]}"
+echo "Driver files: ${drivers_files[@]}"
+echo "TTY files: ${tty_files[@]}"
+echo "Program files: ${prog_files[@]}"
+echo "Other files: ${other_files[@]}"
+
+# Build the link command
+echo ""
+echo "=== Linking ==="
+ld -m elf_i386 -T "linker.ld" -o "bin/kernel.elf" -nostdlib \
+    "${init_files[@]}" \
+    "${heap_files[@]}" \
+    "${isr_files[@]}" \
+    "${pci_files[@]}" \
+    "${drivers_files[@]}" \
+    "${tty_files[@]}" \
+    "${prog_files[@]}" \
+    "${other_files[@]}"
+if [ $? -eq 0 ]; then
+    echo "Linking successful: bin/kernel.elf"
+else
+    echo "Linking failed!"
+fi
+
 if grub-file --is-x86-multiboot bin/kernel.elf; then 
         echo multiboot confirmed 
         mkdir -p isodir/boot/grub 

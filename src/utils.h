@@ -1,6 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#ifndef NULL
+#define NULL (void*)(0)
+#endif
+
 #define cli() __asm("cli")
 #define sti() __asm("sti")
 #define hlt() __asm("hlt")
