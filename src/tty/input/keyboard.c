@@ -19,18 +19,19 @@ bool keyboardKeyPressed(void)
 
 uint8_t getchar(void)
 {
-        sti();
+        cli();
         while (!keyboardPressed)
         {
                 character = keyboardFetch(NULL);
         }
+        sti();
         uint8_t x = character;
         keyboardPressed = false;
         return x;
 }
 
 /* magic nums oh no */
-uint8_t keyboard_map[256] =
+static uint8_t keyboard_map[256] =
     {
         0x00, 0x7F, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
         'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0x80, 'a', 's',
@@ -40,7 +41,7 @@ uint8_t keyboard_map[256] =
         0x8F, 0x90, '-', 0x91, '5', 0x92, '+', 0x93, 0x94, 0x95, 0x96, 0x97, '\n',
         0x81, '\\', 0x98, 0x99};
 
-uint8_t keyboard_map_shifted[256] =
+static uint8_t keyboard_map_shifted[256] =
     {
         0x00, 0x7F, '!', '"', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',
         'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0x80, 'A', 'S',

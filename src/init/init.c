@@ -77,8 +77,8 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         }
 
         /* Stinky inconsistent naming for PS/2 stuff */
-        ps2_initialize_mouse();
-        ps2_initialize_keyboard();
+        // ps2_initialize_mouse();
+        // ps2_initialize_keyboard();
 
         display();
 
@@ -104,9 +104,8 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         int mouse_x = framebuffer.dimensions[0]/2, mouse_y = framebuffer.dimensions[1]/2, prev_x=-1, prev_y=-1;
         uint8_t mouse_buttons = 0;
         sti();
-
-        while (1)
+        while(1)
         {
-                mouseFetch(&mouse_x, &mouse_y, &prev_x, &prev_y, &mouse_buttons);
+                //mouseFetch(&mouse_x, &mouse_y, &prev_x, &prev_y, &mouse_buttons);
         }
 }
