@@ -19,10 +19,10 @@
 #define CONTROL 0x206
 #define ALTERNATE_STATUS 0
 
-extern void cd_drive_init(int *port, bool *slave);
-extern int detect_cdrom(uint16_t port, bool slave);
-extern int cdrom_detect(uint16_t port, bool slave);
-extern int cdrom_media_present(uint16_t port, bool slave);
-extern int read_cdrom(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *buffer);
+void cdInit(int *port, bool *slave);
+int cdDetectMedia(uint16_t port, bool slave);
+int cdDetect(uint16_t port, bool slave);
+int cdMediaPresent(uint16_t port, bool slave);
+int cdRead(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *buffer);
 
 #endif

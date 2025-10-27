@@ -15,9 +15,12 @@
 #define RTC_YEAR 0x09
 #define BASE_YEAR (2000)
 
-extern uint8_t rtc_read(uint8_t reg);
-extern uint8_t bcd_to_bin(uint8_t bcd);
-extern void rtc_get_time(uint8_t *hour, uint8_t *minute, uint8_t *second);
-extern void rtc_get_date(uint8_t *day, uint8_t *month, uint8_t *year);
+typedef struct
+{
+        uint8_t day, month, year;
+        uint8_t hour, minute, second;
+} rtcTime_t;
+
+rtcTime_t rtcGetTime(void);
 
 #endif

@@ -2,10 +2,11 @@
 #define SCHED_H
 
 #include <stddef.h>
-#include <heap/alloc.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
 #include <tty/output/output.h>
 #include <io.h>
-#include <math.h>
+#include <drivers/math.h>
 
 #define MAX_PROCS 4096
 #define PROC_NAME_LEN 32
@@ -31,39 +32,40 @@ typedef struct
 {
         bool valid : 1;
         uint32_t num : 31;
-} pid_t;
+} schedPid_t;
 
 typedef struct
 {
         uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip;
         uint32_t flags;
         uint32_t cs, ss, ds, es, fs, gs;
-} regs_t;
+} schedRegisters_t;
 
 typedef struct /* process */
 {
-        regs_t regs;
+        schedRegisters_t regs;
         uint32_t *stack, stack_size;
+        uint32_t output[TTY_H][TTY_W];
         uint8_t *program;
+        uint8_t name[PROC_NAME_LEN];
         bool active;
         bool valid;
         bool debugger_is_present;
-        uint8_t name[PROC_NAME_LEN];
-        uint32_t output[TTY_H][TTY_W];
-} proc_t;
+} schedProcess_t;
 
-extern void Scheduler(void);
-extern pid_t StartProcess(const char *Name, char **Args, int Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength);
-extern bool KillProcess(pid_t Pid); /* Return True on fail */
-extern void SchedInit(void);
-extern bool SuspendProcess(pid_t pid);
-extern void ListProcesses(void);
-extern void transfer(void);
-extern void SaveContext(void);
-extern uint32_t CloneProcess(pid_t pid);
-extern bool ProcessIsRunning(pid_t pid);
-extern proc_t processes[MAX_PROCS];
-extern pid_t current_pid;
-extern uint32_t tick_counter;
+void schedNext(void);
+int schedFindInvalidProcess(void);
+uint32_t schedCloneProcess(schedPid_t pid);
+void schedSaveContext(void);
+void schedTick(void);
+void schedInit(void);
+bool schedSuspendProcess(schedPid_t pid);
+bool schedResumeProcess(schedPid_t pid);
+void schedListProcesses(void);
+schedPid_t schedCreateProcess(const char *Name, char **Args, int Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength);
+bool schedKillProcess(schedPid_t Pid);
+bool schedIsRunning(schedPid_t Pid);
+void schedTransfer(void);
+schedPid_t schedGetCurrentPid(void);
 
 #endif

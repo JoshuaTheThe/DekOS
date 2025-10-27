@@ -4,7 +4,7 @@
 
 const char Sign[8] = "EXENNEA";
 
-void print_header_info(const Header h)
+void exHeaderInfo(const exHeader_t h)
 {
         printf("Signature: %s\n", h.Sign);
         printf("Version: %d.%d.%d\n", h.major, h.minor, h.patch);
@@ -13,38 +13,38 @@ void print_header_info(const Header h)
         printf("Text Start: %d\n", h.TextSegmentOrg);
         printf("Text Size: %d\n", h.TextSegmentSize);
         printf("FunTableOrg: %d\n", h.FunTableOrg);
-        printf("Function Count: %d\n", h.FunctionCount);
+        printf("exFunction_t Count: %d\n", h.FunctionCount);
         printf("Stack Size: %d\n", h.StackSize);
 }
 
-void find_functions(const Header h, const char *buffer, Function *func)
+void exFindFunctions(const exHeader_t h, const char *buffer, exFunction_t *func)
 {
         const char *func_table = buffer + h.FunTableOrg;
         for (int i = 0; i < h.FunctionCount; ++i)
         {
-                const Function *fun = (const Function *)(func_table + i * sizeof(Function));
+                const exFunction_t *fun = (const exFunction_t *)(func_table + i * sizeof(exFunction_t));
                 memcpy(func[i].name, fun->name, 16);
                 func[i].offset = fun->offset;
         }
 }
 
-void find_relocations(const Header h, const char *buffer, Relocation *relocations)
+void exFindRelocations(const exHeader_t h, const char *buffer, exRelocation_t *relocations)
 {
         const char *reloc_table = buffer + h.RelocationsStart;
         for (int i = 0; i < h.RelocationCount; ++i)
         {
-                const Relocation *rel = (const Relocation *)(reloc_table + i * sizeof(Relocation));
+                const exRelocation_t *rel = (const exRelocation_t *)(reloc_table + i * sizeof(exRelocation_t));
                 relocations[i].offset = rel->offset;
         }
 }
 
-void find_raw_data(const Header h, const char *buffer, char *raw)
+void exFindRawData(const exHeader_t h, const char *buffer, char *raw)
 {
         const char *text_segment = buffer + h.TextSegmentOrg;
         memcpy(raw, text_segment, h.TextSegmentSize);
 }
 
-void apply_relocations(const Header h, const Relocation *relocations, char *raw)
+void exApplyRelocations(const exHeader_t h, const exRelocation_t *relocations, char *raw)
 {
         for (int i = 0; i < h.RelocationCount; ++i)
         {
@@ -53,17 +53,17 @@ void apply_relocations(const Header h, const Relocation *relocations, char *raw)
         }
 }
 
-int execute(char *name, char *buffer, size_t buffer_size)
+int exExecute(char *name, char *buffer, size_t buffer_size)
 {
         cli();
-        if (buffer_size < sizeof(Header))
+        if (buffer_size < sizeof(exHeader_t))
         {
                 printf("Buffer too small for header\n");
                 return -1;
         }
 
-        Header h;
-        memcpy(&h, buffer, sizeof(Header));
+        exHeader_t h;
+        memcpy(&h, buffer, sizeof(exHeader_t));
 
         if (h.Sign[0] == '\0')
         {
@@ -77,8 +77,8 @@ int execute(char *name, char *buffer, size_t buffer_size)
                 return -1;
         }
 
-        Function functions[h.FunctionCount];
-        Relocation relocations[h.RelocationCount];
+        exFunction_t functions[h.FunctionCount];
+        exRelocation_t relocations[h.RelocationCount];
 
         cli();
         void *ExeMem = malloc(h.TextSegmentSize);
@@ -88,17 +88,17 @@ int execute(char *name, char *buffer, size_t buffer_size)
                 return -1;
         }
 
-        find_functions(h, buffer, functions);
-        find_relocations(h, buffer, relocations);
-        find_raw_data(h, buffer, (char *)ExeMem);
-        apply_relocations(h, relocations, (char *)ExeMem);
+        exFindFunctions(h, buffer, functions);
+        exFindRelocations(h, buffer, relocations);
+        exFindRawData(h, buffer, (char *)ExeMem);
+        exApplyRelocations(h, relocations, (char *)ExeMem);
 
         uint8_t *stack = malloc(h.StackSize * 4);
 
         // Execute the first function (entry point)
         if (h.FunctionCount > 0)
         {
-                StartProcess(name, NULL, 0, ExeMem, functions[0].offset, stack, h.StackSize);
+                schedCreateProcess(name, NULL, 0, ExeMem, functions[0].offset, stack, h.StackSize);
                 sti();
                 return 0;
         }

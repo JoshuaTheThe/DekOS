@@ -1,32 +1,19 @@
 #include <drivers/iso9660.h>
 
-/* strA -- String with only ASCII a-characters, padded to the right with spaces. */
-/* strD -- String with only ASCII d-characters, padded to the right with spaces. */
-
-bool is_a_character(char x)
-{
-        return is_d_character(x) || x == '!' || x == '"' || (x >= '%' || x <= '/') || (x >= ':' || x <= '?');
-}
-
-bool is_d_character(char x)
-{
-        return (x >= 'A' && x <= 'Z') || x == '_';
-}
-
-// Global variables for CD-ROM information
 int cd_port = 0x1F0;
 bool cd_slave = false;
-iso9660_primary_desc primary_desc;
+iso9660PrimaryDesc_t primary_desc;
 bool iso9660_initialized = false;
 
-// Implementation
-bool iso9660_init(void)
+bool iso9660Initialized(void)
 {
-        // Initialize CD-ROM drive
-        cd_drive_init(&cd_port, &cd_slave);
+        return iso9660_initialized;
+}
 
-        // Read volume descriptors
-        if (!iso9660_read_volume_descriptors())
+bool iso9660Init(void)
+{
+        cdInit(&cd_port, &cd_slave);
+        if (!iso9660ReadVolumeDescriptors())
         {
                 return false;
         }
@@ -35,24 +22,22 @@ bool iso9660_init(void)
         return true;
 }
 
-bool iso9660_read_volume_descriptors(void)
+bool iso9660ReadVolumeDescriptors(void)
 {
-        uint8_t buffer[2048]; // Use byte buffer, not uint16_t
+        uint8_t buffer[2048];
         uint32_t lba = ISO9660_FIRST_VOLUME_DESC;
         bool found_pvd = false;
 
-        while (lba < 32) // Reasonable limit
+        while (lba < 32)
         {
-                // Read one sector
-                if (read_cdrom(cd_port, cd_slave, lba, 1, (uint16_t *)buffer) != 0)
+                if (cdRead(cd_port, cd_slave, lba, 1, (uint16_t *)buffer) != 0)
                 {
                         printf("Failed to read LBA %d\n", lba);
                         return false;
                 }
 
-                iso9660_volume_desc *desc = (iso9660_volume_desc *)buffer;
+                iso9660VolumeDesc_t *desc = (iso9660VolumeDesc_t *)buffer;
 
-                // Check identifier first
                 if (memcmp(desc->iden, "CD001", 5) != 0)
                 {
                         printf("Invalid identifier at LBA %d: %s\n", lba, desc->iden);
@@ -68,7 +53,7 @@ bool iso9660_read_volume_descriptors(void)
 
                 case ISO9660_PRIMARY_DESC:
                         printf("Found Primary Volume Descriptor at LBA %d\n", lba);
-                        if (!iso9660_parse_primary_desc(desc))
+                        if (!iso9660ParsePrimaryDescriptor(desc))
                         {
                                 return false;
                         }
@@ -77,7 +62,7 @@ bool iso9660_read_volume_descriptors(void)
 
                 case ISO9660_VOLUME_DESC_SET_TERMINATOR:
                         printf("Found Volume Descriptor Terminator at LBA %d\n", lba);
-                        return found_pvd; // Return true if we found PVD
+                        return found_pvd;
 
                 default:
                         printf("Found unknown descriptor type %d at LBA %d\n", desc->type, lba);
@@ -91,7 +76,7 @@ bool iso9660_read_volume_descriptors(void)
         return found_pvd;
 }
 
-bool iso9660_parse_primary_desc(const iso9660_volume_desc *desc)
+bool iso9660ParsePrimaryDescriptor(const iso9660VolumeDesc_t *desc)
 {
         if (desc->type != ISO9660_PRIMARY_DESC)
         {
@@ -99,7 +84,7 @@ bool iso9660_parse_primary_desc(const iso9660_volume_desc *desc)
         }
 
         // Copy the primary descriptor
-        memcpy(&primary_desc, desc, sizeof(iso9660_primary_desc));
+        memcpy(&primary_desc, desc, sizeof(iso9660PrimaryDesc_t));
 
         // Verify it's a valid primary descriptor
         if (memcmp(primary_desc.iden, "CD001", 5) != 0 || primary_desc.version != 0x1)
@@ -110,7 +95,7 @@ bool iso9660_parse_primary_desc(const iso9660_volume_desc *desc)
         return true;
 }
 
-uint32_t iso9660_get_root_directory_lba(void)
+uint32_t iso9660GetRootLba(void)
 {
         if (!iso9660_initialized)
         {
@@ -119,7 +104,7 @@ uint32_t iso9660_get_root_directory_lba(void)
         return primary_desc.root_directory_record.extend_lba[0];
 }
 
-uint32_t iso9660_get_logical_block_size(void)
+uint32_t iso9660GetLogicalBlockSize(void)
 {
         if (!iso9660_initialized)
         {
@@ -129,15 +114,14 @@ uint32_t iso9660_get_logical_block_size(void)
         return primary_desc.logical_block_size[0];
 }
 
-bool iso9660_read_directory(uint32_t lba, uint16_t *buffer)
+bool iso9660ReadDirectory(uint32_t lba, uint16_t *buffer)
 {
         if (!iso9660_initialized)
         {
                 return false;
         }
 
-        // Read the directory sector
-        if (read_cdrom(cd_port, cd_slave, lba, 1, buffer) != 0)
+        if (cdRead(cd_port, cd_slave, lba, 1, buffer) != 0)
         {
                 return false;
         }
@@ -145,7 +129,7 @@ bool iso9660_read_directory(uint32_t lba, uint16_t *buffer)
         return true;
 }
 
-void *iso9660_read_file(iso9660_directory *file_entry)
+void *iso9660ReadFile(iso9660Dir_t *file_entry)
 {
         if (!iso9660_initialized || !file_entry)
         {
@@ -154,9 +138,8 @@ void *iso9660_read_file(iso9660_directory *file_entry)
 
         uint32_t file_size = file_entry->data_length[0] + 128;
         uint32_t lba = file_entry->extend_lba[0];
-        uint32_t sectors_to_read = (file_size + 2047) / 2048; // Round up to nearest sector
+        uint32_t sectors_to_read = (file_size + 2047) / 2048;
 
-        // Allocate memory for the file
         void *file_data = malloc(file_size);
         if (!file_data)
         {
@@ -174,7 +157,7 @@ void *iso9660_read_file(iso9660_directory *file_entry)
 
         for (uint32_t i = 0; i < sectors_to_read; i++)
         {
-                if (read_cdrom(cd_port, cd_slave, lba + i, 1, buffer) != 0)
+                if (cdRead(cd_port, cd_slave, lba + i, 1, buffer) != 0)
                 {
                         free(file_data);
                         free(buffer);
@@ -190,19 +173,17 @@ void *iso9660_read_file(iso9660_directory *file_entry)
         return file_data;
 }
 
-// Function to list directory contents
-// Function to list directory contents
-bool iso9660_list_directory(uint32_t directory_lba)
+bool iso9660ListDirectory(uint32_t directory_lba)
 {
         if (!iso9660_initialized)
         {
                 return false;
         }
 
-        uint16_t buffer[1024]; // 2048 bytes buffer
+        uint16_t buffer[1024];
         uint8_t *dir_data = (uint8_t *)buffer;
 
-        if (!iso9660_read_directory(directory_lba, buffer))
+        if (!iso9660ReadDirectory(directory_lba, buffer))
         {
                 printf("Failed to read directory at LBA %d\n", directory_lba);
                 return false;
@@ -217,25 +198,22 @@ bool iso9660_list_directory(uint32_t directory_lba)
 
         while (offset < 2048)
         {
-                iso9660_directory *dir_entry = (iso9660_directory *)(dir_data + offset);
+                iso9660Dir_t *dir_entry = (iso9660Dir_t *)(dir_data + offset);
 
-                // Check for end of directory or invalid entry
                 if (dir_entry->length_of_dir == 0)
                 {
                         break;
                 }
 
-                // Skip current directory (.) and parent directory (..) entries
                 if (dir_entry->length_of_dir_ident == 1 &&
-                    (dir_data[offset + sizeof(iso9660_directory)] == 0x00 ||
-                     dir_data[offset + sizeof(iso9660_directory)] == 0x01))
+                    (dir_data[offset + sizeof(iso9660Dir_t)] == 0x00 ||
+                     dir_data[offset + sizeof(iso9660Dir_t)] == 0x01))
                 {
                         offset += dir_entry->length_of_dir;
                         continue;
                 }
 
-                // Extract and clean filename
-                char *name = (char *)(dir_data + offset + sizeof(iso9660_directory));
+                char *name = (char *)(dir_data + offset + sizeof(iso9660Dir_t));
                 uint8_t name_length = dir_entry->length_of_dir_ident;
 
                 char clean_name[256];
@@ -244,14 +222,12 @@ bool iso9660_list_directory(uint32_t directory_lba)
                         memcpy(clean_name, name, name_length);
                         clean_name[name_length] = '\0';
 
-                        // Remove version suffix (everything after semicolon)
                         char *semicolon = strchr(clean_name, ';');
                         if (semicolon)
                         {
                                 *semicolon = '\0';
                         }
 
-                        // Remove trailing spaces
                         for (int i = strlen(clean_name) - 1; i >= 0 && clean_name[i] == ' '; i--)
                         {
                                 clean_name[i] = '\0';
@@ -262,21 +238,15 @@ bool iso9660_list_directory(uint32_t directory_lba)
                         strncpy(clean_name, "(no name)", 255);
                 }
 
-                // Calculate file size
                 uint32_t file_size = dir_entry->data_length[0];
-
-                // Calculate LBA
                 uint32_t lba = dir_entry->extend_lba[0];
 
-                // Determine file type and flags
                 char type_char = (dir_entry->flags.raw & 0x02) ? 'D' : 'F';   // Directory or File
                 char hidden_char = (dir_entry->flags.raw & 0x01) ? 'H' : ' '; // Hidden
 
-                // Format and print the entry
                 printf("%-28s %-8d %-8d %c%c\n",
-                        clean_name, file_size, lba, type_char, hidden_char);
+                       clean_name, file_size, lba, type_char, hidden_char);
 
-                // Move to next entry
                 offset += dir_entry->length_of_dir;
         }
 
@@ -284,20 +254,18 @@ bool iso9660_list_directory(uint32_t directory_lba)
         return true;
 }
 
-// Convenience function to list root directory
-bool iso9660_list_root(void)
+bool iso9660ListRoot(void)
 {
-        uint32_t root_lba = iso9660_get_root_directory_lba();
+        uint32_t root_lba = iso9660GetRootLba();
         if (root_lba == 0)
         {
                 printf("Failed to get root directory LBA\n");
                 return false;
         }
-        return iso9660_list_directory(root_lba);
+        return iso9660ListDirectory(root_lba);
 }
 
-// Enhanced version that can list any directory by path
-bool iso9660_list_dir(const char *path)
+bool iso9660ListDir(const char *path)
 {
         if (!iso9660_initialized)
         {
@@ -309,13 +277,11 @@ bool iso9660_list_dir(const char *path)
 
         if (path == NULL || strcmp(path, "") == 0 || strcmp(path, "/") == 0)
         {
-                // List root directory
-                directory_lba = iso9660_get_root_directory_lba();
+                directory_lba = iso9660GetRootLba();
         }
         else
         {
-                // Find the directory by path
-                if (!iso9660_find_directory(path, &directory_lba))
+                if (!iso9660FindDirectory(path, &directory_lba))
                 {
                         printf("Directory not found: %s\n", path);
                         return false;
@@ -323,26 +289,25 @@ bool iso9660_list_dir(const char *path)
         }
 
         printf("Listing directory: %s\n", path);
-        return iso9660_list_directory(directory_lba);
+        return iso9660ListDirectory(directory_lba);
 }
-bool iso9660_traverse_path_table(const char *path)
+
+bool iso9660TraversePathTable(const char *path)
 {
         if (!iso9660_initialized)
                 return false;
 
-        // Read path table
         uint32_t path_table_lba = primary_desc.type_l_path_table;
         uint32_t path_table_size = primary_desc.path_table_size[0];
         uint32_t sectors = (path_table_size + 2047) / 2048;
         uint8_t *buffer = malloc(sectors * 2048);
 
-        if (!buffer || read_cdrom(cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
+        if (!buffer || cdRead(cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
         {
                 free(buffer);
                 return false;
         }
 
-        // Split path into components
         char *components[32];
         int count = 0;
         char *token = strtok((char *)path, "/");
@@ -352,7 +317,6 @@ bool iso9660_traverse_path_table(const char *path)
                 token = strtok(NULL, "/");
         }
 
-        // Start from root directory (index 1)
         uint16_t current_index = 1;
         uint32_t current_lba = primary_desc.root_directory_record.extend_lba[0];
 
@@ -363,11 +327,10 @@ bool iso9660_traverse_path_table(const char *path)
 
                 while (offset < path_table_size)
                 {
-                        iso9660_path_table_record *rec = (iso9660_path_table_record *)(buffer + offset);
+                        iso9660PathTableRecord_t *rec = (iso9660PathTableRecord_t *)(buffer + offset);
                         if (offset + sizeof(*rec) + rec->name_len > path_table_size)
                                 break;
 
-                        // Check if this record belongs to current directory and matches name
                         if (rec->parent == current_index)
                         {
                                 char name[256];
@@ -376,17 +339,16 @@ bool iso9660_traverse_path_table(const char *path)
 
                                 if (strncmp(name, components[i], rec->name_len) == 0)
                                 {
-                                        current_index = (offset / sizeof(iso9660_path_table_record)) + 1;
+                                        current_index = (offset / sizeof(iso9660PathTableRecord_t)) + 1;
                                         current_lba = rec->lba;
                                         found = true;
                                         break;
                                 }
                         }
 
-                        // Move to next record
                         offset += sizeof(*rec) + rec->name_len;
                         if (rec->name_len & 1)
-                                offset++; // Padding byte
+                                offset++;
                 }
 
                 if (!found)
@@ -397,10 +359,10 @@ bool iso9660_traverse_path_table(const char *path)
         }
 
         free(buffer);
-        return iso9660_list_directory(current_lba);
+        return iso9660ListDirectory(current_lba);
 }
 
-bool iso9660_find_file(const char *path, iso9660_directory *file_entry)
+bool iso9660FindFile(const char *path, iso9660Dir_t *file_entry)
 {
         if (!iso9660_initialized || !file_entry)
                 return false;
@@ -412,29 +374,29 @@ bool iso9660_find_file(const char *path, iso9660_directory *file_entry)
         char *last_slash = strrchr(path_copy, '/');
         if (!last_slash)
         {
-                return iso9660_find_in_directory(iso9660_get_root_directory_lba(), path, file_entry);
+                return iso9660FindInDirectory(iso9660GetRootLba(), path, file_entry);
         }
 
         *last_slash = '\0';
         char *filename = last_slash + 1;
 
         uint32_t directory_lba;
-        if (!iso9660_find_directory(path_copy, &directory_lba))
+        if (!iso9660FindDirectory(path_copy, &directory_lba))
         {
                 return false;
         }
 
-        return iso9660_find_in_directory(directory_lba, filename, file_entry);
+        return iso9660FindInDirectory(directory_lba, filename, file_entry);
 }
 
-bool iso9660_find_directory(const char *path, uint32_t *directory_lba)
+bool iso9660FindDirectory(const char *path, uint32_t *directory_lba)
 {
         if (!iso9660_initialized || !directory_lba)
                 return false;
 
         if (strncmp(path, "", 8) == 0 || strncmp(path, "/", 8) == 0)
         {
-                *directory_lba = iso9660_get_root_directory_lba();
+                *directory_lba = iso9660GetRootLba();
                 return true;
         }
 
@@ -443,7 +405,7 @@ bool iso9660_find_directory(const char *path, uint32_t *directory_lba)
         uint32_t sectors = (path_table_size + 2047) / 2048;
         uint8_t *buffer = malloc(sectors * 2048);
 
-        if (!buffer || read_cdrom(cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
+        if (!buffer || cdRead(cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
         {
                 free(buffer);
                 return false;
@@ -470,18 +432,16 @@ bool iso9660_find_directory(const char *path, uint32_t *directory_lba)
 
                 while (offset < path_table_size)
                 {
-                        iso9660_path_table_record *rec = (iso9660_path_table_record *)(buffer + offset);
+                        iso9660PathTableRecord_t *rec = (iso9660PathTableRecord_t *)(buffer + offset);
                         if (offset + sizeof(*rec) + rec->name_len > path_table_size)
                                 break;
 
-                        // Check if this record belongs to current directory and matches name
                         if (rec->parent == current_index)
                         {
                                 char name[256];
                                 memcpy(name, (char *)(rec + 1), rec->name_len);
                                 name[rec->name_len] = '\0';
 
-                                // Convert to uppercase for comparison (ISO9660 names are uppercase)
                                 for (char *p = name; *p; p++)
                                         *p = toupper(*p);
                                 for (char *p = components[i]; *p; p++)
@@ -489,17 +449,16 @@ bool iso9660_find_directory(const char *path, uint32_t *directory_lba)
 
                                 if (strncmp(name, components[i], rec->name_len) == 0)
                                 {
-                                        current_index = (offset / sizeof(iso9660_path_table_record)) + 1;
+                                        current_index = (offset / sizeof(iso9660PathTableRecord_t)) + 1;
                                         *directory_lba = rec->lba;
                                         found = true;
                                         break;
                                 }
                         }
 
-                        // Move to next record
                         offset += sizeof(*rec) + rec->name_len;
                         if (rec->name_len & 1)
-                                offset++; // Padding byte
+                                offset++;
                 }
 
                 if (!found)
@@ -514,12 +473,12 @@ bool iso9660_find_directory(const char *path, uint32_t *directory_lba)
         return true;
 }
 
-bool iso9660_find_in_directory(uint32_t directory_lba, const char *filename, iso9660_directory *file_entry)
+bool iso9660FindInDirectory(uint32_t directory_lba, const char *filename, iso9660Dir_t *file_entry)
 {
         uint16_t buffer[1024];
         uint8_t *dir_data = (uint8_t *)buffer;
 
-        if (!iso9660_read_directory(directory_lba, buffer))
+        if (!iso9660ReadDirectory(directory_lba, buffer))
         {
                 return false;
         }
@@ -533,14 +492,14 @@ bool iso9660_find_in_directory(uint32_t directory_lba, const char *filename, iso
 
         while (offset < 2048)
         {
-                iso9660_directory *dir_entry = (iso9660_directory *)(dir_data + offset);
+                iso9660Dir_t *dir_entry = (iso9660Dir_t *)(dir_data + offset);
 
                 if (dir_entry->length_of_dir == 0)
                 {
                         break;
                 }
 
-                char *name = (char *)(dir_data + offset + sizeof(iso9660_directory));
+                char *name = (char *)(dir_data + offset + sizeof(iso9660Dir_t));
                 uint8_t name_length = dir_entry->length_of_dir_ident;
 
                 char clean_name[256];
@@ -556,7 +515,7 @@ bool iso9660_find_in_directory(uint32_t directory_lba, const char *filename, iso
 
                 if (strcmp(clean_name, search_name) == 0)
                 {
-                        memcpy(file_entry, dir_entry, sizeof(iso9660_directory));
+                        memcpy(file_entry, dir_entry, sizeof(iso9660Dir_t));
                         return true;
                 }
 

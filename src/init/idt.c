@@ -1,9 +1,9 @@
 #include <init/idt.h>
 
-idt_entry idt[256];
-idt_ptr idtp;
+idtEntry_t idt[256];
+idtPtr_t idtp;
 
-void idt_set_entry(uint8_t n, void *handler, idt_entry *idt)
+void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idt)
 {
         idt[n].base_low = (uint32_t)handler & 0xFFFF;
         idt[n].base_high = ((uint32_t)handler >> 16) & 0xFFFF;
@@ -12,26 +12,27 @@ void idt_set_entry(uint8_t n, void *handler, idt_entry *idt)
         idt[n].flags = 0x8E;
 }
 
-void default_handler(void)
+void idtDefault(void)
 {
         outb(0x20, 0x20);
 }
 
-void idt_init(void)
+void idtInit(void)
 {
         cli();
         for (uint32_t i = 0; i < IDT_ENTRIES; ++i)
         {
-                idt_set_entry(i, (void *)default_handler_wrapper, idt);
+                idtSetEntry(i, (void *)idtDefaultHandler, idt);
         }
-        idt_set_entry(0x80, (void *)systemcall, idt);
-        idt_set_entry(0x20, (void *)timer_interrupt_handler, idt);
-        idt_set_entry(0x00, (void *)divide_by_zero_handler, idt);
-        idt_set_entry(0x0E, (void *)page_fault_handler, idt);
-        idt_set_entry(0x0D, (void *)general_protection_fault_handler, idt);
-        idt_set_entry(0x06, (void *)invalid_opcode_handler, idt);
 
-        idtp.limit = (sizeof(idt_entry) * IDT_ENTRIES) - 1;
+        idtSetEntry(0x80, (void *)idtSysCall, idt);
+        idtSetEntry(0x20, (void *)idtTimer, idt);
+        idtSetEntry(0x00, (void *)idtDivideByZeroHandler, idt);
+        idtSetEntry(0x0E, (void *)idtPageFault, idt);
+        idtSetEntry(0x0D, (void *)idtGeneralProtectionFaultHandler, idt);
+        idtSetEntry(0x06, (void *)idtInvalidOpcodeHandler, idt);
+
+        idtp.limit = (sizeof(idtEntry_t) * IDT_ENTRIES) - 1;
         idtp.base = (uint32_t)idt;
         __asm("lidt (%0)" : : "r"(&idtp));
 

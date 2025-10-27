@@ -17,19 +17,19 @@ void display(void)
         }
 }
 
-void putch(const char ch, char **output, int *tty_x, int *tty_y)
+void putch(const char ch, char **output, uint32_t *tty_x, uint32_t *tty_y)
 {
         if (ch == '\n')
         {
                 *tty_x = 0;
                 ++(*tty_y);
         }
-        else if (ch == '\b' && tty_x > 0)
+        else if (ch == '\b' && *tty_x > 0)
         {
                 (*tty_x)--;
                 output[*tty_y][*tty_x] = ' ';
         }
-        else if (ch == '\b' && tty_y > 0)
+        else if (ch == '\b' && *tty_y > 0)
         {
                 (*tty_y)--;
                 *tty_x = TTY_W - 1;
@@ -69,7 +69,7 @@ void putch(const char ch, char **output, int *tty_x, int *tty_y)
 
 void putchar(const char ch)
 {
-        putch(ch, system_output, &tty_x, &tty_y);
+        putch(ch, (char **)system_output, &tty_x, &tty_y);
 }
 
 static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list args)
@@ -467,7 +467,7 @@ int printf(const char *fmt, ...)
 {
         va_list args;
         va_start(args, fmt);
-        int result = vsnprintf(system_output, sizeof(system_output), fmt, args);
+        int result = vsnprintf((char*)system_output, sizeof(system_output), fmt, args);
         va_end(args);
         return result;
 }

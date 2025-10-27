@@ -2,19 +2,18 @@
 #define EX_H
 
 #include <programs/scheduler.h>
-#include <heap/alloc.h>
-
-#pragma pack(1)
+#include <memory/alloc.h>
+#include <memory/string.h>
 
 typedef unsigned int DWORD;
 
-typedef struct
+typedef struct __attribute__((packed))
 {
         char name[16];
         int offset;
-} Function;
+} exFunction_t;
 
-typedef struct
+typedef struct __attribute__((packed))
 {
         char Sign[8];
         char major, minor, patch;
@@ -25,13 +24,13 @@ typedef struct
         int FunTableOrg;
         int FunctionCount;
         int StackSize;
-} Header;
+} exHeader_t;
 
-typedef struct
+typedef struct __attribute__((packed))
 {
         int offset; /* final calculation is just value @off + new base */
-} Relocation;
+} exRelocation_t;
 
-int execute(char *name, char *buffer, size_t buffer_size);
+int exExecute(char *name, char *buffer, size_t buffer_size);
 
 #endif

@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 #include <drivers/disk.h>
-#include <heap/alloc.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
 #include <drivers/math.h>
 #include <utils.h>
 #include <tty/output/output.h>
@@ -30,7 +31,7 @@ typedef struct __attribute__((__packed__))
         char second[2];   /* 0..59 */
         char second_h[2]; /* 0..99; we ignore this cus lazy */
         char gmt[2];      /* we ignore this cus lazy */
-} iso9660_date_time;
+} iso9660DateTime_t;
 
 typedef struct __attribute__((__packed__))
 {
@@ -38,7 +39,7 @@ typedef struct __attribute__((__packed__))
         char iden[5]; /* CD001 */
         char version; /* 0x1 */
         char data[2041];
-} iso9660_volume_desc;
+} iso9660VolumeDesc_t;
 
 typedef struct __attribute__((__packed__))
 {
@@ -48,8 +49,7 @@ typedef struct __attribute__((__packed__))
         char bootsyside[32]; /* strA */
         char bootide[32];    /* strA */
         char data[1977];
-} iso9660_boot_record;
-
+} iso9660BootRecord_t;
 
 typedef struct __attribute__((__packed__))
 {
@@ -85,8 +85,7 @@ typedef struct __attribute__((__packed__))
         uint8_t unused_i_think_i_cant_remember[2];
         int16_t volume_seq[2];
         uint8_t length_of_dir_ident;
-        /* variable sized name and then a padding byte if odd */
-} iso9660_directory;
+} iso9660Dir_t;
 
 typedef struct __attribute__((__packed__))
 {
@@ -107,7 +106,7 @@ typedef struct __attribute__((__packed__))
         uint32_t opt_type_l_path_table;
         uint32_t type_m_path_table;
         uint32_t opt_type_m_path_table;
-        iso9660_directory root_directory_record;
+        iso9660Dir_t root_directory_record;
         char always0ithink;
         char volume_set_id[128];           /* strD */
         char publisher_id[128];            /* strA */
@@ -124,38 +123,37 @@ typedef struct __attribute__((__packed__))
         char unused3;
         char application_use[512];
         char unused4[653];
-} iso9660_primary_desc;
+} iso9660PrimaryDesc_t;
 
 typedef struct __attribute__((__packed__))
 {
         char type;    /* 255 */
         char ide[5];  /* CD001 */
         char version; /* 0x1 */
-} iso9660_volume_desc_set_terminator;
+} iso9660VolumeDescSetTerminator_t;
 
-typedef struct
+typedef struct __attribute__((packed))
 {
         uint8_t name_len;
         uint8_t extended_attr_len;
         uint32_t lba;
         uint16_t parent;
-} __attribute__((packed)) iso9660_path_table_record;
+} iso9660PathTableRecord_t;
 
-extern bool is_a_character(char x);
-extern bool is_d_character(char x);
-extern bool iso9660_init(void);
-extern bool iso9660_read_volume_descriptors(void);
-extern bool iso9660_parse_primary_desc(const iso9660_volume_desc *desc);
-extern uint32_t iso9660_get_root_directory_lba(void);
-extern uint32_t iso9660_get_logical_block_size(void);
-extern bool iso9660_read_directory(uint32_t lba, uint16_t *buffer);
-extern void *iso9660_read_file(iso9660_directory *file_entry);
-extern bool iso9660_list_directory(uint32_t directory_lba);
-extern void traverse_path_table(void);
-extern bool iso9660_find_in_directory(uint32_t directory_lba, const char *filename, iso9660_directory *file_entry);
-extern bool iso9660_find_directory(const char *path, uint32_t *directory_lba);
-extern bool iso9660_find_file(const char *path, iso9660_directory *file_entry);
-
-extern bool iso9660_initialized;
+bool iso9660Initialized(void);
+bool iso9660Init(void);
+bool iso9660ReadVolumeDescriptors(void);
+bool iso9660ParsePrimaryDescriptor(const iso9660VolumeDesc_t *desc);
+uint32_t iso9660GetRootLba(void);
+uint32_t iso9660GetLogicalBlockSize(void);
+bool iso9660ReadDirectory(uint32_t lba, uint16_t *buffer);
+void *iso9660ReadFile(iso9660Dir_t *file_entry);
+bool iso9660ListDirectory(uint32_t directory_lba);
+bool iso9660ListRoot(void);
+bool iso9660ListDir(const char *path);
+bool iso9660TraversePathTable(const char *path);
+bool iso9660FindFile(const char *path, iso9660Dir_t *file_entry);
+bool iso9660FindDirectory(const char *path, uint32_t *directory_lba);
+bool iso9660FindInDirectory(uint32_t directory_lba, const char *filename, iso9660Dir_t *file_entry);
 
 #endif

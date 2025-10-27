@@ -3076,17 +3076,19 @@ unsigned char console_font_8x8[] = {
 };
 
 unsigned char gui_font_cursors[] = {
-        /* default cursor */
-        0b11000000,
-        0b10100000,
-        0b10010000,
-        0b10001000,
-        0b10000100,
-        0b10000010,
-        0b10001110,
-        0b10100100,
-        0b11100100,
-        0b00011000,
+        /*
+         * code=0, ascii="\0", normal cursor
+         */
+        0xC0, /* 11000000 */
+        0xA0, /* 10100000 */
+        0x90, /* 10010000 */
+        0x88, /* 10001000 */
+        0x84, /* 10000100 */
+        0x82, /* 10000010 */
+        0x8E, /* 10001110 */
+        0xA4, /* 10100100 */
+        0xE4, /* 11100100 */
+        0x18, /* 00011000 */
 };
 
 font_t font_8x8 = {.char_height = 8, .char_width = 8, .first_char = 0, .last_char = 255, .font_name = "8x8", .font_bitmap = console_font_8x8};

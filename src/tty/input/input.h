@@ -64,26 +64,38 @@ typedef struct
 #define CURSOR_WIDTH 8
 #define CURSOR_HEIGHT 10
 
-int gets(char *b, int max); /* return length */
+#define MOUSE_STANDARD (0x00)
+#define MOUSE_HAS_SCROLL (0x03)
+#define MOUSE_HAS_5_BUTTONS (0x04)
+
+#define MOUSE_CLK2 (1 << 5)
+
+/* PS/2 GENERIC */
 uint8_t ps2_read_status(void);
 uint8_t ps2_read_data(void);
 void ps2_write_data(uint8_t data);
 void ps2_write_command(uint8_t command);
+bool ps2_send_device_command(uint8_t port, uint8_t command);
 bool ps2_wait_output(void);
 bool ps2_wait_input(void);
-bool is_keyboard_present(void);
-bool is_mouse_present(void);
+
+/* PS/2 MOUSE */
 void ps2_initialize_mouse(void);
 bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet);
-void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons);
-void save_pixels(int x, int y);
-void restore_pixels(int x, int y);
-int min(int a, int b);
-uint8_t keyboard_get(volatile bool *hit);
 
-extern char mouse_icon;
-extern int prev_save_x, prev_save_y;
-extern volatile uint8_t character;
-extern volatile bool key_pressed;
+void mouseFetch(uint32_t *mx, uint32_t *my, uint32_t *prev_mx, uint32_t *prev_my, uint8_t *buttons);
+void mouseRestorePixels(int x, int y);
+void mouseSavePixels(int x, int y);
+bool mouseIsPresent(void);
+void mouseSetIcon(char chr);
+char mouseGetIcon(void);
+
+/* PS/2 KEYBOARD */
+uint8_t keyboardFetch(volatile bool *hit);
+bool keyboardIsPresent(void);
+char keyboardLastCharacter(void);
+bool keyboardKeyPressed(void);
+char getchar(void);
+int gets(char *b, int max);
 
 #endif

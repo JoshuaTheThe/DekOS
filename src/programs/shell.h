@@ -1,7 +1,8 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include <heap/alloc.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
 #include <tty/input/input.h>
 #include <tty/output/output.h>
 #include <drivers/iso9660.h>

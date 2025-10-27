@@ -1,7 +1,33 @@
 #include <tty/input/input.h>
 
 volatile uint8_t character = 0;
-volatile bool key_pressed = false;
+volatile bool keyboardPressed = false;
+
+char keyboardLastCharacter(void)
+{
+        if (keyboardPressed)
+        {
+                return character;
+        }
+        return (char)-1;
+}
+
+bool keyboardKeyPressed(void)
+{
+        return keyboardPressed;
+}
+
+char getchar(void)
+{
+        sti();
+        while (!keyboardPressed)
+        {
+                character = keyboardFetch(NULL);
+        }
+        char x = character;
+        keyboardPressed = false;
+        return x;
+}
 
 /* magic nums oh no */
 uint8_t keyboard_map[256] =
@@ -24,12 +50,13 @@ uint8_t keyboard_map_shifted[256] =
         0x8F, 0x90, '-', 0x91, '5', 0x92, '+', 0x93, 0x94, 0x95, 0x96, 0x97, '\n',
         0x81, '\\', 0x98, 0x99};
 
-uint8_t keyboard_get(volatile bool *hit)
+uint8_t keyboardFetch(volatile bool *hit)
 {
         cli();
         static uint32_t shifted = 0;
         static uint32_t ctrl = 0;
-        *hit = false;
+        if (hit) *hit = false;
+        keyboardPressed = false;
 
         if (!(inb(0x64) & 0x01))
         {
@@ -82,8 +109,8 @@ uint8_t keyboard_get(volatile bool *hit)
         }
 
         uint8_t key = shifted ? keyboard_map_shifted[scancode] : keyboard_map[scancode];
-
-        *hit = true;
+        if (hit) *hit = true;
+        keyboardPressed = true;
         if (ctrl)
         {
                 if (key >= 'a' && key <= 'z')
@@ -102,7 +129,7 @@ uint8_t keyboard_get(volatile bool *hit)
 }
 
 
-bool is_keyboard_present(void)
+bool keyboardIsPresent(void)
 {
         while (ps2_read_status() & PS2_STATUS_OUTPUT_FULL)
         {
@@ -143,5 +170,6 @@ bool is_keyboard_present(void)
                 return true;
         }
 
+        (void)(id2);
         return false;
 }

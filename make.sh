@@ -47,7 +47,7 @@ list_files_recursive() {
             
             echo "Compiling $file -> $output_file"
             mkdir -p "$(dirname "$output_file")"
-            clang -Wno-pragma-pack -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file"
+            clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra -Wpedantic
             
             # Categorize the object file
             categorize_object_file "$output_file"

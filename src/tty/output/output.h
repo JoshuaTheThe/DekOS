@@ -12,14 +12,11 @@
 #define TTY_H 60
 #define TAB_SIZE 4
 
-void putch(const char ch, char **output, int *tty_x, int *tty_y);
+void putch(const char ch, char **output, uint32_t *tty_x, uint32_t *tty_y);
 void display(void);
 void putchar(const char);
+int vsnprintf(char *str, size_t size, const char *fmt, va_list args);
+int snprintf(char *str, size_t size, const char *fmt, ...);
 int printf(const char *fmt, ...);
-
-extern uint8_t system_output[TTY_H][TTY_W];
-extern uint32_t tty_y, tty_x;
-extern uint32_t tty_bg;
-extern uint32_t tty_fg;
 
 #endif

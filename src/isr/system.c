@@ -1,6 +1,6 @@
 #include <isr/system.h>
 
-void hang(void)
+void sysHang(void)
 {
         cli();
         while (1)
@@ -9,13 +9,20 @@ void hang(void)
         }
 }
 
-uint32_t sysreply(InterruptFunction_t function, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
+uint32_t sysReply(InterruptFunction_t function, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
 {
+        schedPid_t pid = schedGetCurrentPid();
+        (void)ebx;
+        (void)ecx;
+        (void)edx;
+        (void)esi;
+        (void)edi;
+
         switch (function)
         {
                 case INT80_EXIT:
                 {
-                        KillProcess(current_pid);
+                        schedKillProcess(pid);
                         sti();
                         while(1);
                         break;

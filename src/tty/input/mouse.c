@@ -2,12 +2,22 @@
 #include <tty/render/render.h>
 #include <drivers/math.h>
 
-int cursor_saved = 0;
-int prev_save_x = -1, prev_save_y = -1;
-uint32_t cursor_backbuffer[CURSOR_WIDTH * CURSOR_HEIGHT];
 char mouse_icon = 0;
+int prev_save_x = -1, prev_save_y = -1;
+int cursor_saved = 0;
+uint32_t cursor_backbuffer[CURSOR_WIDTH * CURSOR_HEIGHT];
 
-void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
+char mouseGetIcon(void)
+{
+        return mouse_icon;
+}
+
+void mouseSetIcon(char chr)
+{
+        mouse_icon = chr;
+}
+
+void mouseFetch(uint32_t *mx, uint32_t *my, uint32_t *prev_mx, uint32_t *prev_my, uint8_t *buttons)
 {
         cli();
         ps2_mouse_packet_t packet;
@@ -23,7 +33,7 @@ void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 // Process the packet
                 if (cursor_saved)
                 {
-                        restore_pixels(prev_save_x, prev_save_y);
+                        mouseRestorePixels(prev_save_x, prev_save_y);
                         cursor_saved = 0;
                 }
 
@@ -61,7 +71,7 @@ void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
 
                 if (*mx != *prev_mx || *my != *prev_my)
                 {
-                        save_pixels(*mx, *my);
+                        mouseSavePixels(*mx, *my);
                         prev_save_x = *mx;
                         prev_save_y = *my;
                         cursor_saved = 1;
@@ -79,7 +89,7 @@ void mouse_get(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
         sti();
 }
 
-void save_pixels(int x, int y)
+void mouseSavePixels(int x, int y)
 {
         framebuffer_t framebuffer = getframebuffer();
         int start_x = x;
@@ -103,7 +113,7 @@ void save_pixels(int x, int y)
         }
 }
 
-void restore_pixels(int x, int y)
+void mouseRestorePixels(int x, int y)
 {
         framebuffer_t framebuffer = getframebuffer();
         int start_x = x;
@@ -127,16 +137,14 @@ void restore_pixels(int x, int y)
         }
 }
 
-bool is_mouse_present(void)
+bool mouseIsPresent(void)
 {
-        // Enable the second PS/2 port (mouse port)
         ps2_write_command(PS2_CMD_ENABLE_PORT2);
 
-        // Wait a bit for the port to enable
+        // dummy wait, should be replaced with a Wait call, when i impl that
         for (volatile int i = 0; i < 10000; i++)
                 __asm volatile("nop");
 
-        // Read the configuration uint8_t
         ps2_write_command(PS2_CMD_READ_CONFIG);
         if (!ps2_wait_output())
         {
@@ -145,17 +153,15 @@ bool is_mouse_present(void)
 
         ps2_write_command(PS2_CMD_READ_CONFIG);
         uint8_t config = ps2_read_data();
-        config |= (1 << 5); // Enable port 2 clock
+        config |= MOUSE_CLK2;
         ps2_write_command(PS2_CMD_WRITE_CONFIG);
         ps2_write_data(config);
 
-        // Check if the second port is actually enabled
-        if (!(config & (1 << 5)))
+        if (!(config & MOUSE_CLK2))
         {
-                return false; // Second port clock is disabled
+                return false;
         }
 
-        // Test the second port
         ps2_write_command(PS2_CMD_TEST_PORT2);
         if (!ps2_wait_output())
         {
@@ -165,10 +171,9 @@ bool is_mouse_present(void)
         uint8_t test_result = ps2_read_data();
         if (test_result != 0x00)
         {
-                return false; // Port test failed
+                return false;
         }
 
-        // Try to identify the mouse
         if (!ps2_send_device_command(2, PS2_DEV_IDENTIFY))
         {
                 return false;
@@ -180,18 +185,13 @@ bool is_mouse_present(void)
         }
 
         uint8_t id1 = ps2_read_data();
-
-        uint8_t id2 = 0x00;
+        uint8_t id2 __attribute__((unused)) = 0x00;
         if (ps2_wait_output())
         {
                 id2 = ps2_read_data();
         }
 
-        // Check for mouse identification
-        // Standard mouse returns 0x00
-        // Scroll wheel mouse returns 0x03
-        // 5-button mouse returns 0x04
-        if (id1 == 0x00 || id1 == 0x03 || id1 == 0x04)
+        if (id1 == MOUSE_STANDARD || id1 == MOUSE_HAS_SCROLL || id1 == MOUSE_HAS_5_BUTTONS)
         {
                 return true;
         }

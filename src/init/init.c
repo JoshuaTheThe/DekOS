@@ -2,6 +2,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <utils.h>
+
+#include <init/idt.h>
+#include <init/gdt.h>
+
+#include <memory/alloc.h>
+#include <memory/string.h>
+
 #include <tty/render/render.h>
 
 void main(uint32_t magic, uint32_t mbinfo_ptr)
@@ -13,12 +20,16 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         }
         
         multiboot_info_t *mbi = (multiboot_info_t *)mbinfo_ptr;
-        uint64_t memory_size = mbi->mem_upper * 1024 + mbi->mem_lower * 1024;
         framebuffer_t framebuffer;
         framebuffer.buffer = (uint32_t *)mbi->framebuffer_addr;
         framebuffer.dimensions[0] = mbi->framebuffer_width;
         framebuffer.dimensions[1] = mbi->framebuffer_height;
         setframebuffer(framebuffer);
+
+        gdtInit();
+        idtInit();
+        memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
+
         //mx = framebuffer_width / 2;
         //my = framebuffer_height / 2;
         //memset(system_output, 0, sizeof(system_output));

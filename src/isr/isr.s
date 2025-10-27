@@ -1,16 +1,20 @@
-        .global systemcall
-        .global invalid_opcode_handler
-        .global timer_interrupt_handler
-        .global divide_by_zero_handler
-        .global general_protection_fault_handler
-        .global page_fault_handler
-        .global transfer
-        .global default_handler_wrapper
-        .extern tick
-        .extern Scheduler
-        .extern sysreply
-        .extern processes
-        .extern default_handler
+        .global idtSysCall
+        .extern sysReply
+idtSysCall:
+        cli
+        pushl %edi
+        pushl %esi
+        pushl %edx
+        pushl %ecx
+        pushl %ebx
+        pushl %eax
+        call sysReply
+        addl 4*6, %esp
+        sti
+        iret
+
+        .global idtTimer
+        .extern schedTick
 
         .equ TEMP_REG  , 0x1000
         .equ TEMP_EAX  , TEMP_REG+(0*4)
@@ -30,48 +34,8 @@
         .equ TEMP_GS   , TEMP_REG+(14*4)
         .equ TEMP_FLGS , TEMP_REG+(15*4)
         .equ TEMP_STCK , 0x4000
-systemcall:
-        cli
-        pushl %edi
-        pushl %esi
-        pushl %edx
-        pushl %ecx
-        pushl %ebx
-        pushl %eax
-        call sysreply
-        addl 4*6, %esp
-        sti
-        iret
-transfer:
-        cli
-        # Segments
-        movw [TEMP_DS],%ax
-        movw [TEMP_SS],%bx
-        movw [TEMP_ES],%cx
-        movw [TEMP_FS],%dx
-        movw [TEMP_GS],%si
-        movw %ax,%ds
-        movw %bx,%ss
-        movw %cx,%es
-        movw %dx,%fs
-        movw %si,%gs
-
-        # Registers
-        movl [TEMP_EAX],%eax
-        movl [TEMP_EBX],%ebx
-        movl [TEMP_ECX],%ecx
-        movl [TEMP_EDX],%edx
-        movl [TEMP_EBP],%ebp
-        movl [TEMP_ESI],%esi
-        movl [TEMP_EDI],%edi
-        movl [TEMP_ESP],%esp
-
-        # Interrupt Frame
-        pushl [TEMP_FLGS]
-        pushl [TEMP_CS]
-        pushl [TEMP_EIP]
-        iret
-timer_interrupt_handler:
+        
+idtTimer:
         cli
         # Registers & CS
         movl %eax,[TEMP_EAX]
@@ -107,19 +71,27 @@ timer_interrupt_handler:
         movw %ax,%es
         movw %ax,%fs
         movw %ax,%gs
-        jmp Scheduler
-invalid_opcode_handler:
-divide_by_zero_handler:
-general_protection_fault_handler:
-page_fault_handler:
+        jmp schedTick
+
+        .global idtPageFault
+idtPageFault:
         cli
         hlt
-        jmp page_fault_handler
+        jmp idtPageFault
         iret
-default_handler_wrapper:
+
+        .global idtInvalidOpcodeHandler
+        .global idtDivideByZeroHandler
+        .global idtGeneralProtectionFaultHandler
+        .global idtDefaultHandler
+        .extern idtDefault
+idtInvalidOpcodeHandler:
+idtDivideByZeroHandler:
+idtGeneralProtectionFaultHandler:
+idtDefaultHandler:
         cli
         pusha
-        call default_handler
+        call idtDefault
         popa
         sti
         iret

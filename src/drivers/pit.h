@@ -10,4 +10,6 @@
 #define PIT_COMMAND 0x43
 #define PIT_STATUS 0x61
 
+void pitInit(uint32_t targetFreq);
+
 #endif

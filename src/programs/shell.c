@@ -3,7 +3,7 @@
 char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
 char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
 
-int parse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
+static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 {
         int N = 0, i = 0;
 
@@ -53,7 +53,7 @@ int parse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 
 void shell(void)
 {
-        iso9660_directory file;
+        iso9660Dir_t file;
         char current_dir[512] = "/boot";
         while (1)
         {
@@ -61,7 +61,7 @@ void shell(void)
                 memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
                 int len = gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
                 keyboard_buffer[len] = '\0';
-                int argc = parse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
+                int argc = shellParse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
 
                 if (!strcmp(command_buffer[0], "fetch"))
                 {
@@ -75,19 +75,19 @@ void shell(void)
                 }
                 else if (!strcmp(command_buffer[0], "tasks"))
                 {
-                        ListProcesses();
+                        schedListProcesses();
                 }
                 else if (!strcmp(command_buffer[0], "ls"))
                 {
                         if (argc == 1)
                         {
-                                iso9660_list_dir(current_dir);
+                                iso9660ListDir(current_dir);
                         }
                         else if (argc == 2)
                         {
                                 char path[512];
                                 snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
-                                iso9660_list_dir(path);
+                                iso9660ListDir(path);
                         }
                 }
                 else if (!strcmp(command_buffer[0], "cd") && argc == 2)
@@ -145,10 +145,10 @@ void shell(void)
                 {
                         char path[512];
                         snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
-                        bool success = iso9660_find_file(path, &file);
+                        bool success = iso9660FindFile(path, &file);
                         if (success)
                         {
-                                char *data = iso9660_read_file(&file);
+                                char *data = iso9660ReadFile(&file);
                                 printf("%s\n", data);
                                 free(data);
                         }
@@ -161,11 +161,11 @@ void shell(void)
                 {
                         char path[512];
                         snprintf(path, 512, "%s/%s", current_dir, command_buffer[0]);
-                        bool success = iso9660_find_file(path, &file);
+                        bool success = iso9660FindFile(path, &file);
                         if (success)
                         {
-                                char *data = iso9660_read_file(&file);
-                                execute(path, data, file.data_length[0]);
+                                char *data = iso9660ReadFile(&file);
+                                exExecute(path, data, file.data_length[0]);
                         }
                         else
                         {

@@ -7,8 +7,6 @@
 
 #define IDT_ENTRIES 256
 
-extern void idt_init(void);
-
 typedef struct __attribute__((__packed__))
 {
         uint16_t base_low;
@@ -16,21 +14,22 @@ typedef struct __attribute__((__packed__))
         uint8_t always_0;
         uint8_t flags;
         uint16_t base_high;
-} idt_entry;
+} idtEntry_t;
 
 typedef struct __attribute__((__packed__))
 {
         uint16_t limit;
         uint32_t base;
-} idt_ptr;
+} idtPtr_t;
 
-extern void systemcall(void);
-extern void invalid_opcode_handler(void);
-extern void timer_interrupt_handler(void);
-extern void divide_by_zero_handler(void);
-extern void general_protection_fault_handler(void);
-extern void page_fault_handler(void);
-extern void default_handler_wrapper(void);
-extern void keyboard_handler_wrapper(void);
+void idtInit(void);
+
+extern void idtSysCall(void);
+extern void idtInvalidOpcodeHandler(void);
+extern void idtTimer(void);
+extern void idtDivideByZeroHandler(void);
+extern void idtGeneralProtectionFaultHandler(void);
+extern void idtPageFault(void);
+extern void idtDefaultHandler(void);
 
 #endif

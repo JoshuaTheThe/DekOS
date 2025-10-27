@@ -3,6 +3,22 @@
 pci_device_t devices[MAX_DEVICES];
 int device_count = 0;
 
+uint32_t pciGetDeviceCount(void)
+{
+        return device_count;
+}
+
+int pciGetDevices(pci_device_t *destination, int start, int end)
+{
+        int count = 0;
+        for (int i = start; i <= end && i < device_count; ++i)
+        {
+                destination[count] = devices[i];
+                count++;
+        }
+        return count;
+}
+
 const char *pciClassToString(uint8_t class_id, uint8_t subclass_id)
 {
         switch (class_id)
@@ -141,18 +157,18 @@ const char *pciClassToString(uint8_t class_id, uint8_t subclass_id)
 static inline uint32_t pciConfigReadDword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
         uint32_t address = (bus << 16) | (slot << 11) | (func << 8) |
-                        (offset & 0xFC) | 0x80000000;
+                           (offset & 0xFC) | 0x80000000;
         outl(PCI_CONFIG_ADDRESS, address);
         return inl(PCI_CONFIG_DATA);
 }
 
-static inline void pciConfigWriteDword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value)
-{
-        uint32_t address = (bus << 16) | (slot << 11) | (func << 8) |
-                        (offset & 0xFC) | 0x80000000;
-        outl(PCI_CONFIG_ADDRESS, address);
-        outl(PCI_CONFIG_DATA, value);
-}
+//static inline void pciConfigWriteDword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value)
+//{
+//        uint32_t address = (bus << 16) | (slot << 11) | (func << 8) |
+//                           (offset & 0xFC) | 0x80000000;
+//        outl(PCI_CONFIG_ADDRESS, address);
+//        outl(PCI_CONFIG_DATA, value);
+//}
 
 static inline uint16_t pciConfigReadWord(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
@@ -160,14 +176,14 @@ static inline uint16_t pciConfigReadWord(uint8_t bus, uint8_t slot, uint8_t func
         return (uint16_t)((data >> ((offset & 2) * 8)) & 0xFFFF);
 }
 
-static inline void pciConfigWriteWord(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint16_t value)
-{
-        uint32_t old = pciConfigReadDword(bus, slot, func, offset);
-        int shift = (offset & 2) * 8;
-        uint32_t mask = 0xFFFF << shift;
-        uint32_t data = (old & ~mask) | ((value & 0xFFFF) << shift);
-        pciConfigWriteDword(bus, slot, func, offset, data);
-}
+// static inline void pciConfigWriteWord(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint16_t value)
+// {
+//         uint32_t old = pciConfigReadDword(bus, slot, func, offset);
+//         int shift = (offset & 2) * 8;
+//         uint32_t mask = 0xFFFF << shift;
+//         uint32_t data = (old & ~mask) | ((value & 0xFFFF) << shift);
+//         pciConfigWriteDword(bus, slot, func, offset, data);
+// }
 
 static inline uint8_t pciConfigReadByte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
@@ -175,14 +191,14 @@ static inline uint8_t pciConfigReadByte(uint8_t bus, uint8_t slot, uint8_t func,
         return (uint8_t)((data >> ((offset & 3) * 8)) & 0xFF);
 }
 
-static inline void pciConfigWriteByte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint8_t value)
-{
-        uint32_t old = pciConfigReadDword(bus, slot, func, offset);
-        int shift = (offset & 3) * 8;
-        uint32_t mask = 0xFF << shift;
-        uint32_t data = (old & ~mask) | ((value & 0xFF) << shift);
-        pciConfigWriteDword(bus, slot, func, offset, data);
-}
+// static inline void pciConfigWriteByte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint8_t value)
+// {
+//         uint32_t old = pciConfigReadDword(bus, slot, func, offset);
+//         int shift = (offset & 3) * 8;
+//         uint32_t mask = 0xFF << shift;
+//         uint32_t data = (old & ~mask) | ((value & 0xFF) << shift);
+//         pciConfigWriteDword(bus, slot, func, offset, data);
+// }
 
 static inline int pciDeviceExists(uint8_t bus, uint8_t slot, uint8_t function)
 {
@@ -210,12 +226,12 @@ static inline void pciReadDeviceInfo(pci_device_t *dev, uint8_t bus, uint8_t slo
         }
 }
 
-static inline void pciEnableBusMastering(pci_device_t *dev)
-{
-        uint16_t command = pciConfigReadWord(dev->bus, dev->slot, dev->function, 0x04);
-        command |= (1 << 2); // Bus mastering enable bit
-        pciConfigWriteWord(dev->bus, dev->slot, dev->function, 0x04, command);
-}
+// static inline void pciEnableBusMastering(pci_device_t *dev)
+// {
+//         uint16_t command = pciConfigReadWord(dev->bus, dev->slot, dev->function, 0x04);
+//         command |= (1 << 2); // Bus mastering enable bit
+//         pciConfigWriteWord(dev->bus, dev->slot, dev->function, 0x04, command);
+// }
 
 void pciEnumerateDevices(void (*on_device_found)(pci_device_t *))
 {
@@ -243,7 +259,7 @@ void pciEnumerateDevices(void (*on_device_found)(pci_device_t *))
         }
 }
 
-void print_pci_device(pci_device_t *dev)
+void pciDisplayDeviceInfo(pci_device_t *dev)
 {
         const char *className = pciClassToString(dev->class_id, dev->subclass_id);
 
@@ -264,13 +280,14 @@ void print_pci_device(pci_device_t *dev)
         }
 }
 
-void register_device(pci_device_t *dev)
+void pciRegister(pci_device_t *dev)
 {
         const char *className = pciClassToString(dev->class_id, dev->subclass_id);
         devices[device_count++] = *dev;
+        printf("Registered Device of class %s at %p\n", className, dev);
 }
 
-pci_device_t *find_device_of_type(uint8_t class_id, uint8_t subclass_id)
+pci_device_t *pciFindOfType(uint8_t class_id, uint8_t subclass_id)
 {
         for (int i = 0; i < MAX_DEVICES; ++i)
         {

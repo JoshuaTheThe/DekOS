@@ -1,17 +1,5 @@
 #include <tty/input/input.h>
 
-char getchar(void)
-{
-        key_pressed = false;
-        while (!key_pressed)
-        {
-                character = keyboard_get(&key_pressed);
-        }
-        char x = character;
-        key_pressed = false;
-        return x;
-}
-
 int gets(char *b, int max)
 {
         if (!b || max <= 0)
