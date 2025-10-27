@@ -9,83 +9,104 @@
 #include <memory/alloc.h>
 #include <memory/string.h>
 
+#include <programs/scheduler.h>
+#include <programs/shell.h>
+
+#include <tty/input/input.h>
+#include <tty/output/output.h>
 #include <tty/render/render.h>
+
+#include <drivers/pit.h>
+#include <drivers/iso9660.h>
+
+#include <isr/system.h>
+
+#include <pci/pci.h>
 
 void main(uint32_t magic, uint32_t mbinfo_ptr)
 {
+        multiboot_info_t *mbi;
+        framebuffer_t framebuffer;
+
         cli();
         while (magic != 0x2BADB002)
         {
                 hlt();
         }
         
-        multiboot_info_t *mbi = (multiboot_info_t *)mbinfo_ptr;
-        framebuffer_t framebuffer;
+        mbi = (multiboot_info_t *)mbinfo_ptr;
         framebuffer.buffer = (uint32_t *)mbi->framebuffer_addr;
         framebuffer.dimensions[0] = mbi->framebuffer_width;
         framebuffer.dimensions[1] = mbi->framebuffer_height;
         setframebuffer(framebuffer);
+        setfont(&font_8x8);
 
         gdtInit();
         idtInit();
         memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
+        pitInit(25);
+        schedInit();
 
-        //mx = framebuffer_width / 2;
-        //my = framebuffer_height / 2;
-        //memset(system_output, 0, sizeof(system_output));
-        //
-        ///* Init e.g. GDT, IDT, PIT, etc. */
-        //set_active_font(&font_8x8);
-        //memory_init(memory_size);
-        //bool fs_valid = iso9660_init();
-        //if (fs_valid)
-        //{
-        //        k_print("file system is valid\n");
-        //}
-        //else
-        //{
-        //        k_print("file system is invalid\n");
-        //        hang();
-        //}
-        //
-        //bool keyboardq = is_keyboard_present();
-        //bool mouseq = is_mouse_present();
-        //if (!keyboardq)
-        //{
-        //        k_print("no keyboard device, plug one in and reboot");
-        //        hang();
-        //}
-        //if (!mouseq)
-        //{
-        //        k_print("no mouse device, plug one in and reboot");
-        //        hang();
-        //}
-        //pciEnumerateDevices(register_device);
-        //ps2_initialize_mouse();
-        //
-        //int px = mx, py = my;
-        //uint8_t buttons;
-        //
-        //iso9660_directory fil;
-        //iso9660_find_file("/boot/grub/grub.cfg", &fil);
-        //k_print("config size=%d\n", fil.data_length[0]);
-        //char *data = iso9660_read_file(&fil);
-        //data[fil.data_length[0]] = 0;
-        //k_print("config:\n%s", data);
-        //free(data);
-        //
-        //uint8_t shell_stack[8192*2];
-        //StartProcess("shell", NULL, 0, (void*)shell, 0, shell_stack, 8192*2);
-        //sti();
+        if (!iso9660Init())
+        {
+                printf("Could not initialize ISO9660 Driver\n");
+                display();
+                sysHang();
+        }
+
+        if (!keyboardIsPresent())
+        {
+                printf("Keyboard is not present, please plug one in\n");
+                display();
+                while (!keyboardIsPresent())
+                {
+                        sti();
+                        hlt();
+                }
+        }
+
+        if (!mouseIsPresent())
+        {
+                printf("Mouse is not present, please plug one in\n");
+                display();
+                while (!mouseIsPresent())
+                {
+                        sti();
+                        hlt();
+                }
+        }
+
+        /* Stinky inconsistent naming for PS/2 stuff */
+        ps2_initialize_mouse();
+        ps2_initialize_keyboard();
+
+        display();
+
+        /* so we dont get
+           nuked by the scheduler */
+        cli();
+
+        /* enumerate devices and save info to array */
+        pciEnumerateDevices(pciRegister);
+
+        iso9660Dir_t fil;
+        iso9660FindFile("/boot/grub/grub.cfg", &fil);
+
+        char *data = iso9660ReadFile(&fil);
+        data[fil.data_length[0]] = 0;
+        printf("Grub Configuration:\n%s\n", data);
+        free(data);
+        display();
+
+        uint8_t stack[8192];
+        schedCreateProcess("Shell", NULL, 0, (void*)shell, 0, stack, sizeof(stack));
+
+        int mouse_x = framebuffer.dimensions[0]/2, mouse_y = framebuffer.dimensions[1]/2, prev_x=-1, prev_y=-1;
+        uint8_t mouse_buttons = 0;
+        sti();
 
         while (1)
         {
-                //if (buttons & MOUSE_LEFT_BUTTON)
-                //{
-                //        restore_pixels(prev_save_x, prev_save_y);
-                //        put_character('!', mx, my, 0xFF000000, 0xFFFFFFFF);
-                //        save_pixels(prev_save_x, prev_save_y);
-                //}
-                //mouse_get(&mx, &my, &px, &py, &buttons);
+                mouseFetch(&mouse_x, &mouse_y, &prev_x, &prev_y, &mouse_buttons);
         }
 }

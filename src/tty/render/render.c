@@ -1,6 +1,6 @@
 #include <tty/render/render.h>
 
-framebuffer_t framebuffer;
+static framebuffer_t framebuffer;
 static font_t *font = NULL;
 
 void setframebuffer(framebuffer_t fb)
@@ -23,56 +23,72 @@ font_t getfont(void)
         return *font;
 }
 
-void displaychar(char chr, int px, int py, int bg, int fg)
+void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
 {
         if (framebuffer.dimensions[1] == 0 || framebuffer.dimensions[0] == 0)
                 return;
         if (!framebuffer.buffer || chr < font->first_char || chr > font->last_char)
                 return;
+
+        if (px >= framebuffer.dimensions[0] || py >= framebuffer.dimensions[1])
+                return;
+
         uint32_t bytes_per_row = (font->char_width + 7) / 8;
+        uint32_t char_offset = (chr - font->first_char) * bytes_per_row * font->char_height;
+
+        bool skip_bg = (bg & 0xFF000000) == 0x00000000;
+        bool skip_fg = (fg & 0xFF000000) == 0x00000000;
 
         for (uint32_t y = 0; y < font->char_height; y++)
         {
-                if (py + y < 0 || py + y >= framebuffer.dimensions[1])
+                uint32_t current_y = py + y;
+                if (current_y >= framebuffer.dimensions[1])
                         continue;
 
-                uint32_t char_offset = (chr - font->first_char) * bytes_per_row * font->char_height;
                 uint8_t bitmap_byte = font->font_bitmap[char_offset + y * bytes_per_row];
 
                 for (uint32_t x = 0; x < font->char_width; x++)
                 {
-                        if (px + x < 0 || px + x >= framebuffer.dimensions[0])
+                        uint32_t current_x = px + x;
+                        if (current_x >= framebuffer.dimensions[0])
                                 continue;
-                        bool status = bitmap_byte & (1 << (7 - (x % 8)));
-                        if ((!status && bg == 0x00000000) || (status && fg == 0x00000000))
-                        {
-                                continue;
-                        }
 
-                        framebuffer.buffer[(py + y) * framebuffer.dimensions[0] + (px + x)] = status ? fg : bg;
+                        bool pixel_set = bitmap_byte & (1 << (7 - (x % 8)));
+
+                        if ((pixel_set && skip_fg) || (!pixel_set && skip_bg))
+                                continue;
+
+                        framebuffer.buffer[current_y * framebuffer.dimensions[0] + current_x] =
+                            pixel_set ? fg : bg;
                 }
         }
 }
 
-void write(const char *text, int length, int px, int py)
+void write(const unsigned char *text, size_t length, uint32_t px, uint32_t py)
 {
-        if (length == 0 || length < 0 || !text)
+        uint32_t fg, bg;
+
+        fg = 0xFFFFFFFF;
+        bg = 0xFF000000;
+
+        if (length == 0 || !text)
                 return;
-        int fg = 0xFFFFFFFF;
-        int bg = 0xFF000000;
-        for (int i = 0; i < length; ++i)
+        for (size_t i = 0; i < length; ++i)
         {
                 displaychar(text[i], px + (i * font->char_width), py, bg, fg);
         }
 }
 
-void print(const char *text, int px, int py)
+void print(const unsigned char *text, uint32_t px, uint32_t py)
 {
+        uint32_t i, fg, bg;
+
+        i = 0;
+        fg = 0xFFFFFFFF;
+        bg = 0xFF000000;
+
         if (!text)
                 return;
-        int i = 0;
-        int fg = 0xFFFFFFFF;
-        int bg = 0xFF000000;
         while (text[i])
         {
                 displaychar(*text, px + (i++ * font->char_width), py, bg, fg);

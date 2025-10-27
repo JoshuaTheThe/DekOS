@@ -3,12 +3,12 @@
 
 typedef struct
 {
-        unsigned char_width;
-        unsigned char_height;
-        const char *font_name;
+        const unsigned char *font_name;
+        unsigned char *font_bitmap;
+        unsigned int char_width;
+        unsigned int char_height;
         unsigned char first_char;
         unsigned char last_char;
-        unsigned char *font_bitmap;
 } font_t;
 
 extern font_t font_8x8;

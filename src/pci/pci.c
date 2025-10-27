@@ -1,17 +1,17 @@
 #include <pci/pci.h>
 
-pci_device_t devices[MAX_DEVICES];
-int device_count = 0;
+static pci_device_t devices[MAX_DEVICES];
+static uint32_t device_count = 0;
 
 uint32_t pciGetDeviceCount(void)
 {
         return device_count;
 }
 
-int pciGetDevices(pci_device_t *destination, int start, int end)
+size_t pciGetDevices(pci_device_t *destination, size_t start, size_t end)
 {
-        int count = 0;
-        for (int i = start; i <= end && i < device_count; ++i)
+        size_t count = 0;
+        for (size_t i = start; i <= end && i < device_count; ++i)
         {
                 destination[count] = devices[i];
                 count++;
@@ -154,10 +154,10 @@ const char *pciClassToString(uint8_t class_id, uint8_t subclass_id)
         }
 }
 
-static inline uint32_t pciConfigReadDword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
+static inline uint32_t pciConfigReadDword(uint16_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
-        uint32_t address = (bus << 16) | (slot << 11) | (func << 8) |
-                           (offset & 0xFC) | 0x80000000;
+        uint32_t address = ((uint32_t)bus << 16) | ((uint32_t)slot << 11) | ((uint32_t)func << 8) |
+                           ((uint32_t)offset & 0xFC) | 0x80000000;
         outl(PCI_CONFIG_ADDRESS, address);
         return inl(PCI_CONFIG_DATA);
 }
@@ -170,7 +170,7 @@ static inline uint32_t pciConfigReadDword(uint8_t bus, uint8_t slot, uint8_t fun
 //        outl(PCI_CONFIG_DATA, value);
 //}
 
-static inline uint16_t pciConfigReadWord(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
+static inline uint16_t pciConfigReadWord(uint16_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
         uint32_t data = pciConfigReadDword(bus, slot, func, offset);
         return (uint16_t)((data >> ((offset & 2) * 8)) & 0xFFFF);
@@ -185,7 +185,7 @@ static inline uint16_t pciConfigReadWord(uint8_t bus, uint8_t slot, uint8_t func
 //         pciConfigWriteDword(bus, slot, func, offset, data);
 // }
 
-static inline uint8_t pciConfigReadByte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
+static inline uint8_t pciConfigReadByte(uint16_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
         uint32_t data = pciConfigReadDword(bus, slot, func, offset);
         return (uint8_t)((data >> ((offset & 3) * 8)) & 0xFF);
@@ -200,14 +200,14 @@ static inline uint8_t pciConfigReadByte(uint8_t bus, uint8_t slot, uint8_t func,
 //         pciConfigWriteDword(bus, slot, func, offset, data);
 // }
 
-static inline int pciDeviceExists(uint8_t bus, uint8_t slot, uint8_t function)
+static inline int pciDeviceExists(uint16_t bus, uint8_t slot, uint8_t function)
 {
         return pciConfigReadWord(bus, slot, function, 0x00) != 0xFFFF;
 }
 
-static inline void pciReadDeviceInfo(pci_device_t *dev, uint8_t bus, uint8_t slot, uint8_t func)
+static inline void pciReadDeviceInfo(pci_device_t *dev, uint16_t bus, uint8_t slot, uint8_t func)
 {
-        dev->bus = bus;
+        dev->bus = (uint8_t)bus;
         dev->slot = slot;
         dev->function = func;
         dev->vendor_id = pciConfigReadWord(bus, slot, func, 0x00);
@@ -221,7 +221,7 @@ static inline void pciReadDeviceInfo(pci_device_t *dev, uint8_t bus, uint8_t slo
 
         for (int i = 0; i < 6; i++)
         {
-                uint32_t bar_val = pciConfigReadDword(bus, slot, func, 0x10 + i * 4);
+                uint32_t bar_val = pciConfigReadDword(bus, slot, func, (uint8_t)(0x10 + i * 4));
                 dev->bar[i] = bar_val;
         }
 }

@@ -47,11 +47,12 @@ list_files_recursive() {
             
             echo "Compiling $file -> $output_file"
             mkdir -p "$(dirname "$output_file")"
-            clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra -Wpedantic
+
+            # hehehehehehehe just a few
+            clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -O3
             
             # Categorize the object file
             categorize_object_file "$output_file"
-            
         elif [[ -f "$file" && "$file" == *.s ]]; then
             local base="${file#./src/}"
             base="${base%.s}"
@@ -108,15 +109,16 @@ else
     echo "Linking failed!"
 fi
 
-if grub-file --is-x86-multiboot bin/kernel.elf; then 
-        echo multiboot confirmed 
-        mkdir -p isodir/boot/grub 
-        cp bin/kernel.elf isodir/boot/kernel.bin 
-        cp grub.cfg isodir/boot/grub/grub.cfg 
-        cp examples/example.ex isodir/boot/example.ex
-        grub-mkrescue -o dekos.iso isodir 
-        qemu-system-i386 -cdrom dekos.iso -m 128 -monitor stdio -boot d 
-else 
-        echo the file is not multiboot 
-fi 
- 
+if [ "$1" == '--run' ]; then
+        if grub-file --is-x86-multiboot bin/kernel.elf; then 
+                echo multiboot confirmed 
+                mkdir -p isodir/boot/grub 
+                cp bin/kernel.elf isodir/boot/kernel.bin 
+                cp grub.cfg isodir/boot/grub/grub.cfg 
+                cp examples/example.ex isodir/boot/example.ex
+                grub-mkrescue -o dekos.iso isodir 
+                qemu-system-i386 -cdrom dekos.iso -m 128 -monitor stdio -boot d
+        else 
+                echo the file is not multiboot 
+        fi 
+fi

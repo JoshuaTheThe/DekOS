@@ -9,9 +9,9 @@ int gets(char *b, int max)
 
         while (i < max - 1)
         {
-                ch = getchar();
+                ch = (int)getchar();
 
-                if (ch == '\b' || ch == 127)
+                if ((char)ch == '\b' || (char)ch == 127)
                 {
                         if (i > 0)
                         {
@@ -25,15 +25,15 @@ int gets(char *b, int max)
                 }
                 else if (ch == '\n' || ch == '\r')
                 {
-                        putchar(ch);
+                        putchar((uint8_t)ch);
                         display();
                         break;
                 }
                 else if (ch >= 32 && ch <= 126)
                 {
-                        putchar(ch);
+                        putchar((uint8_t)ch);
                         display();
-                        b[i] = ch;
+                        b[i] = (char)ch;
                         i++;
                 }
         }

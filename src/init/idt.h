@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <io.h>
+#include <utils.h>
 
 #define IDT_ENTRIES 256
 
@@ -23,6 +25,8 @@ typedef struct __attribute__((__packed__))
 } idtPtr_t;
 
 void idtInit(void);
+void idtDefault(void);
+void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idt);
 
 extern void idtSysCall(void);
 extern void idtInvalidOpcodeHandler(void);

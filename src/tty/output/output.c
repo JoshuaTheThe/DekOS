@@ -1,81 +1,88 @@
 #include <tty/output/output.h>
 
-uint8_t system_output[TTY_H][TTY_W] = {0};
-uint32_t tty_y = 0, tty_x = 0;
-uint32_t tty_bg = rgb(128, 0, 128);
-uint32_t tty_fg = rgb(255, 128, 255);
+static uint8_t system_output[TTY_H][TTY_W];
+static uint32_t tty_y = 0, tty_x = 0;
+static uint32_t tty_bg = rgb(128, 0, 128);
+static uint32_t tty_fg = rgb(255, 128, 255);
 
 void display(void)
 {
         setfont(&font_8x8);
-        for (int y = 0; y < TTY_H; ++y)
+        for (size_t y = 0; y < TTY_H; ++y)
         {
-                for (int x = 0; x < TTY_W; ++x)
+                for (size_t x = 0; x < TTY_W; ++x)
                 {
                         displaychar(system_output[y][x], x * font_8x8.char_width, y * font_8x8.char_height, tty_bg, tty_fg);
                 }
         }
 }
 
-void putch(const char ch, char **output, uint32_t *tty_x, uint32_t *tty_y)
+void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint32_t *y)
 {
         if (ch == '\n')
         {
-                *tty_x = 0;
-                ++(*tty_y);
+                *x = 0;
+                ++(*y);
         }
-        else if (ch == '\b' && *tty_x > 0)
+        else if (ch == '\b' && *x > 0)
         {
-                (*tty_x)--;
-                output[*tty_y][*tty_x] = ' ';
+                (*x)--;
+                (*output)[*y][*x] = ' ';
         }
-        else if (ch == '\b' && *tty_y > 0)
+        else if (ch == '\b' && *y > 0)
         {
-                (*tty_y)--;
-                *tty_x = TTY_W - 1;
-                output[*tty_y][*tty_x] = ' ';
+                (*y)--;
+                *x = TTY_W - 1;
+                (*output)[*y][*x] = ' ';
         }
         else if (ch == '\t')
-                for (int i = 0; i < TAB_SIZE; ++i)
         {
-                putch(' ', output, tty_x, tty_y);
+                (*output)[*y][*x] = ' ';
+                (*x)++;
         }
         else
         {
-                output[*tty_y][(*tty_x)++] = ch;
+                (*output)[*y][*x] = ch;
+                (*x)++;
         }
 
-        if (*tty_x >= TTY_W)
+        if (*x >= TTY_W)
         {
-                *tty_x = 0;
-                ++(*tty_y);
+                *x = 0;
+                ++(*y);
         }
-        if (*tty_y >= TTY_H)
+
+        if (*y >= TTY_H)
         {
-                for (int y = 1; y < TTY_H; y++)
+                for (int a = 1; a < TTY_H; a++)
                 {
-                        for (int x = 0; x < TTY_W; x++)
+                        for (int b = 0; b < TTY_W; b++)
                         {
-                                output[y - 1][x] = output[y][x];
+                                (*output)[a - 1][b] = (*output)[a][b];
                         }
                 }
-                for (int x = 0; x < TTY_W; x++)
+
+                for (int b = 0; b < TTY_W; b++)
                 {
-                        output[TTY_H - 1][x] = ' ';
+                        (*output)[TTY_H - 1][b] = ' ';
                 }
-                *tty_y = TTY_H - 1;
+
+                *y = TTY_H - 1;
         }
 }
 
-void putchar(const char ch)
+void putchar(const uint8_t ch)
 {
-        putch(ch, (char **)system_output, &tty_x, &tty_y);
+        putch(ch, &system_output, &tty_x, &tty_y);
 }
 
-static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list args)
+static size_t vsnprintf_helper(char *str, size_t size, const char *fmt, va_list args)
 {
+        const char *s = fmt, *p, *hex_digits = "0123456789abcdef";
+        int padding, width, precision, total_len, i, j, num;
+        char buffer[32], pad_char, *str_arg;
+        bool left_align, zero_pad, negative;
         size_t pos = 0;
-        const char *s = fmt;
 
         while (*s && pos < size)
         {
@@ -83,13 +90,11 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                 {
                         s++;
 
-                        // Check for format flags
-                        int width = 0;
-                        int precision = -1;
-                        bool left_align = false;
-                        bool zero_pad = false;
+                        width = 0;
+                        precision = -1;
+                        left_align = false;
+                        zero_pad = false;
 
-                        // Parse flags
                         while (*s == '-' || *s == '0')
                         {
                                 if (*s == '-')
@@ -99,7 +104,6 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                 s++;
                         }
 
-                        // Parse width
                         if (*s >= '0' && *s <= '9')
                         {
                                 width = 0;
@@ -115,7 +119,6 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                 s++;
                         }
 
-                        // Parse precision
                         if (*s == '.')
                         {
                                 s++;
@@ -139,11 +142,10 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                         switch (*s)
                         {
                         case 'd':
-                        {
-                                int num = va_arg(args, int);
-                                char buffer[32];
-                                int i = 0;
-                                bool negative = false;
+
+                                num = va_arg(args, int);
+                                negative = false;
+                                i = 0;
 
                                 if (num < 0)
                                 {
@@ -161,12 +163,11 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         num /= 10;
                                 }
 
-                                // Handle precision for zero value
                                 if (precision == 0 && i == 0)
                                 {
                                         if (width > 0)
                                         {
-                                                for (int j = 0; j < width && pos < size; j++)
+                                                for (j = 0; j < width && pos < size; j++)
                                                 {
                                                         if (str)
                                                                 str[pos] = ' ';
@@ -176,21 +177,19 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         break;
                                 }
 
-                                // Apply precision (minimum digits)
                                 if (precision > i)
                                 {
-                                        int padding = precision - i;
-                                        for (int j = 0; j < padding; j++)
+                                        padding = precision - i;
+                                        for (j = 0; j < padding; j++)
                                                 buffer[i++] = '0';
                                 }
 
-                                int total_len = i + (negative ? 1 : 0);
+                                total_len = i + (negative ? 1 : 0);
 
-                                // Right align with padding
                                 if (!left_align && width > total_len)
                                 {
-                                        char pad_char = zero_pad ? '0' : ' ';
-                                        for (int j = 0; j < width - total_len && pos < size; j++)
+                                        pad_char = zero_pad ? '0' : ' ';
+                                        for (j = 0; j < width - total_len && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = pad_char;
@@ -198,7 +197,6 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         }
                                 }
 
-                                // Print sign
                                 if (negative && pos < size)
                                 {
                                         if (str)
@@ -206,7 +204,6 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         pos++;
                                 }
 
-                                // Print digits
                                 while (i > 0 && pos < size)
                                 {
                                         if (str)
@@ -214,10 +211,9 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         pos++;
                                 }
 
-                                // Left align with space padding
                                 if (left_align && width > total_len)
                                 {
-                                        for (int j = 0; j < width - total_len && pos < size; j++)
+                                        for (j = 0; j < width - total_len && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = ' ';
@@ -225,25 +221,24 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         }
                                 }
                                 break;
-                        }
 
                         case 's':
                         {
-                                char *str_arg = va_arg(args, char *);
+                                str_arg = va_arg(args, char *);
                                 if (str_arg == NULL)
                                         str_arg = "(null)";
 
-                                int len = 0;
-                                const char *p = str_arg;
-                                while (*p && (precision == -1 || len < precision))
+                                total_len = 0;
+                                p = str_arg;
+                                while (*p && (precision == -1 || total_len < precision))
                                 {
-                                        len++;
+                                        total_len++;
                                         p++;
                                 }
 
-                                if (!left_align && width > len)
+                                if (!left_align && width > total_len)
                                 {
-                                        for (int j = 0; j < width - len && pos < size; j++)
+                                        for (j = 0; j < width - total_len && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = ' ';
@@ -252,19 +247,19 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                 }
 
                                 p = str_arg;
-                                int printed = 0;
-                                while (*p && (precision == -1 || printed < precision) && pos < size)
+                                num = 0;
+                                while (*p && (precision == -1 || num < precision) && pos < size)
                                 {
                                         if (str)
                                                 str[pos] = *p;
                                         pos++;
                                         p++;
-                                        printed++;
+                                        num++;
                                 }
 
-                                if (left_align && width > len)
+                                if (left_align && width > total_len)
                                 {
-                                        for (int j = 0; j < width - len && pos < size; j++)
+                                        for (j = 0; j < width - total_len && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = ' ';
@@ -276,11 +271,11 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
 
                         case 'c':
                         {
-                                char c = (char)va_arg(args, int);
+                                pad_char = (char)va_arg(args, int);
 
                                 if (!left_align && width > 1)
                                 {
-                                        for (int j = 0; j < width - 1 && pos < size; j++)
+                                        for (j = 0; j < width - 1 && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = ' ';
@@ -291,13 +286,13 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                 if (pos < size)
                                 {
                                         if (str)
-                                                str[pos] = c;
+                                                str[pos] = pad_char;
                                         pos++;
                                 }
 
                                 if (left_align && width > 1)
                                 {
-                                        for (int j = 0; j < width - 1 && pos < size; j++)
+                                        for (j = 0; j < width - 1 && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = ' ';
@@ -310,10 +305,8 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                         case 'x':
                         case 'X':
                         {
-                                unsigned int num = va_arg(args, unsigned int);
-                                char buffer[32];
-                                int i = 0;
-                                const char *digits = (*s == 'X') ? "0123456789ABCDEF" : "0123456789abcdef";
+                                num = va_arg(args, int);
+                                i = 0;
 
                                 if (num == 0)
                                 {
@@ -322,16 +315,15 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
 
                                 while (num > 0)
                                 {
-                                        buffer[i++] = digits[num & 0xF];
+                                        buffer[i++] = hex_digits[num & 0xF];
                                         num >>= 4;
                                 }
 
-                                // Handle precision for zero value
                                 if (precision == 0 && i == 0)
                                 {
                                         if (width > 0)
                                         {
-                                                for (int j = 0; j < width && pos < size; j++)
+                                                for (j = 0; j < width && pos < size; j++)
                                                 {
                                                         if (str)
                                                                 str[pos] = ' ';
@@ -341,21 +333,19 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         break;
                                 }
 
-                                // Apply precision
                                 if (precision > i)
                                 {
-                                        int padding = precision - i;
-                                        for (int j = 0; j < padding; j++)
+                                        padding = precision - i;
+                                        for (j = 0; j < padding; j++)
                                                 buffer[i++] = '0';
                                 }
 
-                                int total_len = i;
+                                total_len = i;
 
-                                // Right align with padding
                                 if (!left_align && width > total_len)
                                 {
-                                        char pad_char = zero_pad ? '0' : ' ';
-                                        for (int j = 0; j < width - total_len && pos < size; j++)
+                                        pad_char = zero_pad ? '0' : ' ';
+                                        for (j = 0; j < width - total_len && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = pad_char;
@@ -363,7 +353,6 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         }
                                 }
 
-                                // Print digits
                                 while (i > 0 && pos < size)
                                 {
                                         if (str)
@@ -371,10 +360,9 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
                                         pos++;
                                 }
 
-                                // Left align with space padding
                                 if (left_align && width > total_len)
                                 {
-                                        for (int j = 0; j < width - total_len && pos < size; j++)
+                                        for (j = 0; j < width - total_len && pos < size; j++)
                                         {
                                                 if (str)
                                                         str[pos] = ' ';
@@ -439,35 +427,413 @@ static int vsnprintf_helper(char *str, size_t size, const char *fmt, va_list arg
 
 int vsnprintf(char *str, size_t size, const char *fmt, va_list args)
 {
+        va_list args_copy;
+        int required_len, written;
+
         if (str == NULL || size == 0 || fmt == NULL)
         {
                 return 0;
         }
 
-        va_list args_copy;
         va_copy(args_copy, args);
-
-        int required_len = vsnprintf_helper(NULL, 0, fmt, args_copy);
+        required_len = (int)vsnprintf_helper(NULL, 0, fmt, args_copy);
         va_end(args_copy);
-        int written = vsnprintf_helper(str, size, fmt, args);
-
+        written = (int)vsnprintf_helper(str, size, fmt, args);
         return (written < required_len) ? required_len : written;
 }
 
 int snprintf(char *str, size_t size, const char *fmt, ...)
 {
+        int result;
         va_list args;
         va_start(args, fmt);
-        int result = vsnprintf(str, size, fmt, args);
+        result = (int)vsnprintf(str, size, fmt, args);
         va_end(args);
         return result;
 }
 
-int printf(const char *fmt, ...)
+void printf(const char *fmt, ...)
 {
         va_list args;
         va_start(args, fmt);
-        int result = vsnprintf((char*)system_output, sizeof(system_output), fmt, args);
+
+        const char *s = fmt;
+        const char *hex_digits = "0123456789abcdef";
+        const char *HEX_digits = "0123456789ABCDEF";
+        char buffer[32];
+        int i, num;
+        unsigned int unum;
+        char *str_arg;
+        int width, precision, zero_pad, left_justify;
+        char length_modifier;
+
+        while (*s)
+        {
+                if (*s == '%')
+                {
+                        s++;
+
+                        // Parse flags
+                        zero_pad = 0;
+                        left_justify = 0;
+                        if (*s == '0')
+                        {
+                                zero_pad = 1;
+                                s++;
+                        }
+                        if (*s == '-')
+                        {
+                                left_justify = 1;
+                                s++;
+                        }
+
+                        // Parse width
+                        width = 0;
+                        while (*s >= '0' && *s <= '9')
+                        {
+                                width = width * 10 + (*s - '0');
+                                s++;
+                        }
+
+                        // Parse precision
+                        precision = -1;
+                        if (*s == '.')
+                        {
+                                s++;
+                                precision = 0;
+                                while (*s >= '0' && *s <= '9')
+                                {
+                                        precision = precision * 10 + (*s - '0');
+                                        s++;
+                                }
+                        }
+
+                        // Parse length modifier
+                        length_modifier = 0;
+                        if (*s == 'l' || *s == 'h')
+                        {
+                                length_modifier = *s;
+                                s++;
+                                if ((length_modifier == 'l' && *s == 'l') ||
+                                    (length_modifier == 'h' && *s == 'h'))
+                                {
+                                        s++; // Skip second character for ll/hh
+                                }
+                        }
+
+                        switch (*s)
+                        {
+                        case 'd':
+                        case 'i':
+                                if (length_modifier == 'l')
+                                {
+                                        long lnum = va_arg(args, long);
+                                        num = (int)lnum; // Simplified for 32-bit systems
+                                }
+                                else
+                                {
+                                        num = va_arg(args, int);
+                                }
+
+                                if (num < 0)
+                                {
+                                        putchar('-');
+                                        num = -num;
+                                }
+                                else if (num == 0)
+                                {
+                                        putchar('0');
+                                }
+                                else
+                                {
+                                        i = 0;
+                                        while (num > 0)
+                                        {
+                                                buffer[i++] = '0' + (num % 10);
+                                                num /= 10;
+                                        }
+
+                                        // Apply padding
+                                        if (!left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(zero_pad ? '0' : ' ');
+                                                }
+                                        }
+
+                                        while (i > 0)
+                                        {
+                                                putchar((uint8_t)buffer[--i]);
+                                        }
+
+                                        // Right padding for left justification
+                                        if (left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(' ');
+                                                }
+                                        }
+                                }
+                                break;
+
+                        case 'u': // Unsigned decimal
+                                unum = va_arg(args, unsigned int);
+                                i = 0;
+
+                                if (unum == 0)
+                                {
+                                        putchar('0');
+                                }
+                                else
+                                {
+                                        while (unum > 0)
+                                        {
+                                                buffer[i++] = '0' + (unum % 10);
+                                                unum /= 10;
+                                        }
+
+                                        // Apply padding
+                                        if (!left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(zero_pad ? '0' : ' ');
+                                                }
+                                        }
+
+                                        while (i > 0)
+                                        {
+                                                putchar((uint8_t)buffer[--i]);
+                                        }
+
+                                        // Right padding for left justification
+                                        if (left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(' ');
+                                                }
+                                        }
+                                }
+                                break;
+
+                        case 's':
+                                str_arg = va_arg(args, char *);
+                                if (str_arg == NULL)
+                                        str_arg = "(null)";
+
+                                // Calculate string length
+                                int len = 0;
+                                const char *temp = str_arg;
+                                while (*temp++)
+                                        len++;
+
+                                // Apply precision if specified
+                                if (precision >= 0 && precision < len)
+                                {
+                                        len = precision;
+                                }
+
+                                // Left padding
+                                if (!left_justify && width > len)
+                                {
+                                        for (int j = len; j < width; j++)
+                                        {
+                                                putchar(' ');
+                                        }
+                                }
+
+                                // Print string (up to precision)
+                                for (i = 0; i < len && str_arg[i]; i++)
+                                {
+                                        putchar((uint8_t)str_arg[i]);
+                                }
+
+                                // Right padding
+                                if (left_justify && width > len)
+                                {
+                                        for (int j = len; j < width; j++)
+                                        {
+                                                putchar(' ');
+                                        }
+                                }
+                                break;
+
+                        case 'c':
+                                putchar((uint8_t)va_arg(args, int));
+                                break;
+
+                        case 'x': // Lowercase hex
+                                unum = va_arg(args, unsigned int);
+                                i = 0;
+
+                                if (unum == 0)
+                                {
+                                        putchar('0');
+                                }
+                                else
+                                {
+                                        while (unum > 0)
+                                        {
+                                                buffer[i++] = hex_digits[unum & 0xF];
+                                                unum >>= 4;
+                                        }
+
+                                        // Apply padding
+                                        if (!left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(zero_pad ? '0' : ' ');
+                                                }
+                                        }
+
+                                        while (i > 0)
+                                        {
+                                                putchar((uint8_t)buffer[--i]);
+                                        }
+
+                                        // Right padding for left justification
+                                        if (left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(' ');
+                                                }
+                                        }
+                                }
+                                break;
+
+                        case 'X': // Uppercase hex
+                                unum = va_arg(args, unsigned int);
+                                i = 0;
+
+                                if (unum == 0)
+                                {
+                                        putchar('0');
+                                }
+                                else
+                                {
+                                        while (unum > 0)
+                                        {
+                                                buffer[i++] = HEX_digits[unum & 0xF];
+                                                unum >>= 4;
+                                        }
+
+                                        // Apply padding
+                                        if (!left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(zero_pad ? '0' : ' ');
+                                                }
+                                        }
+
+                                        while (i > 0)
+                                        {
+                                                putchar((uint8_t)buffer[--i]);
+                                        }
+
+                                        // Right padding for left justification
+                                        if (left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(' ');
+                                                }
+                                        }
+                                }
+                                break;
+
+                        case 'p': // Pointer
+                        {
+                                void *ptr = va_arg(args, void *);
+                                uintptr_t ptr_val = (uintptr_t)ptr;
+
+                                putchar('0');
+                                putchar('x');
+
+                                i = 0;
+                                if (ptr_val == 0)
+                                {
+                                        putchar('0');
+                                }
+                                else
+                                {
+                                        while (ptr_val > 0)
+                                        {
+                                                buffer[i++] = hex_digits[ptr_val & 0xF];
+                                                ptr_val >>= 4;
+                                        }
+                                        while (i > 0)
+                                        {
+                                                putchar((uint8_t)buffer[--i]);
+                                        }
+                                }
+                        }
+                        break;
+
+                        case 'o': // Octal
+                                unum = va_arg(args, unsigned int);
+                                i = 0;
+
+                                if (unum == 0)
+                                {
+                                        putchar('0');
+                                }
+                                else
+                                {
+                                        while (unum > 0)
+                                        {
+                                                buffer[i++] = '0' + (unum & 0x7);
+                                                unum >>= 3;
+                                        }
+
+                                        // Apply padding
+                                        if (!left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(zero_pad ? '0' : ' ');
+                                                }
+                                        }
+
+                                        while (i > 0)
+                                        {
+                                                putchar((uint8_t)buffer[--i]);
+                                        }
+
+                                        // Right padding for left justification
+                                        if (left_justify && width > i)
+                                        {
+                                                for (int j = i; j < width; j++)
+                                                {
+                                                        putchar(' ');
+                                                }
+                                        }
+                                }
+                                break;
+
+                        case '%':
+                                putchar('%');
+                                break;
+
+                        default:
+                                putchar('%');
+                                putchar((uint8_t)*s);
+                                break;
+                        }
+                }
+                else
+                {
+                        putchar((uint8_t)*s);
+                }
+
+                s++;
+        }
+
         va_end(args);
-        return result;
+        display();
 }

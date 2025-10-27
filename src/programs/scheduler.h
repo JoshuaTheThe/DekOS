@@ -44,9 +44,9 @@ typedef struct
 typedef struct /* process */
 {
         schedRegisters_t regs;
-        uint32_t *stack, stack_size;
+        uint32_t stack_size;
         uint32_t output[TTY_H][TTY_W];
-        uint8_t *program;
+        uint8_t *program, *stack;
         uint8_t name[PROC_NAME_LEN];
         bool active;
         bool valid;
@@ -55,14 +55,14 @@ typedef struct /* process */
 
 void schedNext(void);
 int schedFindInvalidProcess(void);
-uint32_t schedCloneProcess(schedPid_t pid);
+int schedCloneProcess(schedPid_t pid);
 void schedSaveContext(void);
 void schedTick(void);
 void schedInit(void);
 bool schedSuspendProcess(schedPid_t pid);
 bool schedResumeProcess(schedPid_t pid);
 void schedListProcesses(void);
-schedPid_t schedCreateProcess(const char *Name, char **Args, int Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength);
+schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength);
 bool schedKillProcess(schedPid_t Pid);
 bool schedIsRunning(schedPid_t Pid);
 void schedTransfer(void);

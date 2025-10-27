@@ -2,7 +2,7 @@
 
 #include <programs/ex.h>
 
-const char Sign[8] = "EXENNEA";
+static const char Sign[8] = "EXENNEA";
 
 void exHeaderInfo(const exHeader_t h)
 {
@@ -20,7 +20,7 @@ void exHeaderInfo(const exHeader_t h)
 void exFindFunctions(const exHeader_t h, const char *buffer, exFunction_t *func)
 {
         const char *func_table = buffer + h.FunTableOrg;
-        for (int i = 0; i < h.FunctionCount; ++i)
+        for (size_t i = 0; i < h.FunctionCount; ++i)
         {
                 const exFunction_t *fun = (const exFunction_t *)(func_table + i * sizeof(exFunction_t));
                 memcpy(func[i].name, fun->name, 16);
@@ -31,7 +31,7 @@ void exFindFunctions(const exHeader_t h, const char *buffer, exFunction_t *func)
 void exFindRelocations(const exHeader_t h, const char *buffer, exRelocation_t *relocations)
 {
         const char *reloc_table = buffer + h.RelocationsStart;
-        for (int i = 0; i < h.RelocationCount; ++i)
+        for (size_t i = 0; i < h.RelocationCount; ++i)
         {
                 const exRelocation_t *rel = (const exRelocation_t *)(reloc_table + i * sizeof(exRelocation_t));
                 relocations[i].offset = rel->offset;
@@ -41,14 +41,14 @@ void exFindRelocations(const exHeader_t h, const char *buffer, exRelocation_t *r
 void exFindRawData(const exHeader_t h, const char *buffer, char *raw)
 {
         const char *text_segment = buffer + h.TextSegmentOrg;
-        memcpy(raw, text_segment, h.TextSegmentSize);
+        memcpy(raw, text_segment, (int)h.TextSegmentSize);
 }
 
 void exApplyRelocations(const exHeader_t h, const exRelocation_t *relocations, char *raw)
 {
-        for (int i = 0; i < h.RelocationCount; ++i)
+        for (size_t i = 0; i < h.RelocationCount; ++i)
         {
-                int off = (relocations[i].offset - h.TextSegmentOrg);
+                size_t off = (size_t)(relocations[i].offset - (int)h.TextSegmentOrg);
                 *(DWORD *)(raw + off) += (DWORD)raw;
         }
 }
@@ -98,7 +98,7 @@ int exExecute(char *name, char *buffer, size_t buffer_size)
         // Execute the first function (entry point)
         if (h.FunctionCount > 0)
         {
-                schedCreateProcess(name, NULL, 0, ExeMem, functions[0].offset, stack, h.StackSize);
+                schedCreateProcess(name, NULL, 0, ExeMem, (uint32_t)functions[0].offset, stack, (uint32_t)h.StackSize);
                 sti();
                 return 0;
         }

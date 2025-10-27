@@ -1,8 +1,8 @@
 #include <init/gdt.h>
 
-gdtTssEntry_t tss;
-gdtEntry_t gdt[GDT_SIZE];
-gdtPtr_t gdtp;
+static gdtTssEntry_t tss;
+static gdtEntry_t gdt[GDT_SIZE];
+static gdtPtr_t gdtp;
 
 void gdtSetEntry(uint32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
 {

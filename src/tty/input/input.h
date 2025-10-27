@@ -83,19 +83,21 @@ bool ps2_wait_input(void);
 void ps2_initialize_mouse(void);
 bool ps2_read_mouse_packet(ps2_mouse_packet_t *packet);
 
-void mouseFetch(uint32_t *mx, uint32_t *my, uint32_t *prev_mx, uint32_t *prev_my, uint8_t *buttons);
-void mouseRestorePixels(int x, int y);
-void mouseSavePixels(int x, int y);
+void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons);
+void mouseRestorePixels(uint32_t x, uint32_t y);
+void mouseSavePixels(uint32_t x, uint32_t y);
 bool mouseIsPresent(void);
-void mouseSetIcon(char chr);
-char mouseGetIcon(void);
+void mouseSetIcon(unsigned char chr);
+unsigned char mouseGetIcon(void);
+void ps2_enable_mouse_interrupts(void);
 
 /* PS/2 KEYBOARD */
 uint8_t keyboardFetch(volatile bool *hit);
 bool keyboardIsPresent(void);
-char keyboardLastCharacter(void);
+uint8_t keyboardLastCharacter(void);
 bool keyboardKeyPressed(void);
-char getchar(void);
+uint8_t getchar(void);
 int gets(char *b, int max);
+void ps2_initialize_keyboard(void);
 
 #endif

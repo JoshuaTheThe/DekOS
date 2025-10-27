@@ -1,15 +1,15 @@
 #include <init/idt.h>
 
-idtEntry_t idt[256];
-idtPtr_t idtp;
+static idtEntry_t idt[256];
+static idtPtr_t idtp;
 
-void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idt)
+void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idtEntries)
 {
-        idt[n].base_low = (uint32_t)handler & 0xFFFF;
-        idt[n].base_high = ((uint32_t)handler >> 16) & 0xFFFF;
-        idt[n].selector = 8;
-        idt[n].always_0 = 0;
-        idt[n].flags = 0x8E;
+        idtEntries[n].base_low = (uint32_t)handler & 0xFFFF;
+        idtEntries[n].base_high = ((uint32_t)handler >> 16) & 0xFFFF;
+        idtEntries[n].selector = 8;
+        idtEntries[n].always_0 = 0;
+        idtEntries[n].flags = 0x8E;
 }
 
 void idtDefault(void)
@@ -20,9 +20,9 @@ void idtDefault(void)
 void idtInit(void)
 {
         cli();
-        for (uint32_t i = 0; i < IDT_ENTRIES; ++i)
+        for (size_t i = 0; i < IDT_ENTRIES; ++i)
         {
-                idtSetEntry(i, (void *)idtDefaultHandler, idt);
+                idtSetEntry((uint8_t)i, (void *)idtDefaultHandler, idt);
         }
 
         idtSetEntry(0x80, (void *)idtSysCall, idt);

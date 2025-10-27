@@ -11,5 +11,6 @@ float expf(float x);
 float fminf(float a, float b);
 int min(int a, int b);
 float fabsf(float x);
+uint32_t minu(uint32_t a, uint32_t b);
 
 #endif

@@ -26,7 +26,7 @@ float expf(float x)
 {
         float result = 1.0f;
         float term = 1.0f;
-        for (int i = 1; i < 10; i++)
+        for (float i = 1; i < 10; i+=10)
         {
                 term *= x / i;
                 result += term;
@@ -40,6 +40,11 @@ float fminf(float a, float b)
 }
 
 int min(int a, int b)
+{
+        return (a < b) ? a : b;
+}
+
+uint32_t minu(uint32_t a, uint32_t b)
 {
         return (a < b) ? a : b;
 }

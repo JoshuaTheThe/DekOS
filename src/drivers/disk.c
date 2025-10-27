@@ -1,6 +1,6 @@
 #include <drivers/disk.h>
 
-static void ataWait(const uint8_t p)
+static void ataWait(const uint16_t p)
 {
         inb(p + CONTROL + ALTERNATE_STATUS);
         inb(p + CONTROL + ALTERNATE_STATUS);
@@ -35,7 +35,7 @@ int cdRead(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *
                 ataWait(port);
         }
 
-        outsw(port + DATA, (uint16_t *)read_cmd, 6);
+        outsw(port + DATA, (void*)read_cmd, 6);
 
         for (uint32_t i = 0; i < sectors; i++)
         {
@@ -49,7 +49,7 @@ int cdRead(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *
                 }
 
                 int size = inb(port + LBA_HIGH) << 8 | inb(port + LBA_MID); 
-                insw(port + DATA, (uint16_t *)((uint8_t *)buffer + i * 0x800), size / 2);
+                insw(port + DATA, ((uint8_t *)buffer + i * 0x800), (size_t)size / 2);
         }
 
         return 0;

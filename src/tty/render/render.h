@@ -21,8 +21,8 @@ void setfont(font_t *new_font);
 font_t getfont(void);
 
 /* functions */
-void displaychar(const char chr, const int px, const int py, const int bg, const int fg);
-void write(const char *text, const int length, const int px, const int py);
-void print(const char *text, const int px, const int py);
+void displaychar(const unsigned char chr, const uint32_t px, const uint32_t py, const uint32_t bg, const uint32_t fg);
+void write(const unsigned char *text, const size_t length, const uint32_t px, const uint32_t py);
+void print(const unsigned char *text, const uint32_t px, const uint32_t py);
 
 #endif

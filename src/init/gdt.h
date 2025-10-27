@@ -56,5 +56,8 @@ typedef struct __attribute__((packed))
 } gdtTssEntry_t;
 
 void gdtInit(void);
+void gdtTssInit(void);
+void gdtSetTssEntry(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
+void gdtSetEntry(uint32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 
 #endif

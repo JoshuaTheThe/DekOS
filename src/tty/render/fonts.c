@@ -1,6 +1,6 @@
 #include <tty/render/fonts.h>
 
-unsigned char console_font_8x8[] = {
+static unsigned char console_font_8x8[] = {
 
     /*
      * code=0, hex=0x00, ascii="^@"
@@ -3075,7 +3075,7 @@ unsigned char console_font_8x8[] = {
     0x00, /* 00000000 */
 };
 
-unsigned char gui_font_cursors[] = {
+static unsigned char gui_font_cursors[] = {
         /*
          * code=0, ascii="\0", normal cursor
          */
@@ -3091,5 +3091,5 @@ unsigned char gui_font_cursors[] = {
         0x18, /* 00011000 */
 };
 
-font_t font_8x8 = {.char_height = 8, .char_width = 8, .first_char = 0, .last_char = 255, .font_name = "8x8", .font_bitmap = console_font_8x8};
-font_t cursors = {.char_height = 10, .char_width = 8, .first_char = 0, .last_char = 1, .font_name = "cursors", .font_bitmap = gui_font_cursors};
+font_t font_8x8 = {.char_height = 8, .char_width = 8, .first_char = 0, .last_char = 255, .font_name = (unsigned char *)"8x8", .font_bitmap = console_font_8x8};
+font_t cursors = {.char_height = 10, .char_width = 8, .first_char = 0, .last_char = 1, .font_name = (unsigned char *)"cursors", .font_bitmap = gui_font_cursors};

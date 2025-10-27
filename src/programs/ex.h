@@ -17,13 +17,13 @@ typedef struct __attribute__((packed))
 {
         char Sign[8];
         char major, minor, patch;
-        int RelocationCount;
-        int RelocationsStart;
-        int TextSegmentOrg;
-        int TextSegmentSize;
-        int FunTableOrg;
-        int FunctionCount;
-        int StackSize;
+        size_t RelocationCount;
+        size_t RelocationsStart;
+        size_t TextSegmentOrg;
+        size_t TextSegmentSize;
+        size_t FunTableOrg;
+        size_t FunctionCount;
+        size_t StackSize;
 } exHeader_t;
 
 typedef struct __attribute__((packed))
@@ -32,5 +32,10 @@ typedef struct __attribute__((packed))
 } exRelocation_t;
 
 int exExecute(char *name, char *buffer, size_t buffer_size);
+void exApplyRelocations(const exHeader_t h, const exRelocation_t *relocations, char *raw);
+void exFindRawData(const exHeader_t h, const char *buffer, char *raw);
+void exFindRelocations(const exHeader_t h, const char *buffer, exRelocation_t *relocations);
+void exFindFunctions(const exHeader_t h, const char *buffer, exFunction_t *func);
+void exHeaderInfo(const exHeader_t h);
 
 #endif

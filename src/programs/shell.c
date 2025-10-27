@@ -1,7 +1,7 @@
 #include <programs/shell.h>
 
-char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
-char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
+static char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
+static char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
 
 static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 {
@@ -59,7 +59,7 @@ void shell(void)
         {
                 printf("%s\\`(owo`)o -> ", current_dir);
                 memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
-                int len = gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
+                size_t len = (size_t)gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
                 keyboard_buffer[len] = '\0';
                 int argc = shellParse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
 
@@ -127,7 +127,7 @@ void shell(void)
                                         }
                                 }
 
-                                int len = strlen(new_dir);
+                                len = strlen(new_dir);
                                 while (len > 1 && new_dir[len - 1] == '/')
                                 {
                                         new_dir[len - 1] = '\0';

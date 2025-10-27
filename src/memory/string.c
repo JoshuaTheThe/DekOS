@@ -54,7 +54,7 @@ void memset(void *d, uint8_t v, size_t len)
 {
         for (size_t i = 0; i < len; ++i)
         {
-                ((char *)d)[i] = v;
+                ((uint8_t *)d)[i] = v;
         }
 }
 

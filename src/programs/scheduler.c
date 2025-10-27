@@ -1,11 +1,12 @@
 #include <programs/scheduler.h>
 
-schedProcess_t processes[MAX_PROCS];
-schedPid_t current_pid;
-uint32_t tick_counter;
+static schedProcess_t processes[MAX_PROCS];
+static schedPid_t current_pid;
+static uint32_t tick_counter;
 
 void schedNext(void)
 {
+        cli();
         current_pid.num = (current_pid.num + 1) % MAX_PROCS;
         while (!processes[current_pid.num].active || !processes[current_pid.num].valid)
         {
@@ -44,7 +45,7 @@ int schedFindInvalidProcess(void)
         return -1;
 }
 
-uint32_t schedCloneProcess(schedPid_t pid)
+int schedCloneProcess(schedPid_t pid)
 {
         if (!pid.valid || pid.num >= MAX_PROCS)
                 return (uint32_t)-1;
@@ -54,22 +55,22 @@ uint32_t schedCloneProcess(schedPid_t pid)
         proc.stack = malloc(orig->stack_size);
         if (!proc.stack)
         {
-                return (uint32_t)-1;
+                return -1;
         }
 
         proc.stack_size = orig->stack_size;
-        memcpy(proc.stack, orig->stack, proc.stack_size);
+        memcpy(proc.stack, orig->stack, (int)proc.stack_size);
         uint32_t esp_offset = (uint32_t)(orig->regs.esp) - (uint32_t)(orig->stack);
         proc.regs.esp = (uint32_t)(proc.stack) + esp_offset;
         int new_pid_num = schedFindInvalidProcess();
-        if (new_pid_num < 0)
+        if ((int)new_pid_num < 0)
         {
                 free(proc.stack);
                 return (uint32_t)-1;
         }
         processes[new_pid_num] = proc;
         processes[new_pid_num].regs.eax = 0;
-        return (uint32_t)new_pid_num;
+        return new_pid_num;
 }
 
 void schedSaveContext(void)
@@ -111,7 +112,7 @@ void schedInit(void)
         processes[0].valid = true;
         processes[0].active = true;
         processes[0].program = (uint8_t *)NULL;
-        processes[0].stack = (uint32_t *)NULL;
+        processes[0].stack = (uint8_t *)NULL;
         processes[0].stack_size = 0;
         processes[0].debugger_is_present = false;
 }
@@ -143,16 +144,16 @@ void schedListProcesses(void)
         }
 }
 
-schedPid_t schedCreateProcess(const char *Name, char **Args, int Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength)
+schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength)
 {
         int id = schedFindInvalidProcess();
         schedPid_t pid;
-        if (Name && Program)
+        if (Name && Program && id > 0)
         {
                 pid.num = id;
                 pid.valid = true;
                 memset(&processes[id].regs, 0, sizeof(schedRegisters_t));
-                memcpy(processes[id].name, Name, min(sizeof(processes[id].name), strlen(Name)));
+                memcpy(processes[id].name, Name, (int)minu(sizeof(processes[id].name), strlen(Name)));
                 processes[id].program = Program;
                 processes[id].valid = 1;
                 processes[id].active = 1;
@@ -167,9 +168,9 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, int Argc, uint8_t *
                 processes[id].regs.es = 0x10;
                 processes[id].regs.fs = 0x10;
                 processes[id].regs.gs = 0x10;
-                processes[id].regs.esp = (uint32_t)Stack + (StackLength - 4);
-                processes[id].regs.ebp = (uint32_t)Stack + (StackLength - 4);
-                processes[id].stack = (uint32_t *)Stack;
+                processes[id].regs.esp = (uint32_t)(Stack + (StackLength - 4));
+                processes[id].regs.ebp = (uint32_t)(Stack + (StackLength - 4));
+                processes[id].stack = Stack;
                 processes[id].stack_size = StackLength;
                 id++;
                 return pid;

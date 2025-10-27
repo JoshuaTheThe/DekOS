@@ -1,9 +1,9 @@
 #include <drivers/iso9660.h>
 
-int cd_port = 0x1F0;
-bool cd_slave = false;
-iso9660PrimaryDesc_t primary_desc;
-bool iso9660_initialized = false;
+static int cd_port = 0x1F0;
+static bool cd_slave = false;
+static iso9660PrimaryDesc_t primary_desc;
+static bool iso9660_initialized = false;
 
 bool iso9660Initialized(void)
 {
@@ -30,7 +30,7 @@ bool iso9660ReadVolumeDescriptors(void)
 
         while (lba < 32)
         {
-                if (cdRead(cd_port, cd_slave, lba, 1, (uint16_t *)buffer) != 0)
+                if (cdRead((uint16_t)cd_port, cd_slave, lba, 1, (uint16_t*)buffer) != 0)
                 {
                         printf("Failed to read LBA %d\n", lba);
                         return false;
@@ -121,7 +121,7 @@ bool iso9660ReadDirectory(uint32_t lba, uint16_t *buffer)
                 return false;
         }
 
-        if (cdRead(cd_port, cd_slave, lba, 1, buffer) != 0)
+        if (cdRead((uint16_t)cd_port, cd_slave, lba, 1, buffer) != 0)
         {
                 return false;
         }
@@ -157,7 +157,7 @@ void *iso9660ReadFile(iso9660Dir_t *file_entry)
 
         for (uint32_t i = 0; i < sectors_to_read; i++)
         {
-                if (cdRead(cd_port, cd_slave, lba + i, 1, buffer) != 0)
+                if (cdRead((uint16_t)cd_port, cd_slave, lba + i, 1, buffer) != 0)
                 {
                         free(file_data);
                         free(buffer);
@@ -165,7 +165,7 @@ void *iso9660ReadFile(iso9660Dir_t *file_entry)
                 }
 
                 uint32_t bytes_to_copy = (file_size - bytes_read) > 2048 ? 2048 : (file_size - bytes_read);
-                memcpy((uint8_t *)file_data + bytes_read, buffer, bytes_to_copy);
+                memcpy((uint8_t *)file_data + bytes_read, buffer, (int)bytes_to_copy);
                 bytes_read += bytes_to_copy;
         }
 
@@ -247,7 +247,7 @@ bool iso9660ListDirectory(uint32_t directory_lba)
                 printf("%-28s %-8d %-8d %c%c\n",
                        clean_name, file_size, lba, type_char, hidden_char);
 
-                offset += dir_entry->length_of_dir;
+                offset += (int32_t)dir_entry->length_of_dir;
         }
 
         printf("----------------------------------------------------------------\n");
@@ -302,7 +302,7 @@ bool iso9660TraversePathTable(const char *path)
         uint32_t sectors = (path_table_size + 2047) / 2048;
         uint8_t *buffer = malloc(sectors * 2048);
 
-        if (!buffer || cdRead(cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
+        if (!buffer || cdRead((uint16_t)cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
         {
                 free(buffer);
                 return false;
@@ -405,7 +405,7 @@ bool iso9660FindDirectory(const char *path, uint32_t *directory_lba)
         uint32_t sectors = (path_table_size + 2047) / 2048;
         uint8_t *buffer = malloc(sectors * 2048);
 
-        if (!buffer || cdRead(cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
+        if (!buffer || cdRead((uint16_t)cd_port, cd_slave, path_table_lba, sectors, (uint16_t *)buffer) != 0)
         {
                 free(buffer);
                 return false;
@@ -423,7 +423,7 @@ bool iso9660FindDirectory(const char *path, uint32_t *directory_lba)
                 token = strtok(NULL, "/");
         }
 
-        uint16_t current_index = 1;
+        uint32_t current_index = 1;
 
         for (int i = 0; i < count; i++)
         {
@@ -443,9 +443,9 @@ bool iso9660FindDirectory(const char *path, uint32_t *directory_lba)
                                 name[rec->name_len] = '\0';
 
                                 for (char *p = name; *p; p++)
-                                        *p = toupper(*p);
+                                        *p = (char)toupper((int)*p);
                                 for (char *p = components[i]; *p; p++)
-                                        *p = toupper(*p);
+                                        *p = (char)toupper((int)*p);
 
                                 if (strncmp(name, components[i], rec->name_len) == 0)
                                 {
@@ -488,7 +488,7 @@ bool iso9660FindInDirectory(uint32_t directory_lba, const char *filename, iso966
 
         strncpy(search_name, filename, sizeof(search_name) - 1);
         for (char *p = search_name; *p; p++)
-                *p = toupper(*p);
+                *p = (char)toupper((int)*p);
 
         while (offset < 2048)
         {
@@ -511,7 +511,7 @@ bool iso9660FindInDirectory(uint32_t directory_lba, const char *filename, iso966
                         *semicolon = '\0';
 
                 for (char *p = clean_name; *p; p++)
-                        *p = toupper(*p);
+                        *p = (char)toupper((int)*p);
 
                 if (strcmp(clean_name, search_name) == 0)
                 {
@@ -519,7 +519,7 @@ bool iso9660FindInDirectory(uint32_t directory_lba, const char *filename, iso966
                         return true;
                 }
 
-                offset += dir_entry->length_of_dir;
+                offset += (uint32_t)dir_entry->length_of_dir;
         }
 
         return false;
