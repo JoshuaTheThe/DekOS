@@ -23,6 +23,24 @@
 
 #include <pci/pci.h>
 
+/* Post-Init kernel stuff, e.g. managing procs, and communication */
+void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
+{
+        int mouse_x = frame->dimensions[0] / 2, mouse_y = frame->dimensions[1] / 2, prev_x = -1, prev_y = -1;
+        uint8_t mouse_buttons = 0;
+
+        size_t stack_size = 8192;
+        uint8_t stack[stack_size];
+        schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t*)shell, 0, stack, stack_size, true);
+        printf("Created proc with id : %d\n", pid.num);
+
+        while (true)
+        {
+                sti();
+        }
+}
+
+/* Initialize the System */
 void main(uint32_t magic, uint32_t mbinfo_ptr)
 {
         multiboot_info_t *mbi;
@@ -33,7 +51,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         {
                 hlt();
         }
-        
+
         mbi = (multiboot_info_t *)mbinfo_ptr;
         framebuffer.buffer = (uint32_t *)mbi->framebuffer_addr;
         framebuffer.dimensions[0] = mbi->framebuffer_width;
@@ -77,8 +95,8 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         }
 
         /* Stinky inconsistent naming for PS/2 stuff */
-        // ps2_initialize_mouse();
-        // ps2_initialize_keyboard();
+        ps2_initialize_mouse();
+        ps2_initialize_keyboard();
 
         display();
 
@@ -97,15 +115,12 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         printf("Grub Configuration:\n%s\n", data);
         free(data);
         display();
-
-        uint8_t stack[8192];
-        schedCreateProcess("Shell", NULL, 0, (void*)shell, 0, stack, sizeof(stack));
-
-        int mouse_x = framebuffer.dimensions[0]/2, mouse_y = framebuffer.dimensions[1]/2, prev_x=-1, prev_y=-1;
-        uint8_t mouse_buttons = 0;
         sti();
-        while(1)
+
+        kernelTask(&framebuffer, mbi);
+        cli();
+        while (1)
         {
-                //mouseFetch(&mouse_x, &mouse_y, &prev_x, &prev_y, &mouse_buttons);
+                hlt();
         }
 }

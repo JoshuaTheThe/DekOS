@@ -21,9 +21,9 @@ region_t m_map(size_t size)
 
         region.ptr = NULL;
         region.size = 0;
-        aligned = align(size);
-        num_bits = aligned / alignment;
-        
+        aligned = alloc_align(size);
+        num_bits = aligned / alloc_alignment;
+
         for (i = 0; i < (minfo.heap_size / 8); i++)
         {
                 if ((minfo.map[i / 8] & (1 << (i % 8))))
@@ -45,7 +45,7 @@ region_t m_map(size_t size)
                                 minfo.map[(i + j) / 8] |= (1 << ((i + j) % 8));
                         }
 
-                        region.ptr = (uint8_t *)(minfo.raw + i * alignment);
+                        region.ptr = (uint8_t *)(minfo.raw + i * alloc_alignment);
                         region.size = aligned;
                         return region;
                 }
@@ -60,8 +60,8 @@ void u_map(region_t region)
         if (!region.ptr)
                 return;
 
-        index = (uint32_t)((uint8_t *)region.ptr - minfo.raw) / alignment;
-        nbits = region.size / alignment;
+        index = (uint32_t)((uint8_t *)region.ptr - minfo.raw) / alloc_alignment;
+        nbits = region.size / alloc_alignment;
 
         for (i = 0; i < nbits; i++)
         {
@@ -74,38 +74,39 @@ region_t *find_empty_allocation(void)
         region_t *alloc = &_allocations[0];
         uint32_t max = 0x20000 / sizeof(region_t);
 
-        while ((alloc->ptr && alloc->size) && max)
+        for (uint32_t i = 0; i < max; i++, alloc++)
         {
-                alloc += sizeof(region_t);
-                max--;
+                if (alloc->ptr == NULL && alloc->size == 0)
+                {
+                        return alloc;
+                }
         }
-
-        return alloc;
+        return NULL; // No space left
 }
 
 region_t *find_allocation_from_address(void *p)
 {
-        uint32_t max;
-        region_t *alloc;
+        if (p == NULL)
+                return NULL;
 
-        if (p == NULL) return NULL;
-        
-        alloc = &_allocations[0];
-        max = 0x20000 / sizeof(region_t);
-        
-        while ((alloc->ptr != p) && max)
+        region_t *alloc = &_allocations[0];
+        uint32_t max = 0x20000 / sizeof(region_t);
+
+        for (uint32_t i = 0; i < max; i++, alloc++)
         {
-                alloc += sizeof(region_t);
-                max--;
+                if (alloc->ptr == p)
+                {
+                        return alloc;
+                }
         }
-
-        return alloc;
+        return NULL; // Not found
 }
 
 void *malloc(size_t size)
 {
         region_t region = m_map(size), *dest;
-        if (region.size == 0) return NULL;
+        if (region.size == 0)
+                return NULL;
         dest = find_empty_allocation();
         *dest = region;
         return region.ptr;
@@ -114,6 +115,7 @@ void *malloc(size_t size)
 void free(void *p)
 {
         region_t *src = find_allocation_from_address(p);
-        if (src == NULL) return;
+        if (src == NULL)
+                return;
         u_map(*src);
 }

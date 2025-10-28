@@ -55,7 +55,6 @@ void exApplyRelocations(const exHeader_t h, const exRelocation_t *relocations, c
 
 int exExecute(char *name, char *buffer, size_t buffer_size)
 {
-        cli();
         if (buffer_size < sizeof(exHeader_t))
         {
                 printf("Buffer too small for header\n");
@@ -80,11 +79,9 @@ int exExecute(char *name, char *buffer, size_t buffer_size)
         exFunction_t functions[h.FunctionCount];
         exRelocation_t relocations[h.RelocationCount];
 
-        cli();
         void *ExeMem = malloc(h.TextSegmentSize);
         if (!ExeMem)
         {
-                sti();
                 return -1;
         }
 
@@ -98,11 +95,9 @@ int exExecute(char *name, char *buffer, size_t buffer_size)
         // Execute the first function (entry point)
         if (h.FunctionCount > 0)
         {
-                schedCreateProcess(name, NULL, 0, ExeMem, (uint32_t)functions[0].offset, stack, (uint32_t)h.StackSize);
-                sti();
+                schedCreateProcess(name, NULL, 0, ExeMem, (uint32_t)functions[0].offset, stack, (uint32_t)h.StackSize, false);
                 return 0;
         }
         free(ExeMem);
-        sti();
         return -1;
 }

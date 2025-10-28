@@ -17,9 +17,9 @@ program:
 .text:
 .main:
         mov eax, 0
-        mov ebx, 1
+        mov ebx, 0
         int 0x80
-        hlt
+        jmp $
 .relocations:
 .funtable:
         db "main", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

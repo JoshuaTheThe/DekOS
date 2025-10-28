@@ -1,5 +1,7 @@
 #!/bin/bash
 
+nasm examples/example.s -o isodir/boot/example.ex -f bin
+
 declare -a all_object_files
 declare -a init_files heap_files isr_files pci_files drivers_files tty_files prog_files other_files
 
@@ -49,7 +51,7 @@ list_files_recursive() {
             mkdir -p "$(dirname "$output_file")"
 
             # hehehehehehehe just a few
-            clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -O3
+            clang -m32 -march=i386 -I./src -c -ffreestanding -fno-builtin "$file" -o "$output_file"
             
             # Categorize the object file
             categorize_object_file "$output_file"

@@ -9,26 +9,33 @@ void sysHang(void)
         }
 }
 
-uint32_t sysReply(InterruptFunction_t function, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
+uint32_t sysReply(uint32_t syscall_num, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 {
         schedPid_t pid = schedGetCurrentPid();
-        (void)ebx;
-        (void)ecx;
-        (void)edx;
-        (void)esi;
-        (void)edi;
-
-        switch (function)
+        schedProcess_t proc = schedGetProcess();
+        switch (syscall_num)
         {
-                case INT80_EXIT:
+        case INT80_EXIT:
+        {
+                printf("Process %d exiting\n", pid.num);
+                schedKillProcess(pid);
+                sti();
+                while (1)
+                        ;
+                break;
+        }
+        case INT80_WRITE:
+                if (arg1 != 0)
                 {
-                        schedKillProcess(pid);
-                        sti();
-                        while(1);
-                        break;
+                        printf("%s", (char *)arg1);
                 }
-                case INT80_WRITE:
-                        break;
+                break;
+        case INT80_PUTCHAR:
+                putchar(arg1);
+                break;
+        default:
+                printf("Unknown syscall: %d\n", syscall_num);
+                break;
         }
         return 0;
 }

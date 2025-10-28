@@ -19,7 +19,6 @@ void mouseSetIcon(unsigned char chr)
 
 void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
 {
-        cli();
         ps2_mouse_packet_t packet;
 
         while (ps2_read_mouse_packet(&packet))
@@ -54,7 +53,6 @@ void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 *buttons = packet.buttons;
                 break;
         }
-        sti();
 }
 
 void mouseSavePixels(uint32_t x, uint32_t y)

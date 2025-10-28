@@ -19,12 +19,10 @@ bool keyboardKeyPressed(void)
 
 uint8_t getchar(void)
 {
-        cli();
         while (!keyboardPressed)
         {
                 character = keyboardFetch(NULL);
         }
-        sti();
         uint8_t x = character;
         keyboardPressed = false;
         return x;
@@ -33,7 +31,7 @@ uint8_t getchar(void)
 /* magic nums oh no */
 static uint8_t keyboard_map[256] =
     {
-        0x00, 0x7F, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
+        0x00, '\e', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
         'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0x80, 'a', 's',
         'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0x00, '\\', 'z', 'x', 'c', 'v',
         'b', 'n', 'm', ',', '.', '/', 0x81, '*', 0x81, ' ',
@@ -43,7 +41,7 @@ static uint8_t keyboard_map[256] =
 
 static uint8_t keyboard_map_shifted[256] =
     {
-        0x00, 0x7F, '!', '"', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',
+        0x00, '\e', '!', '"', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',
         'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0x80, 'A', 'S',
         'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '@', '`', 0x00, '|', 'Z', 'X', 'C', 'V',
         'B', 'N', 'M', '<', '>', '?', 0x81, '*', 0x81, ' ',
@@ -53,7 +51,6 @@ static uint8_t keyboard_map_shifted[256] =
 
 uint8_t keyboardFetch(volatile bool *hit)
 {
-        cli();
         static uint32_t shifted = 0;
         static uint32_t ctrl = 0;
         if (hit)
@@ -62,14 +59,12 @@ uint8_t keyboardFetch(volatile bool *hit)
 
         if (!(inb(0x64) & 0x01))
         {
-                sti();
                 return 0;
         }
 
         uint8_t status = inb(0x64);
         if (status & (1 << 5))
         {
-                sti();
                 return 0;
         }
 
@@ -78,35 +73,29 @@ uint8_t keyboardFetch(volatile bool *hit)
         if (scancode == 0x2a || scancode == 0x36)
         {
                 shifted = 1;
-                sti();
                 return 0;
         }
         else if (scancode == 0xaa || scancode == 0xb6)
         {
                 shifted = 0;
-                sti();
                 return 0;
         }
         if (scancode == 0x1d)
         {
                 ctrl = 1;
-                sti();
                 return 0;
         }
         else if (scancode == 0x9d)
         {
                 ctrl = 0;
-                sti();
                 return 0;
         }
         if (scancode & 0x80)
         {
-                sti();
                 return 0;
         }
         if (scancode >= 128)
         {
-                sti();
                 return 0;
         }
 
@@ -118,16 +107,13 @@ uint8_t keyboardFetch(volatile bool *hit)
         {
                 if (key >= 'a' && key <= 'z')
                 {
-                        sti();
                         return key - 'a' + 1;
                 }
                 else if (key >= 'A' && key <= 'Z')
                 {
-                        sti();
                         return key - 'A' + 1;
                 }
         }
-        sti();
         return key;
 }
 

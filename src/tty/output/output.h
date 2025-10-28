@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <utils.h>
 #include <stdarg.h>
+#include <memory/string.h>
 
 #include <tty/render/fonts.h>
 #include <tty/render/render.h>
@@ -18,5 +19,6 @@ void putchar(const uint8_t ch);
 int vsnprintf(char *str, size_t size, const char *fmt, va_list args);
 int snprintf(char *str, size_t size, const char *fmt, ...);
 void printf(const char *fmt, ...);
+void clear(void);
 
 #endif

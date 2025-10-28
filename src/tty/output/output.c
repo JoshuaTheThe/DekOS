@@ -17,6 +17,16 @@ void display(void)
         }
 }
 
+void clear(void)
+{
+        for (int y = 0; y < TTY_H; ++y)
+        {
+                memset(system_output[y], 0, TTY_W);
+        }
+        tty_x = 0;
+        tty_y = 0;
+}
+
 void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint32_t *y)
 {
         if (ch == '\n')

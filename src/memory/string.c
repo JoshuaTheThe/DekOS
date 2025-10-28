@@ -8,6 +8,14 @@ size_t strlen(const char *x)
         return (size_t)p - (size_t)x;
 }
 
+size_t strnlen(const char *x, size_t max)
+{
+        const char *p = x;
+        while (*p && max--)
+                ++p;
+        return (size_t)p - (size_t)x;
+}
+
 int memcmp(const void *s1, const void *s2, int n)
 {
         const unsigned char *p1 = (unsigned char *)s1;
@@ -55,6 +63,14 @@ void memset(void *d, uint8_t v, size_t len)
         for (size_t i = 0; i < len; ++i)
         {
                 ((uint8_t *)d)[i] = v;
+        }
+}
+
+void memsetdw(void *d, uint32_t v, size_t len)
+{
+        for (size_t i = 0; i < len; ++i)
+        {
+                ((uint32_t *)d)[i] = v;
         }
 }
 

@@ -20,5 +20,7 @@ char *strchr(const char *s, int c);
 int toupper(int c);
 int tolower(int c);
 void memset(void *d, uint8_t v, uint32_t len);
+void memsetdw(void *d, uint32_t v, size_t len);
+size_t strnlen(const char *x, size_t max);
 
 #endif

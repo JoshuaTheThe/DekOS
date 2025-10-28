@@ -7,8 +7,8 @@
 #include <stddef.h>
 #include <utils.h>
 
-#define alignment (uint32_t)(16)
-#define align(size) (((size) + (alignment - 1)) & ~(alignment - 1))
+#define alloc_alignment (uint32_t)(16)
+#define alloc_align(size) (((size) + (alloc_alignment - 1)) & ~(alloc_alignment - 1))
 
 typedef struct
 {

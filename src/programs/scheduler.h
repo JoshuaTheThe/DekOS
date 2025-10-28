@@ -7,8 +7,8 @@
 #include <tty/output/output.h>
 #include <io.h>
 #include <drivers/math.h>
+#include <init/gdt.h>
 
-#define MAX_PROCS 4096
 #define PROC_NAME_LEN 32
 
 #define SCHED_EAX *((uint32_t *)(0x1000 + (4 * 0)))
@@ -34,38 +34,28 @@ typedef struct
         uint32_t num : 31;
 } schedPid_t;
 
-typedef struct
-{
-        uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip;
-        uint32_t flags;
-        uint32_t cs, ss, ds, es, fs, gs;
-} schedRegisters_t;
-
 typedef struct /* process */
 {
-        schedRegisters_t regs;
-        uint32_t stack_size;
-        uint32_t output[TTY_H][TTY_W];
-        uint8_t *program, *stack;
         uint8_t name[PROC_NAME_LEN];
-        bool active;
+        uint32_t stack_size;
+        uint8_t *program, *stack, *kstack;
+        gdtTssEntry_t *tss;
         bool valid;
+        bool active;
         bool debugger_is_present;
 } schedProcess_t;
 
 void schedNext(void);
 int schedFindInvalidProcess(void);
-int schedCloneProcess(schedPid_t pid);
-void schedSaveContext(void);
 void schedTick(void);
 void schedInit(void);
 bool schedSuspendProcess(schedPid_t pid);
 bool schedResumeProcess(schedPid_t pid);
 void schedListProcesses(void);
-schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength);
+schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength, bool ring0);
 bool schedKillProcess(schedPid_t Pid);
 bool schedIsRunning(schedPid_t Pid);
-void schedTransfer(void);
 schedPid_t schedGetCurrentPid(void);
+schedProcess_t schedGetProcess(void);
 
 #endif

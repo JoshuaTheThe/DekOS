@@ -6,7 +6,8 @@
 #include <memory/string.h>
 #include <io.h>
 
-#define GDT_SIZE 6
+#define MAX_PROCS 512
+#define GDT_SIZE 3 + MAX_PROCS
 
 typedef struct __attribute__((packed))
 {
@@ -26,38 +27,40 @@ typedef struct __attribute__((packed))
 
 typedef struct __attribute__((packed))
 {
-        uint32_t prev_tss;   // Previous TSS link
-        uint32_t esp0;       // Kernel stack pointer
-        uint32_t ss0;        // Kernel stack segment
-        uint32_t esp1;       // Unused
-        uint32_t ss1;        // Unused
-        uint32_t esp2;       // Unused
-        uint32_t ss2;        // Unused
-        uint32_t cr3;        // Unused
-        uint32_t eip;        // Unused
-        uint32_t eflags;     // Unused
-        uint32_t eax;        // Unused
-        uint32_t ecx;        // Unused
-        uint32_t edx;        // Unused
-        uint32_t ebx;        // Unused
-        uint32_t esp;        // Unused
-        uint32_t ebp;        // Unused
-        uint32_t esi;        // Unused
-        uint32_t edi;        // Unused
-        uint32_t es;         // Unused
-        uint32_t cs;         // Unused
-        uint32_t ss;         // Unused
-        uint32_t ds;         // Unused
-        uint32_t fs;         // Unused
-        uint32_t gs;         // Unused
-        uint32_t ldt;        // Unused
-        uint16_t trap;       // Unused
-        uint16_t iomap_base; // I/O Map Base Address
+        uint32_t prev_tss;
+        uint32_t esp0;
+        uint32_t ss0;
+        uint32_t esp1;
+        uint32_t ss1;
+        uint32_t esp2;
+        uint32_t ss2;
+        uint32_t cr3;
+        uint32_t eip;
+        uint32_t eflags;
+        uint32_t eax;
+        uint32_t ecx;
+        uint32_t edx;
+        uint32_t ebx;
+        uint32_t esp;
+        uint32_t ebp;
+        uint32_t esi;
+        uint32_t edi;
+        uint32_t es;
+        uint32_t cs;
+        uint32_t ss;
+        uint32_t ds;
+        uint32_t fs;
+        uint32_t gs;
+        uint32_t ldt;
+        uint16_t trap;
+        uint16_t iomap_base;
 } gdtTssEntry_t;
 
 void gdtInit(void);
 void gdtTssInit(void);
 void gdtSetTssEntry(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 void gdtSetEntry(uint32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
+gdtTssEntry_t *gdtGetTssEntries();
+void gdtInitTssForTask(int task_num, uint32_t esp0, uint32_t eip, uint32_t esp, uint32_t cr3);
 
 #endif
