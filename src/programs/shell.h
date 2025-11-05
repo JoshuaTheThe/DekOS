@@ -7,6 +7,7 @@
 #include <tty/output/output.h>
 #include <drivers/iso9660.h>
 #include <programs/ex.h>
+#include <programs/delangue.h>
 
 #define SHELL_KBD_BUFF_SIZE 64
 #define SHELL_MAX_ARGS 8

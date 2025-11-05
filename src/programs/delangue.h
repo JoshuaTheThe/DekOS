@@ -8,113 +8,60 @@
 #include <drivers/math.h>
 #include <drivers/iso9660.h>
 
+/*
+
+FOR I=0 , I < 100 , I = I + 1 DO
+        print (I).
+END.
+
+*/
+
 /* Keyboard, Mouse, TTY Output, that kind of thing */
 #include <tty/output/output.h>
 #include <tty/input/input.h>
 
 #define STACK_SIZE (int)(4096)
-
-/*
-
-        / comment /
-        square := function
-                return arg['x'] + arg['x']
-        end
-
-        call add ['x':=2]
-
-        // PUSH variable_by_name(add)->integer_value
-        // CONSTRUCT_DICTIONARY (1)
-        // PUSH 'x'
-        // PUSH 2
-        // SET_DICT
-        // CALL (top)
-*/
-
-// arr :=* a, b, c, d
+#define IDENTIFIER_SIZE (int)(256)
+#define MAX_KEYWORD_SIZE (int)(32)
 
 typedef enum
 {
         DELANGUE_ERROR_NONE,
         DELANGUE_ERROR_SYNTAX,
         DELANGUE_ERROR_UNDEFINED_VARIABLE,
-        DELANGUE_ERROR_TYPE_MISMATCH,
         DELANGUE_ERROR_STACK_OVERFLOW,
 } delangueError_t;
 
 typedef enum
 {
         TOKEN_NULL,
-        TOKEN_ASSIGN,
-        TOKEN_ASSIGN_ARRAY, /* :=* */
-        TOKEN_OPEN_BRACKET,
-        TOKEN_CLOSE_BRACKET,
-        TOKEN_COLON,
-        TOKEN_COMMA,
-
-        /* ADDITIVE */
-        TOKEN_ADD,
-        TOKEN_SUB,
-
-        /* MULTIPLICATIVE */
-        TOKEN_MUL,
-        TOKEN_DIV,
-
-        /* TERMS */
-        TOKEN_STRING_LITERAL,
-        TOKEN_INTEGER_LITERAL,
         TOKEN_IDENTIFIER,
+        TOKEN_NUMBER,
+        
+        TOKEN_DOT,
+        TOKEN_PARENTHESES_L,
+        TOKEN_PARENTHESES_R,
 
-        /* keyword */
-        TOKEN_IF,
+        TOKEN_PLUS,
+        TOKEN_MINUS,
+
+        TOKEN_MULTIPLY,
+        TOKEN_DIVIDE,
+
+        TOKEN_KEYWORDS,
+        TOKEN_VAR=TOKEN_KEYWORDS,
+        TOKEN_FOR,
         TOKEN_WHILE,
-        TOKEN_CALL,
-        TOKEN_FUNCTION,
+        TOKEN_IF,
+        TOKEN_DO,
         TOKEN_END,
         TOKEN_RETURN,
-
 } delangueTokenType_t;
 
-typedef int delangueIntegerValue_t;
-typedef char *delangueStringValue_t;
-typedef int delangueProcedureValue_t;
-
-typedef enum
-{
-        VALUE_NIL,
-        VALUE_INTEGER,
-        VALUE_STRING,
-        VALUE_PROCEDURE,
-        VALUE_ARRAY,
-        VALUE_DICT,
-} delangueValueType_t;
-
 typedef struct __attribute__((__packed__))
 {
-        void *data;
-        delangueValueType_t type;
+        int data;
 } delangueValue_t;
-
-typedef struct __attribute__((__packed__))
-{
-        size_t elements;
-        delangueValue_t *values;
-} delangueArrayValue_t;
-
-typedef struct __attribute__((__packed__)) delangueDictEntry
-{
-        delangueStringValue_t key;
-        delangueValue_t value;
-        uint32_t hash;
-        struct delangueDictEntry *next;
-} delangueDictEntry_t;
-
-typedef struct __attribute__((__packed__))
-{
-        size_t capacity;
-        size_t count;
-        delangueDictEntry_t **buckets;
-} delangueDictionaryValue_t;
 
 typedef struct __attribute__((__packed__))
 {
@@ -127,7 +74,7 @@ typedef struct __attribute__((__packed__))
 typedef struct __attribute__((__packed__))
 {
         size_t identifier_length;
-        char *identifier;
+        char identifier[IDENTIFIER_SIZE];
         int integer_value;
         delangueTokenType_t type;
 } delangueToken_t;
@@ -211,5 +158,9 @@ statement()
 }
 
 */
+
+void delangueExpression(delangueState_t *state);
+void delangueStatement(delangueState_t *state);
+void delangueParse(delangueState_t *state);
 
 #endif

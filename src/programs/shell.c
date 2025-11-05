@@ -53,6 +53,15 @@ static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 
 void shell(void)
 {
+        delangueState_t state;
+        char code[] = "DO 7+8. END.";
+        state.current_working_file.current_offset = 0;
+        state.current_working_file.length = sizeof(code);
+        state.current_working_file.remaining = sizeof(code);
+        state.current_working_file.raw_source = code;
+        memset(&state.virtual_machine, 0, sizeof(state.virtual_machine));
+        delangueParse(&state);
+
         iso9660Dir_t file;
         char current_dir[512] = "/boot";
         while (1)
