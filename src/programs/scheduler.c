@@ -1,6 +1,8 @@
 #include <programs/scheduler.h>
 
 schedProcess_t processes[MAX_PROCS];
+schedProcess_t *current_process;
+gdtTssEntry_t *current_tss;
 schedPid_t current_pid;
 static uint32_t tick_counter;
 static uint32_t kStack[4096];
@@ -53,6 +55,9 @@ void schedInit(void)
         processes[0].tss->fs = 0x10;
         processes[0].tss->gs = 0x10;
         processes[0].tss->iomap_base = 0xFFFF;
+
+        current_process = &processes[0];
+        current_tss = tss;
 }
 
 bool schedSuspendProcess(schedPid_t pid)
@@ -204,6 +209,8 @@ uint32_t schedNextTSS(void)
         {
                 current_pid.num = next_pid;
                 uint32_t tss_selector = (3 + next_pid) * 8;
+                current_process = &processes[next_pid];
+                current_tss = &gdtGetTssEntries()[next_pid];
                 return tss_selector;
         }
 
