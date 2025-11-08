@@ -5,11 +5,14 @@
         .equ tempEsp , tempEax + 4
 idtTimer:
         cli
-        movl %esp, [tempEsp]
+        movl %eax, tempEax
+        movl %esp, tempEsp
         movl current_tss, %eax
         movl 4(%eax), %esp
-
+        movl tempEax, %eax
+        pushal
         call schedTimerHandler
-        movl [tempEsp], %esp
+        popal
+        movl tempEsp, %esp
         sti
         iret
