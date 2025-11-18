@@ -36,8 +36,8 @@ void setfont(font_t *new_font);
 font_t getfont(void);
 
 /* functions */
-void displaychar(const unsigned char chr, const uint32_t px, const uint32_t py, const uint32_t bg, const uint32_t fg);
-void print(const unsigned char *text, const uint32_t px, const uint32_t py, const uint32_t bg, const uint32_t fg);
+void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg);
+void print(const unsigned char *text, const uint32_t px, const uint32_t py, uint32_t bg, const uint32_t fg);
 void setscale(int new_scale);
 int getscale(void);
 void align(const char *text, uint32_t *px, uint32_t *py, int marginX, int marginY, alignType_t alignX, alignType_t alignY);

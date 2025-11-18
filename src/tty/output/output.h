@@ -9,9 +9,9 @@
 #include <tty/render/fonts.h>
 #include <tty/render/render.h>
 
-#define TTY_W 80
-#define TTY_H 60
-#define TAB_SIZE 4
+#define TTY_W (128)
+#define TTY_H (55)
+#define TAB_SIZE 8
 
 void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint32_t *y);
 void display(void);

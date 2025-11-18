@@ -2,17 +2,17 @@
 
 static uint8_t system_output[TTY_H][TTY_W];
 static uint32_t tty_y = 0, tty_x = 0;
-static uint32_t tty_bg = rgb(128, 0, 128);
-static uint32_t tty_fg = rgb(255, 128, 255);
+static uint32_t tty_bg = rgb(30, 30, 30);
+static uint32_t tty_fg = rgb(230, 230, 230);
 
 void display(void)
 {
-        setfont(&font_8x8);
+        setfont(&cascadia);
         for (size_t y = 0; y < TTY_H; ++y)
         {
                 for (size_t x = 0; x < TTY_W; ++x)
                 {
-                        displaychar(system_output[y][x], x * font_8x8.char_width, y * font_8x8.char_height, tty_bg, tty_fg);
+                        displaychar(system_output[y][x], x * cascadia.char_width, y * cascadia.char_height, tty_bg, tty_fg);
                 }
         }
 }

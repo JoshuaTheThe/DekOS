@@ -62,7 +62,7 @@ list_files_recursive() {
             mkdir -p "$(dirname "$output_file")"
 
             # Add debug symbols for better function information
-            clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra
+            clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra -O3
 
             # Generate symbols for this object file
             generate_symbols "$output_file"

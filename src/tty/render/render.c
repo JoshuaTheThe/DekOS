@@ -34,18 +34,65 @@ font_t getfont(void)
         return *font;
 }
 
+uint32_t blend_colors(uint32_t bg, uint32_t fg, uint8_t intensity, uint8_t bpp)
+{
+        if (bpp == 1)
+                return intensity ? fg : bg;
+
+        uint8_t alpha;
+        switch (bpp)
+        {
+        case 2:
+                alpha = intensity * 85;
+                break;
+        case 4:
+                alpha = intensity * 17;
+                break;
+        default:
+                alpha = intensity ? 255 : 0;
+        }
+
+        if (alpha == 0)
+                return bg;
+        if (alpha == 255)
+                return fg;
+
+        uint8_t bg_r = (bg >> 16) & 0xFF;
+        uint8_t bg_g = (bg >> 8) & 0xFF;
+        uint8_t bg_b = bg & 0xFF;
+
+        uint8_t fg_r = (fg >> 16) & 0xFF;
+        uint8_t fg_g = (fg >> 8) & 0xFF;
+        uint8_t fg_b = fg & 0xFF;
+
+        uint8_t r = ((fg_r * alpha) + (bg_r * (255 - alpha))) / 255;
+        uint8_t g = ((fg_g * alpha) + (bg_g * (255 - alpha))) / 255;
+        uint8_t b = ((fg_b * alpha) + (bg_b * (255 - alpha))) / 255;
+
+        return (r << 16) | (g << 8) | b;
+}
+
 void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
 {
         if (framebuffer.dimensions[1] == 0 || framebuffer.dimensions[0] == 0)
                 return;
-        if (!framebuffer.buffer || chr < font->first_char || chr > font->last_char)
+        if (!framebuffer.buffer || !font)
                 return;
 
         if (px >= framebuffer.dimensions[0] || py >= framebuffer.dimensions[1])
                 return;
 
-        uint32_t bytes_per_row = (font->char_width + 7) / 8;
-        uint32_t char_offset = (chr - font->first_char) * bytes_per_row * font->char_height;
+        // Treat unknown characters as space (ASCII 32)
+        if (chr < font->first_char || chr > font->last_char)
+        {
+                chr = 32; // Space character
+        }
+
+        // Calculate bytes per row based on BPP
+        uint32_t pixels_per_byte = 8 / font->bpp;
+        uint32_t bytes_per_row = (font->char_width + pixels_per_byte - 1) / pixels_per_byte;
+        uint32_t bytes_per_char = bytes_per_row * font->char_height;
+        uint32_t char_offset = (chr - font->first_char) * bytes_per_char;
 
         bool skip_bg = (bg & 0xFF000000) == 0x00000000;
         bool skip_fg = (fg & 0xFF000000) == 0x00000000;
@@ -57,7 +104,7 @@ void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint3
                         continue;
 
                 uint32_t src_y = y / scale;
-                uint8_t bitmap_byte = font->font_bitmap[char_offset + src_y * bytes_per_row];
+                uint32_t row_offset = char_offset + src_y * bytes_per_row;
 
                 for (uint32_t x = 0; x < font->char_width * scale; x++)
                 {
@@ -66,13 +113,31 @@ void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint3
                                 continue;
 
                         uint32_t src_x = x / scale;
-                        bool pixel_set = bitmap_byte & (1 << (7 - (src_x % 8)));
 
-                        if ((pixel_set && skip_fg) || (!pixel_set && skip_bg))
-                                continue;
+                        // Get the pixel value based on BPP
+                        uint32_t byte_index = src_x / pixels_per_byte;
+                        uint32_t bit_offset = (pixels_per_byte - 1 - (src_x % pixels_per_byte)) * font->bpp;
+                        uint8_t bitmap_byte = font->font_bitmap[row_offset + byte_index];
+                        uint8_t pixel_value = (bitmap_byte >> bit_offset) & ((1 << font->bpp) - 1);
 
-                        framebuffer.buffer[current_y * framebuffer.dimensions[0] + current_x] =
-                            pixel_set ? fg : bg;
+                        if (font->bpp == 1)
+                        {
+                                // Monochrome: 0=bg, 1=fg
+                                if ((pixel_value && skip_fg) || (!pixel_value && skip_bg))
+                                        continue;
+                                framebuffer.buffer[current_y * framebuffer.dimensions[0] + current_x] =
+                                    pixel_value ? fg : bg;
+                        }
+                        else
+                        {
+                                // Grayscale: blend or use gradient
+                                if (pixel_value == 0 && skip_bg)
+                                        continue;
+
+                                // Simple implementation: use fg color with alpha based on pixel value
+                                uint32_t color = blend_colors(bg, fg, pixel_value, font->bpp);
+                                framebuffer.buffer[current_y * framebuffer.dimensions[0] + current_x] = color;
+                        }
                 }
         }
 }

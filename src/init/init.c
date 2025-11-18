@@ -85,7 +85,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         framebuffer.dimensions[0] = mbi->framebuffer_width;
         framebuffer.dimensions[1] = mbi->framebuffer_height;
         setframebuffer(framebuffer);
-        setfont(&font_8x8);
+        setfont(&cascadia);
 
         gdtInit();
         idtInit();
