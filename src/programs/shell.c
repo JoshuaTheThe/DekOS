@@ -54,23 +54,19 @@ static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 
 void shellCoproc(void)
 {
-        //delangueState_t state;
-        //char code[] = "DO 7+8. END.";
-        //state.current_working_file.current_offset = 0;
-        //state.current_working_file.length = sizeof(code);
-        //state.current_working_file.remaining = sizeof(code);
-        //state.current_working_file.raw_source = code;
-        //memset(&state.virtual_machine, 0, sizeof(state.virtual_machine));
-        //delangueParse(&state);
-        while (1)
-        {
-        }
+        delangueState_t state;
+        char code[] = "DO 7+8. END.";
+        state.current_working_file.current_offset = 0;
+        state.current_working_file.length = sizeof(code);
+        state.current_working_file.remaining = sizeof(code);
+        state.current_working_file.raw_source = code;
+        memset(&state.virtual_machine, 0, sizeof(state.virtual_machine));
+        delangueParse(&state);
+        exit(0);
 }
 
 void shell(void)
 {
-        //uint8_t *stack = malloc(1024);
-        //schedCreateProcess("Delangue", NULL, 0, shellCoproc, 0, stack, 1024, true);
         iso9660Dir_t file;
         char current_dir[512] = "/boot";
         while (1)

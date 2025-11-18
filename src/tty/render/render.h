@@ -33,7 +33,7 @@ typedef enum alignType_t
 void setframebuffer(framebuffer_t fb);
 framebuffer_t getframebuffer(void);
 void setfont(font_t *new_font);
-font_t getfont(void);
+font_t *getfont(void);
 
 /* functions */
 void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg);

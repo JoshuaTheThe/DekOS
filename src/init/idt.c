@@ -121,6 +121,7 @@ const char *__getFunctionName(uint32_t address)
 
 void idtDefault(int code, int eip, int cs)
 {
+        font_t *font = getfont();
         outb(0x20, 0x20);
         clear();
         framebuffer_t frame = getframebuffer();
@@ -141,7 +142,7 @@ void idtDefault(int code, int eip, int cs)
 
         for (int i = 0; i < mc; ++i)
         {
-                align(messages[i], &px, &py, 32, base_y + 32 + i * font_8x8.char_height, ALIGN_LEFT, ALIGN_TOP);
+                align(messages[i], &px, &py, 32, base_y + 32 + i * font->char_height, ALIGN_LEFT, ALIGN_TOP);
                 print((unsigned char *)messages[i], px, py, rgb(0, 0, 128), rgb(255, 255, 255));
         }
 
@@ -156,7 +157,7 @@ void idtDefault(int code, int eip, int cs)
         symbol_t *symbol = __findFunction(eip);
         char debug_info[1024];
         snprintf(debug_info, sizeof(debug_info), "Error: %02x : %08x : %08x, in %s+%x", code, cs, eip, symbol->name, (uint32_t)symbol->address);
-        align(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font_8x8.char_height, ALIGN_LEFT, ALIGN_TOP);
+        align(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font->char_height, ALIGN_LEFT, ALIGN_TOP);
         print((unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
 
         char x = getchar();

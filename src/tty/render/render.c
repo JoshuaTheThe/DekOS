@@ -29,9 +29,9 @@ void setfont(font_t *new_font)
         font = new_font;
 }
 
-font_t getfont(void)
+font_t *getfont(void)
 {
-        return *font;
+        return font;
 }
 
 uint32_t blend_colors(uint32_t bg, uint32_t fg, uint8_t intensity, uint8_t bpp)
@@ -175,9 +175,9 @@ void align(const char *text, uint32_t *px, uint32_t *py, int marginX, int margin
         const uint32_t width = frame.dimensions[0];
         const uint32_t height = frame.dimensions[1];
 
-        font_t font = getfont();
-        const uint32_t text_width = len * font.char_width * scale;
-        const uint32_t text_height = font.char_height * scale;
+        font_t *font = getfont();
+        const uint32_t text_width = len * font->char_width * scale;
+        const uint32_t text_height = font->char_height * scale;
 
         switch (alignX)
         {
