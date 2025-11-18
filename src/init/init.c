@@ -50,20 +50,20 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
 
         size_t stack_size = 8192;
         uint8_t *stack = malloc(stack_size);
-        schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num=0,.valid=0});
+        schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num = 0, .valid = 1});
         printf("Created proc with id : %d\n", pid.num);
 
         while (true)
         {
-                cli();
                 for (int i = 0; i < MAX_PROCS; ++i)
                 {
                         if (processes[i].delete)
                         {
+                                cli();
                                 deleteTask(i);
+                                sti();
                         }
                 }
-                sti();
                 hlt();
         }
 }
@@ -90,7 +90,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         gdtInit();
         idtInit();
         memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
-        pitInit(25);
+        pitInit(250);
         schedInit();
 
         if (!iso9660Init())
