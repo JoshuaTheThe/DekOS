@@ -31,7 +31,7 @@ typedef struct __attribute__((packed))
         int offset; /* final calculation is just value @off + new base */
 } exRelocation_t;
 
-int exExecute(char *name, char *buffer, size_t buffer_size);
+int exExecute(char *name, char *buffer, size_t buffer_size, schedPid_t parent);
 void exApplyRelocations(const exHeader_t h, const exRelocation_t *relocations, char *raw);
 void exFindRawData(const exHeader_t h, const char *buffer, char *raw);
 void exFindRelocations(const exHeader_t h, const char *buffer, exRelocation_t *relocations);

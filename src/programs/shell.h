@@ -11,7 +11,7 @@
 
 #define SHELL_KBD_BUFF_SIZE 64
 #define SHELL_MAX_ARGS 8
-#define __VER__ "1.0.0"
+#define __VER__ "1.1.0"
 
 void shell(void);
 

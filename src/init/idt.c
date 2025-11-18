@@ -1,7 +1,16 @@
 #include <init/idt.h>
+#include <symbols.h>
 
 static idtEntry_t idt[256];
 static idtPtr_t idtp;
+
+extern uint32_t text_start, text_end;
+extern uint32_t rodata_start, rodata_end;
+extern uint32_t data_start, data_end;
+extern uint32_t bss_start, bss_end;
+extern uint32_t _heap_start, _heap_end;
+extern uint32_t _heap_map_start, _heap_map_end;
+extern uint32_t _allocations, _allocations_end;
 
 void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idtEntries)
 {
@@ -12,8 +21,107 @@ void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idtEntries)
         idtEntries[n].flags = 0x8E;
 }
 
+symbol_t *__findFunction(uint32_t address)
+{
+        /* GRUB loads our kernel at 2MB (0x200000) */
+        uint32_t offset = address - 0x200000;
+
+        /* First check if the address is even in our kernel */
+        if (address < 0x200000 || address >= (uint32_t)&bss_end)
+        {
+                return NULL; /* Outside kernel memory */
+        }
+
+        static symbol_t section = {.address = 0, .name = ".unknown section"};
+
+        /* Check which section it's in */
+        if (offset >= (uint32_t)&text_start && offset < (uint32_t)&text_end)
+        {
+                /* It's in .text section - look for specific function */
+                for (int i = 0; i < kernel_symbols_count - 1; ++i)
+                {
+                        if (offset >= (uint32_t)kernel_symbols[i].address &&
+                            offset < (uint32_t)kernel_symbols[i + 1].address)
+                        {
+                                return &kernel_symbols[i];
+                        }
+                }
+
+                /* Check last function */
+                if (kernel_symbols_count > 0 && offset >= (uint32_t)kernel_symbols[kernel_symbols_count - 1].address)
+                {
+                        return &kernel_symbols[kernel_symbols_count - 1];
+                }
+
+                /* In .text but no specific function found */
+                section.address = &text_start;
+                section.name = ".text section";
+        }
+        else if (offset >= (uint32_t)&rodata_start && offset < (uint32_t)&rodata_end)
+        {
+                section.address = &rodata_start;
+                section.name = ".rodata section";
+        }
+        else if (offset >= (uint32_t)&data_start && offset < (uint32_t)&data_end)
+        {
+                section.address = &data_start;
+                section.name = ".data section";
+        }
+        else if (offset >= (uint32_t)&bss_start && offset < (uint32_t)&bss_end)
+        {
+                section.address = &bss_start;
+                section.name = ".bss section";
+        }
+        else if (offset >= (uint32_t)&_heap_start && offset < (uint32_t)&_heap_end)
+        {
+                section.address = &_heap_start;
+                section.name = ".heap section";
+        }
+        else if (offset >= (uint32_t)&_heap_map_start && offset < (uint32_t)&_heap_map_end)
+        {
+                section.address = &_heap_map_start;
+                section.name = ".map section";
+        }
+        else if (offset >= (uint32_t)&_allocations && offset < (uint32_t)&_allocations_end)
+        {
+                section.address = &_allocations;
+                section.name = ".alloc section";
+        }
+        else
+        {
+                section.address = &_allocations_end;
+                section.name = ".unknown section";
+        }
+
+        return &section;
+}
+
+const char *__getFunctionName(uint32_t address)
+{
+        symbol_t *symbol = __findFunction(address);
+        if (symbol != NULL)
+        {
+                return symbol->name;
+        }
+
+        /* Provide more specific unknown messages */
+        if (address < 0x200000)
+        {
+                return "Below kernel";
+        }
+        else if (address >= (uint32_t)&bss_end)
+        {
+                return "Above kernel";
+        }
+        else
+        {
+                return "Unknown kernel address";
+        }
+}
+
 void idtDefault(int code, int eip, int cs)
 {
+        outb(0x20, 0x20);
         clear();
         framebuffer_t frame = getframebuffer();
         memsetdw(frame.buffer, rgb(0, 0, 128), frame.dimensions[0] * frame.dimensions[1]);
@@ -45,12 +153,11 @@ void idtDefault(int code, int eip, int cs)
 
         /* Debug */
         setscale(1);
+        symbol_t *symbol = __findFunction(eip);
         char debug_info[1024];
-        snprintf(debug_info, sizeof(debug_info), "Error: %02x : %08x : %08x", code, cs, eip);
+        snprintf(debug_info, sizeof(debug_info), "Error: %02x : %08x : %08x, in %s+%x", code, cs, eip, symbol->name, (uint32_t)symbol->address);
         align(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font_8x8.char_height, ALIGN_LEFT, ALIGN_TOP);
         print((unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
-
-        outb(0x20, 0x20);
 
         char x = getchar();
         switch (x)

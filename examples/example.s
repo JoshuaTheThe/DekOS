@@ -16,6 +16,9 @@ program:
         dd 64
 .text:
 .main:
+        mov eax, 9
+        mov ebx, 66
+        int 0x80
         mov eax, 0
         mov ebx, 0
         int 0x80

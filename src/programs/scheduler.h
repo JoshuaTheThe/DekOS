@@ -26,7 +26,28 @@
 #define SCHED_SS *((uint32_t *)(0x1000 + (4 * 12)))
 #define SCHED_FS *((uint32_t *)(0x1000 + (4 * 13)))
 #define SCHED_GS *((uint32_t *)(0x1000 + (4 * 14)))
-#define SCHED_EFL *((uint32_t *)(0x1000 + (4 * 15)))
+#define SCHED_FLAGS *((uint32_t *)(0x1000 + (4 * 15)))
+
+#define MAX_MSG_SIZE 256
+#define MAX_PENDING_MESSAGES 4
+
+typedef struct
+{
+        uint32_t sender_pid;
+        uint32_t receiver_pid;
+        uint32_t size;
+        uint8_t data[MAX_MSG_SIZE];
+        bool read;
+} IPCMessage_t;
+
+typedef struct
+{
+        IPCMessage_t messages[MAX_PENDING_MESSAGES];
+        uint8_t head;
+        uint8_t tail;
+        uint8_t count;
+        uint8_t _padding;
+} IPCInbox_t;
 
 typedef struct
 {
@@ -34,14 +55,24 @@ typedef struct
         uint32_t num : 31;
 } schedPid_t;
 
-typedef struct /* process */
+typedef struct
 {
+        uint32_t eax, ebx, ecx, edx, esp, ebp, esi, edi, eip, cs, ds, es, ss, fs, gs, flags;
+} schedRegs_t;
+
+typedef struct
+{
+        IPCInbox_t inbox;
         uint8_t name[PROC_NAME_LEN];
         uint32_t stack_size;
-        uint8_t *program, *stack, *kstack;
-        gdtTssEntry_t *tss;
+        uint8_t *program, *stack;
+        uint8_t tty[TTY_H][TTY_W];
+        schedRegs_t regs;
+        schedPid_t parent;
+        uint32_t x, y;
         bool valid;
         bool active;
+        bool delete;
         bool debugger_is_present;
 } schedProcess_t;
 
@@ -52,10 +83,14 @@ void schedInit(void);
 bool schedSuspendProcess(schedPid_t pid);
 bool schedResumeProcess(schedPid_t pid);
 void schedListProcesses(void);
-schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength, bool ring0);
+schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength, schedPid_t parent);
 bool schedKillProcess(schedPid_t Pid);
 bool schedIsRunning(schedPid_t Pid);
 schedPid_t schedGetCurrentPid(void);
-schedProcess_t schedGetProcess(void);
+schedProcess_t *schedGetProcess(void);
+void schedLoadContext(void);
+bool schedSwitch(uint32_t npid);
+void schedSaveContext(void);
+void schedNextContext(void);
 
 #endif

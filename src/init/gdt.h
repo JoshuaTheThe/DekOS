@@ -6,8 +6,8 @@
 #include <memory/string.h>
 #include <io.h>
 
-#define MAX_PROCS 512
-#define GDT_SIZE 3 + MAX_PROCS
+#define MAX_PROCS 4
+#define GDT_SIZE 4
 
 typedef struct __attribute__((packed))
 {

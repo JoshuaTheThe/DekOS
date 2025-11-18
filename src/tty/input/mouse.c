@@ -36,8 +36,8 @@ void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 *my -= delta_y;
 
                 framebuffer_t framebuffer = getframebuffer();
-                *mx = *mx < 0 ? 0 : (*mx >= framebuffer.dimensions[0] ? framebuffer.dimensions[0] - 1 : *mx);
-                *my = *my < 0 ? 0 : (*my >= framebuffer.dimensions[1] ? framebuffer.dimensions[1] - 1 : *my);
+                *mx = *mx < 0 ? 0 : (*mx >= (int)framebuffer.dimensions[0] ? (int)framebuffer.dimensions[0] - 1 : *mx);
+                *my = *my < 0 ? 0 : (*my >= (int)framebuffer.dimensions[1] ? (int)framebuffer.dimensions[1] - 1 : *my);
 
                 mouseSavePixels(*mx, *my);
                 prev_save_x = *mx;

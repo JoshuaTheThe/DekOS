@@ -14,7 +14,7 @@ static char keywords[][MAX_KEYWORD_SIZE] = {
 void delangueTokenIdentifier(delangueState_t *state)
 {
         char character = 0;
-        int i;
+        uint32_t i;
         if (!state)
         {
                 return;
@@ -350,7 +350,6 @@ void delangueStatement(delangueState_t *state)
 
 void delangueParse(delangueState_t *state)
 {
-        cli();
         // Get the first token
         delangueNext(state);
 
@@ -365,5 +364,4 @@ void delangueParse(delangueState_t *state)
                 delangueValue_t val = delanguePop(state);
                 printf("EXIT VALUE = %d\n", val.data);
         }
-        sti();
 }

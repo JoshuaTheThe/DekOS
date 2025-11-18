@@ -23,6 +23,25 @@
 
 #include <pci/pci.h>
 
+#include <symbols.h>
+
+extern schedProcess_t processes[MAX_PROCS];
+
+void deleteTask(size_t i)
+{
+        if (processes[i].stack)
+        {
+                free(processes[i].stack);
+        }
+
+        if (processes[i].program)
+        {
+                free(processes[i].program);
+        }
+
+        memset(&processes[i], 0, sizeof(schedProcess_t));
+}
+
 /* Post-Init kernel stuff, e.g. managing procs, and communication */
 void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
 {
@@ -30,13 +49,22 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
         uint8_t mouse_buttons = 0;
 
         size_t stack_size = 8192;
-        uint8_t stack[stack_size];
-        schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t*)shell, 0, stack, stack_size, true);
+        uint8_t *stack = malloc(stack_size);
+        schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num=0,.valid=0});
         printf("Created proc with id : %d\n", pid.num);
 
         while (true)
         {
+                cli();
+                for (int i = 0; i < MAX_PROCS; ++i)
+                {
+                        if (processes[i].delete)
+                        {
+                                deleteTask(i);
+                        }
+                }
                 sti();
+                hlt();
         }
 }
 
@@ -115,7 +143,13 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         printf("Grub Configuration:\n%s\n", data);
         free(data);
         display();
+
         sti();
+
+        // for (int i = 0; i < kernel_symbols_count; ++i)
+        //{
+        //	printf("FUNCTION: %s, %x\n", kernel_symbols[i].name, kernel_symbols[i].address);
+        // }
 
         kernelTask(&framebuffer, mbi);
         cli();

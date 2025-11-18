@@ -2,7 +2,7 @@
 
 schedProcess_t processes[MAX_PROCS];
 schedProcess_t *current_process;
-gdtTssEntry_t *current_tss;
+// gdtTssEntry_t *current_tss;
 schedPid_t current_pid;
 static uint32_t tick_counter;
 static uint32_t kStack[4096];
@@ -21,43 +21,43 @@ int schedFindInvalidProcess(void)
         return -1;
 }
 
-void schedTick(void)
-{
-        tick_counter++;
-}
-
 void schedInit(void)
 {
-        gdtTssEntry_t *tss = gdtGetTssEntries();
         current_pid.num = 0;
         current_pid.valid = 1;
-        memset(processes, 0, MAX_PROCS * sizeof(schedProcess_t));
+        memset(processes, 0, sizeof(processes));
 
         memcpy(processes[0].name, "Adam", 5);
         processes[0].valid = true;
         processes[0].active = true;
+        processes[0].delete = false;
         processes[0].program = (uint8_t *)kernelTask;
         processes[0].stack = (uint8_t *)kStack;
         processes[0].stack_size = 4096;
-        processes[0].debugger_is_present = false;
-        processes[0].tss = &tss[0];
 
-        processes[0].tss->eip = (uint32_t)kernelTask;
-        processes[0].tss->esp = (uint32_t)kStack + 4096 - 16;
-        processes[0].kstack = malloc(4096);
-        processes[0].tss->esp0 = processes[0].kstack + 4096 - 16;
-        processes[0].tss->eflags = 0x200;
-        processes[0].tss->cr3 = 0x00;
-        processes[0].tss->cs = 0x08;
-        processes[0].tss->ss = 0x10;
-        processes[0].tss->ds = 0x10;
-        processes[0].tss->es = 0x10;
-        processes[0].tss->fs = 0x10;
-        processes[0].tss->gs = 0x10;
-        processes[0].tss->iomap_base = 0xFFFF;
+        processes[0].regs.esp = (uint32_t)kStack + sizeof(kStack);
+        processes[0].regs.ebp = processes[0].regs.esp;
+
+        processes[0].regs.eax = 0;
+        processes[0].regs.ebx = 0;
+        processes[0].regs.ecx = 0;
+        processes[0].regs.edx = 0;
+        processes[0].regs.esi = 0;
+        processes[0].regs.edi = 0;
+
+        processes[0].regs.eip = (uint32_t)kernelTask;
+        processes[0].regs.flags = 0x200; // Interrupts enabled
+        processes[0].regs.cs = 0x08;
+        processes[0].regs.ss = 0x10;
+        processes[0].regs.ds = 0x10;
+        processes[0].regs.es = 0x10;
+        processes[0].regs.fs = 0x10;
+        processes[0].regs.gs = 0x10;
 
         current_process = &processes[0];
-        current_tss = tss;
+
+        // FIX: Pre-load the initial context into scheduler buffer
+        schedLoadContext(); // Load process 0 context into temp buffer
 }
 
 bool schedSuspendProcess(schedPid_t pid)
@@ -89,12 +89,14 @@ void schedListProcesses(void)
 
 schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                               uint8_t *Program, uint32_t EntryPOffset,
-                              uint8_t *Stack, uint32_t StackLength, bool ring0)
+                              uint8_t *Stack, uint32_t StackLength, schedPid_t parent)
 {
+        uint32_t flags;
+        asm volatile("pushfl; popl %0; cli" : "=r"(flags));
         int id = schedFindInvalidProcess();
         schedPid_t pid;
 
-        gdtTssEntry_t *tss = gdtGetTssEntries();
+        // gdtTssEntry_t *tss = gdtGetTssEntries();
 
         if (Name && Program && id > 0)
         {
@@ -102,65 +104,54 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 pid.valid = true;
 
                 memset(&processes[id], 0, sizeof(schedProcess_t));
-                memcpy(processes[id].name, Name, minu(sizeof(processes[id].name), strlen(Name)));
+                memcpy(processes[id].name, Name, minu(sizeof(processes[id].name), strnlen(Name, 32)));
                 processes[id].program = Program;
                 processes[id].stack = Stack;
                 processes[id].stack_size = StackLength;
                 processes[id].valid = true;
                 processes[id].active = true;
+                processes[id].regs.cs = 0x8;
+                processes[id].regs.ds = 0x10;
+                processes[id].regs.ss = 0x10;
+                processes[id].regs.es = 0x10;
+                processes[id].regs.fs = 0x10;
+                processes[id].regs.gs = 0x10;
+                processes[id].parent = parent;
 
-                // Allocate kernel stack for this task (4KB)
-                uint32_t *kernel_stack = malloc(4096);
-                if (!kernel_stack)
-                {
-                        processes[id].valid = false;
-                        pid.valid = false;
-                        return pid;
-                }
+                processes[id].regs.eip = (uint32_t)Program + EntryPOffset;
+                uint32_t *stack_top = (uint32_t *)(Stack + StackLength);
+                stack_top[-1] = 0; // No return (if process exits, it should be killed)
+                stack_top[-2] = 0; // Fake return address
+                processes[id].regs.esp = (uint32_t)&stack_top[-2];
+                processes[id].regs.ebp = processes[id].regs.esp;
 
-                uint32_t kernel_esp = (uint32_t)kernel_stack + 4096 - 16;
-                uint32_t user_eip = (uint32_t)Program + EntryPOffset;
-                uint32_t user_esp = (uint32_t)(Stack + StackLength - 16);
+                processes[id].regs.eax = 0;
+                processes[id].regs.ebx = 0;
+                processes[id].regs.ecx = 0;
+                processes[id].regs.edx = 0;
+                processes[id].regs.esi = 0;
+                processes[id].regs.edi = 0;
+                processes[id].regs.ebp = processes[id].regs.esp; // Match ESP
+                processes[id].regs.flags = 0x202;                // Interrupts enabled + reserved bit
 
-                // Initialize TSS for this task
-                gdtInitTssForTask(id, kernel_esp, user_eip, user_esp, 0);
-
-                // Store kernel stack pointer in the TSS pointer field for cleanup
-                processes[id].tss = &tss[id];
-
+                asm volatile("pushl %0; popfl" : : "r"(flags));
                 return pid;
         }
 
         pid.num = 0;
         pid.valid = false;
+        asm volatile("pushl %0; popfl" : : "r"(flags));
         return pid;
 }
 
 bool schedKillProcess(schedPid_t Pid)
 {
-        if (Pid.num == 0 || !Pid.valid || !processes[Pid.num].valid)
+        if (Pid.num == 0 || Pid.num > MAX_PROCS)
                 return true;
-
-        if (processes[Pid.num].kstack)
-        {
-                free((void *)(processes[Pid.num].kstack));
-        }
-
-        if (processes[Pid.num].stack)
-        {
-                free(processes[Pid.num].stack);
-        }
 
         processes[Pid.num].active = false;
         processes[Pid.num].valid = false;
-
-        if (processes[Pid.num].tss)
-        {
-                memset(processes[Pid.num].tss, 0, sizeof(gdtTssEntry_t));
-        }
-
-        processes[Pid.num].tss = NULL;
-        memset(&processes[Pid.num], 0, sizeof(schedProcess_t));
+        processes[Pid.num].delete = true;
 
         return false;
 }
@@ -179,12 +170,23 @@ schedPid_t schedGetCurrentPid(void)
         return current_pid;
 }
 
-schedProcess_t schedGetProcess(void)
+bool schedSwitch(uint32_t npid)
 {
-        return processes[current_pid.num];
+        if (npid > MAX_PROCS || !processes[npid].valid || !processes[npid].active || processes[npid].delete)
+        {
+                return true;
+        }
+        current_pid.num = npid;
+        current_pid.valid = true;
+        return false;
 }
 
-uint32_t schedFindNextTask(void)
+schedProcess_t *schedGetProcess(void)
+{
+        return &processes[current_pid.num];
+}
+
+int32_t schedFindNextTask(void)
 {
         uint32_t start = current_pid.num;
         uint32_t next = start;
@@ -192,50 +194,110 @@ uint32_t schedFindNextTask(void)
         do
         {
                 next = (next + 1) % MAX_PROCS;
-                if (processes[next].valid && processes[next].active)
+
+                if (processes[next].valid &&
+                    processes[next].active &&
+                    !processes[next].delete)
                 {
-                        return next;
+                        return (int32_t)next;
                 }
         } while (next != start);
 
         return -1;
 }
 
-uint32_t schedNextTSS(void)
+// uint32_t schedNextTSS(void)
+// {
+//         int32_t next_pid = schedFindNextTask();
+//
+//         if (next_pid != -1 && next_pid != current_pid.num)
+//         {
+//                 current_pid.num = next_pid;
+//                 uint32_t tss_selector = (3 + next_pid) * 8;
+//                 current_process = &processes[next_pid];
+//                 current_tss = &gdtGetTssEntries()[next_pid];
+//                 return tss_selector;
+//         }
+//
+//         return (uint32_t)-1;
+// }
+
+void schedNextContext(void)
 {
-        uint32_t next_pid = schedFindNextTask();
+        /* find the next process, to load into the temp buffer */
+        if (!current_pid.valid)
+                current_pid.num = 0;
+        uint32_t start = current_pid.num;
+        uint32_t next = start;
 
-        if (next_pid != (uint32_t)-1 && next_pid != current_pid.num)
+        while (1)
         {
-                current_pid.num = next_pid;
-                uint32_t tss_selector = (3 + next_pid) * 8;
-                current_process = &processes[next_pid];
-                current_tss = &gdtGetTssEntries()[next_pid];
-                return tss_selector;
+                next = (next + 1) % MAX_PROCS;
+                if (processes[next].valid && processes[next].active)
+                {
+                        current_pid.num = next;
+                        current_pid.valid = true;
+                        break;
+                }
         }
+}
 
-        return (uint32_t)-1;
+void schedSaveContext(void)
+{
+        cli();
+        /* save into current program */
+        if (!current_pid.valid)
+                while (1)
+                        ;
+        processes[current_pid.num].regs.eax = SCHED_EAX;
+        processes[current_pid.num].regs.ebx = SCHED_EBX;
+        processes[current_pid.num].regs.ecx = SCHED_ECX;
+        processes[current_pid.num].regs.edx = SCHED_EDX;
+        processes[current_pid.num].regs.esi = SCHED_ESI;
+        processes[current_pid.num].regs.edi = SCHED_EDI;
+        processes[current_pid.num].regs.esp = SCHED_ESP;
+        processes[current_pid.num].regs.ebp = SCHED_EBP;
+
+        processes[current_pid.num].regs.eip = SCHED_EIP;
+        processes[current_pid.num].regs.flags = SCHED_FLAGS | 0x200;
+
+        processes[current_pid.num].regs.cs = SCHED_CS;
+        processes[current_pid.num].regs.ds = SCHED_DS;
+        processes[current_pid.num].regs.ss = SCHED_SS;
+        processes[current_pid.num].regs.es = SCHED_ES;
+        processes[current_pid.num].regs.fs = SCHED_FS;
+        processes[current_pid.num].regs.gs = SCHED_GS;
+}
+
+void schedLoadContext(void)
+{
+        cli();
+        /* load current program into the temporary buffer */
+        if (!current_pid.valid)
+                while (1)
+                        ;
+        SCHED_EAX = processes[current_pid.num].regs.eax;
+        SCHED_EBX = processes[current_pid.num].regs.ebx;
+        SCHED_ECX = processes[current_pid.num].regs.ecx;
+        SCHED_EDX = processes[current_pid.num].regs.edx;
+        SCHED_ESI = processes[current_pid.num].regs.esi;
+        SCHED_EDI = processes[current_pid.num].regs.edi;
+        SCHED_ESP = processes[current_pid.num].regs.esp;
+        SCHED_EBP = processes[current_pid.num].regs.ebp;
+
+        SCHED_EIP = processes[current_pid.num].regs.eip;
+        SCHED_FLAGS = processes[current_pid.num].regs.flags;
+
+        SCHED_CS = processes[current_pid.num].regs.cs;
+        SCHED_DS = processes[current_pid.num].regs.ds;
+        SCHED_SS = processes[current_pid.num].regs.ss;
+        SCHED_ES = processes[current_pid.num].regs.es;
+        SCHED_FS = processes[current_pid.num].regs.fs;
+        SCHED_GS = processes[current_pid.num].regs.gs;
 }
 
 void schedTimerHandler(void)
 {
-        uint32_t next_tss = schedNextTSS();
+        ++tick_counter;
         outb(0x20, 0x20);
-
-        if (next_tss != (uint32_t)-1)
-        {
-                // Create a far jump descriptor on stack
-                struct far_jump
-                {
-                        uint32_t eip;
-                        uint16_t cs;
-                        uint16_t unused;
-                } __attribute__((packed)) jmp_desc = {0, (uint16_t)next_tss, 0};
-
-                asm volatile(
-                    "ljmp *%0"
-                    :
-                    : "m"(jmp_desc)
-                    : "memory");
-        }
 }

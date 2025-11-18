@@ -77,16 +77,6 @@ void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint3
         }
 }
 
-void write(const unsigned char *text, size_t length, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
-{
-        if (length == 0 || !text)
-                return;
-        for (size_t i = 0; i < length; ++i)
-        {
-                displaychar(text[i], px + (i * font->char_width), py, bg, fg);
-        }
-}
-
 void print(const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
 {
         uint32_t i;

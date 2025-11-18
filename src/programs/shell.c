@@ -1,4 +1,5 @@
 #include <programs/shell.h>
+#include <isr/system.h>
 
 static char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
 static char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
@@ -51,23 +52,32 @@ static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
         return N;
 }
 
+void shellCoproc(void)
+{
+        //delangueState_t state;
+        //char code[] = "DO 7+8. END.";
+        //state.current_working_file.current_offset = 0;
+        //state.current_working_file.length = sizeof(code);
+        //state.current_working_file.remaining = sizeof(code);
+        //state.current_working_file.raw_source = code;
+        //memset(&state.virtual_machine, 0, sizeof(state.virtual_machine));
+        //delangueParse(&state);
+        while (1)
+        {
+        }
+}
+
 void shell(void)
 {
-        delangueState_t state;
-        char code[] = "DO 7+8. END.";
-        state.current_working_file.current_offset = 0;
-        state.current_working_file.length = sizeof(code);
-        state.current_working_file.remaining = sizeof(code);
-        state.current_working_file.raw_source = code;
-        memset(&state.virtual_machine, 0, sizeof(state.virtual_machine));
-        delangueParse(&state);
-
+        //uint8_t *stack = malloc(1024);
+        //schedCreateProcess("Delangue", NULL, 0, shellCoproc, 0, stack, 1024, true);
         iso9660Dir_t file;
         char current_dir[512] = "/boot";
         while (1)
         {
                 printf("%s\\`(owo`)o -> ", current_dir);
                 memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
+                memset(command_buffer, 0, sizeof(command_buffer));
                 size_t len = (size_t)gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
                 keyboard_buffer[len] = '\0';
                 int argc = shellParse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
@@ -174,7 +184,20 @@ void shell(void)
                         if (success)
                         {
                                 char *data = iso9660ReadFile(&file);
-                                exExecute(path, data, file.data_length[0]);
+                                schedPid_t sysPid = {.num = 0, .valid = true};
+                                int pid = exExecute(path, data, file.data_length[0], sysPid);
+                                while (progexists(pid))
+                                {
+                                        if (kbhit() && getc() == '\e')
+                                        {
+                                                schedPid_t p = {.num = pid, .valid = true};
+                                                schedKillProcess(p);
+                                                break;
+                                        }
+                                        hlt();
+                                }
+
+                                printf("\n");
                         }
                         else
                         {
@@ -182,4 +205,6 @@ void shell(void)
                         }
                 }
         }
+
+        while (1);
 }

@@ -19,33 +19,32 @@ SECTIONS
 	   chosen as a safer option than the traditional 1M. */
 	. = 2M;
 
-	/* First put the multiboot header, as it is required to be put very early
-	   in the image or the bootloader won't recognize the file format.
-	   Next we'll put the .text section. */
-	.text BLOCK(4K) : ALIGN(4K)
-	{
-		*(.multiboot)
-		*(.text)
-	}
-
-	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
-
-	/* Read-write data (initialized) */
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
-
-	/* Read-write data (uninitialized) and stack */
-	.bss BLOCK(4K) : ALIGN(4K)
-	{
-		*(COMMON)
-		*(.bss)
-	}
+        .text : {
+                *(.multiboot)
+                *(.text)
+                text_start = .;
+                *(.text*)
+                text_end = .;
+        }
+        
+        .rodata : {
+                rodata_start = .;
+                *(.rodata*)
+                rodata_end = .;
+        }
+        
+        .data : {
+                data_start = .;
+                *(.data)
+                data_end = .;
+        }
+        
+        .bss : {
+                bss_start = .;
+                *(COMMON)
+                *(.bss)
+                bss_end = .;
+        }
 
         . = . + 0x1000;
         _heap_start = .;
