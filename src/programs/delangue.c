@@ -40,7 +40,7 @@ void delangueTokenIdentifier(delangueState_t *state)
                 {
                         printf("FOUND KEYWORD: %s -> token type %d\n", keywords[i], i + TOKEN_KEYWORDS); // DEBUG
                         state->current_token.type = i + TOKEN_KEYWORDS;
-                        break; // ADD THIS - break after finding a match
+                        break;
                 }
         }
 }
