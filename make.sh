@@ -1,6 +1,7 @@
 #!/bin/bash
 
 nasm examples/example.s -o isodir/boot/example.ex -f bin
+nasm examples/hello.s -o isodir/boot/hello.ex -f bin
 
 declare -a all_object_files
 declare -a init_files heap_files isr_files pci_files drivers_files tty_files prog_files other_files

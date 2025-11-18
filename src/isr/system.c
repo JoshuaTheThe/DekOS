@@ -56,7 +56,7 @@ uint32_t sysReply(void)
         uint32_t arg2 = *((uint32_t *)0x1008);
         uint32_t arg3 = *((uint32_t *)0x100C);
 
-        //printf("Syscall: num=0x%x, arg1=0x%x, arg2=0x%x, arg3=0x%x\n", syscall_num, arg1, arg2, arg3);
+        //printf("Syscall: num=%d, arg1=%d, arg2=%d, arg3=%d\n", syscall_num, arg1, arg2, arg3);
 
         switch (syscall_num)
         {

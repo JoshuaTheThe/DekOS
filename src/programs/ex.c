@@ -48,7 +48,7 @@ void exApplyRelocations(const exHeader_t h, const exRelocation_t *relocations, c
 {
         for (size_t i = 0; i < h.RelocationCount; ++i)
         {
-                size_t off = (size_t)(relocations[i].offset - (int)h.TextSegmentOrg);
+                size_t off = (size_t)relocations[i].offset;
                 *(DWORD *)(raw + off) += (DWORD)raw;
         }
 }
