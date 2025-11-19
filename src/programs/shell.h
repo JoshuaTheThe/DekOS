@@ -8,10 +8,11 @@
 #include <drivers/iso9660.h>
 #include <programs/ex.h>
 #include <programs/delangue.h>
+#include <programs/elf/elf.h>
 
 #define SHELL_KBD_BUFF_SIZE 64
 #define SHELL_MAX_ARGS 8
-#define __VER__ "1.1.0"
+#define __VER__ "1.1.2"
 
 void shell(void);
 

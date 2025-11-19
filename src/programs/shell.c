@@ -172,10 +172,11 @@ void shell(void)
                                 printf("could not find file '%s'\n", path);
                         }
                 }
-                else if (strlen(command_buffer[0]) != 0)
+                else if (!strcmp(command_buffer[0], "\\ex") && argc == 2)
                 {
+                        /* OLD EX FORMAT */
                         char path[512];
-                        snprintf(path, 512, "%s/%s", current_dir, command_buffer[0]);
+                        snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
                         bool success = iso9660FindFile(path, &file);
                         if (success)
                         {
@@ -187,6 +188,34 @@ void shell(void)
                                         if (kbhit() && getc() == '\e')
                                         {
                                                 schedPid_t p = {.num = pid, .valid = true};
+                                                schedKillProcess(p);
+                                                break;
+                                        }
+                                        hlt();
+                                }
+
+                                printf("\n");
+                        }
+                        else
+                        {
+                                printf("could not find file '%s'\n", path);
+                        }
+                }
+                else if (strlen(command_buffer[0]) != 0)
+                {
+                        char path[512];
+                        snprintf(path, 512, "%s/%s", current_dir, command_buffer[0]);
+                        bool success = iso9660FindFile(path, &file);
+                        if (success)
+                        {
+                                char *data = iso9660ReadFile(&file);
+                                schedPid_t sysPid = {.num = 0, .valid = true};
+                                schedPid_t pid = elfLoadProgram(data, file.data_length[0]);
+                                while (progexists(pid.num) && pid.valid)
+                                {
+                                        if (kbhit() && getc() == '\e')
+                                        {
+                                                schedPid_t p = {.num = pid.num, .valid = true};
                                                 schedKillProcess(p);
                                                 break;
                                         }

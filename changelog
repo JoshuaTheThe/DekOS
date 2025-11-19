@@ -1,14 +1,3 @@
-Major bug fix / Minor update,
+New feature - Elf
 
-i have removed the TSS, and made a much better software solution to switching, that ACTUALLY WORKS.
-i have also added information on kernel crashes, involving a symbol table.
-
-i have added and rearranged ~10 interrupt calls.
-including the adding of IPC, process management, and other useful tasks. (untested).
-
-the shell also yields to the program, until ESCAPE is pressed, or until the program exits.
-
-NOTE:
-        the symbol generation, is a bit weird and buggy, so if it fails to build, just try again.
-
-there are also unmentioned changes.
+we have a full* elf support, now we can make (better) programs!!!
