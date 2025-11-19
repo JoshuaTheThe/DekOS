@@ -2,11 +2,16 @@
         section .text
         global _start
 _start:
+        mov edi, 10
+.loop:
         mov eax, 8
         mov ebx, hello
         mov ecx, hello.end-hello
         xor edx, edx
         int 0x80
+
+        dec edi
+        jnz .loop
 
         xor eax, eax
         xor ebx, ebx
@@ -14,6 +19,6 @@ _start:
 
         section .data
 hello:
-        db "Hello, World, from ELF!", 10, 0
+        db "Hello, World, from ELF!", 10
 .end:
 
