@@ -14,6 +14,6 @@ _start:
 
         section .data
 hello:
-        db "Hello, World!", 10, 0
+        db "Hello, World, from ELF!", 10, 0
 .end:
 
