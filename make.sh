@@ -1,9 +1,13 @@
 #!/bin/bash
 
+# old EX format
 nasm examples/example.s -o isodir/boot/example.ex -f bin
 nasm examples/hello.s -o isodir/boot/hello.ex -f bin
+
+# test
 nasm -f elf32 examples/hello.elf.s -o isodir/boot/hello.o
-clang isodir/boot/hello.o -o hello.elf -march=i386 -ffreestanding -msoft-float -fno-builtin -static -nostdlib -m32 -e_start
+
+nasm -f elf32 examples/start.s -o isodir/boot/start.o
 
 declare -a all_object_files
 declare -a init_files heap_files isr_files pci_files drivers_files tty_files prog_files other_files
