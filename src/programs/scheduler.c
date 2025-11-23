@@ -4,7 +4,7 @@ schedProcess_t processes[MAX_PROCS];
 schedProcess_t *current_process;
 // gdtTssEntry_t *current_tss;
 schedPid_t current_pid;
-static uint32_t tick_counter;
+uint32_t tick_counter;
 static uint32_t kStack[4096];
 void kernelTask(void);
 

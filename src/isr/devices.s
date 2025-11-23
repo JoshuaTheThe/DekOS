@@ -7,6 +7,7 @@
         .global idtLPT1Handler
         .global idtRTCHandler
         .global idtMouseHandler
+        .global idtSB16Handler
         # stub
 idtKeyboardHandler:
 idtCascadeHandler:
@@ -17,6 +18,7 @@ idtFloppyHandler:
 idtLPT1Handler:
 idtRTCHandler:
 idtMouseHandler:
+idtSB16Handler:
         cli
         push $0xFE
         call idtDefault

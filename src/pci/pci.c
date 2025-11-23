@@ -284,7 +284,7 @@ void pciRegister(pci_device_t *dev)
 {
         const char *className = pciClassToString(dev->class_id, dev->subclass_id);
         devices[device_count++] = *dev;
-        printf("Registered Device of class %s at %p\n", className, dev);
+        printf("Registered Device of class %s on irq %d\n", className, dev->irq_line);
 }
 
 pci_device_t *pciFindOfType(uint8_t class_id, uint8_t subclass_id)

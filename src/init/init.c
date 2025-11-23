@@ -18,6 +18,8 @@
 
 #include <drivers/pit.h>
 #include <drivers/iso9660.h>
+#include <drivers/speaker.h>
+#include <drivers/sb16.h>
 
 #include <isr/system.h>
 
@@ -43,6 +45,9 @@ void deleteTask(size_t i)
         memset(&processes[i], 0, sizeof(schedProcess_t));
 }
 
+#define BUFFER_SIZE 8192
+#define SAMPLE_RATE 22050
+
 /* Post-Init kernel stuff, e.g. managing procs, and communication */
 void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
 {
@@ -51,8 +56,13 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
 
         size_t stack_size = 8192;
         uint8_t *stack = malloc(stack_size);
+        cli();
         schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num = 0, .valid = 1});
         printf("Created proc with id : %d\n", pid.num);
+        sti();
+        speakerPlay(300);
+        pitDelay(10);
+        speakerStop();
 
         while (true)
         {
@@ -69,7 +79,7 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
                 if (tty_needs_flushing)
                 {
                         display();
-                        tty_needs_flushing=false;
+                        tty_needs_flushing = false;
                 }
                 hlt();
         }
@@ -151,8 +161,8 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         free(data);
         display();
 
+        /* Finally; reset the sound blaster */
         sti();
-
         // for (int i = 0; i < kernel_symbols_count; ++i)
         //{
         //	printf("FUNCTION: %s, %x\n", kernel_symbols[i].name, kernel_symbols[i].address);

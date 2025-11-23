@@ -216,6 +216,7 @@ void idtInit(void)
         idtSetEntry(0x26, (void *)idtFloppyHandler, idt);
         idtSetEntry(0x27, (void *)idtLPT1Handler, idt); // Spurious
         idtSetEntry(0x28, (void *)idtRTCHandler, idt);
+        idtSetEntry(0x2A, (void *)idtSB16Handler, idt);
         idtSetEntry(0x2C, (void *)idtMouseHandler, idt);
 
         idtp.limit = (sizeof(idtEntry_t) * IDT_ENTRIES) - 1;
@@ -233,6 +234,6 @@ void idtInit(void)
         outb(0xA1, 0x01);
         outb(0x21, 0x0);
         outb(0xA1, 0x0);
-        outb(0x21, 0xFE);
+        outb(0x21, 0xDE);
         outb(0xA1, 0xFF);
 }

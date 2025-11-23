@@ -84,6 +84,7 @@ void idtMouseHandler(void);
 void idtCoprocessorHandler(void);            // 0x2D
 void idtPrimaryATAControllerHandler(void);   // 0x2E
 void idtSecondaryATAControllerHandler(void); // 0x2F
+void idtSB16Handler(void);
 
 // Default/Spurious
 void idtDefaultHandler(void);

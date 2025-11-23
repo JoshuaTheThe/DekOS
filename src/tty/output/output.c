@@ -29,6 +29,7 @@ void clear(void)
 
 void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint32_t *y)
 {
+        outb(0xE9,ch);
         if (ch == '\n')
         {
                 *x = 0;

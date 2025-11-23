@@ -11,5 +11,6 @@
 #define PIT_STATUS 0x61
 
 void pitInit(uint32_t targetFreq);
+void pitDelay(uint32_t ticks);
 
 #endif
