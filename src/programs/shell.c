@@ -210,8 +210,14 @@ void shell(void)
                         {
                                 char *data = iso9660ReadFile(&file);
                                 schedPid_t sysPid = {.num = 0, .valid = true};
-                                schedPid_t pid = elfLoadProgram(data, file.data_length[0]);
-                                while (progexists(pid.num) && pid.valid)
+                                bool iself;
+                                schedPid_t pid = elfLoadProgram(data, file.data_length[0], &iself);
+                                if (!iself)
+                                {
+                                        pid.num = exExecute(path, data, file.data_length[0], sysPid);
+                                        pid.valid = pid.num != -1;
+                                }
+                                while (pid.valid && progexists(pid.num))
                                 {
                                         if (kbhit() && getc() == '\e')
                                         {

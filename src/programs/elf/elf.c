@@ -297,10 +297,12 @@ int elfLoadStageTwo(elf32EHeader_t *hdr)
 /**
  * elfLoadProgram - completely load and link the elf buffer, then create the process
  */
-schedPid_t elfLoadProgram(uint8_t *file, size_t file_size)
+schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself)
 {
+        *(iself)=false;
         if (!elfCheckSupported((elf32EHeader_t *)file))
                 return (schedPid_t){.valid=0};
+        *(iself)=true;
         uint8_t *program_mem = malloc(file_size);
         if (!program_mem)
         {
