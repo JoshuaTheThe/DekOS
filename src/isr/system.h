@@ -22,6 +22,7 @@ typedef enum InterruptFunction
         INT80_PUTCH,
         INT80_KBHIT,
         INT80_GETCH,
+        INT80_FLUSH,
 
         /* IPC */
         INT80_SENDMSG, /* void sendmsg(pid, msg, sizeof(msg)), max size of 1024 */

@@ -2,6 +2,7 @@
 #include <programs/scheduler.h>
 #include <tty/input/input.h>
 
+bool tty_needs_flushing=false;
 extern schedProcess_t processes[];
 
 extern void jumpToProc();
@@ -145,6 +146,9 @@ uint32_t sysReply(void)
                 /* get the ps/2 key pressed, need to use kbhit before to make sure that its actually gonna work */
         case INT80_GETCH:
                 return keyboardFetch(NULL);
+        case INT80_FLUSH:
+                tty_needs_flushing=true;
+                return 0;
 
                 /* IPC */
 

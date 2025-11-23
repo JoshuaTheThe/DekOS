@@ -26,6 +26,7 @@
 #include <symbols.h>
 
 extern schedProcess_t processes[MAX_PROCS];
+extern bool tty_needs_flushing;
 
 void deleteTask(size_t i)
 {
@@ -63,6 +64,12 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
                                 deleteTask(i);
                                 sti();
                         }
+                }
+
+                if (tty_needs_flushing)
+                {
+                        display();
+                        tty_needs_flushing=false;
                 }
                 hlt();
         }
