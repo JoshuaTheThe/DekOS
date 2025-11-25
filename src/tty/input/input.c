@@ -1,5 +1,7 @@
 #include <tty/input/input.h>
 
+extern bool tty_needs_flushing;
+
 int gets(char *b, int max)
 {
         if (!b || max <= 0)
@@ -19,20 +21,20 @@ int gets(char *b, int max)
                                 putchar('\b');
                                 putchar(' ');
                                 putchar('\b');
-                                display();
+                                tty_needs_flushing=true;
                                 b[i] = '\0';
                         }
                 }
                 else if (ch == '\n' || ch == '\r')
                 {
                         putchar((uint8_t)ch);
-                        display();
+                        tty_needs_flushing=true;
                         break;
                 }
                 else if (ch >= 32 && ch <= 126)
                 {
                         putchar((uint8_t)ch);
-                        display();
+                        tty_needs_flushing=true;
                         b[i] = (char)ch;
                         i++;
                 }

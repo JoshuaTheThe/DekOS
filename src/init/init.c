@@ -60,9 +60,10 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
         schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num = 0, .valid = 1});
         printf("Created proc with id : %d\n", pid.num);
         sti();
-        speakerPlay(300);
-        pitDelay(10);
-        speakerStop();
+
+        //speakerPlay(300);
+        //pitDelay(10);
+        //speakerStop();
 
         while (true)
         {
@@ -160,6 +161,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         printf("Grub Configuration:\n%s\n", data);
         free(data);
         display();
+        malloc(8192);
 
         /* Finally; reset the sound blaster */
         sti();
