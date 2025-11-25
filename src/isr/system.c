@@ -225,6 +225,16 @@ uint32_t sysReply(void)
 
                 return 0; // No unread messages from this sender
         }
+
+        case INT80_ALLOC:
+                if (arg1 > 0 && arg1 < 1024*1024)
+                {
+                        return malloc(arg1);
+                }
+                return NULL;
+        case INT80_UNALLOC:
+                free(arg1);
+                return 0;
         default:
                 return -1;
                 break;

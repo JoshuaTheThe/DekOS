@@ -28,6 +28,10 @@ typedef enum InterruptFunction
         INT80_SENDMSG, /* void sendmsg(pid, msg, sizeof(msg)), max size of 1024 */
         INT80_RECVMSG, /* void recvmsg(buffer, sizeof(buffer)), read the process's message buffer (recieve message) */
         INT80_MSGRECV, /* bool msgrecv(pid), whether it has been read yet */
+
+        /* MEMORY */
+        INT80_ALLOC, /* BASICALLY MALLOC */
+        INT80_UNALLOC, /* BASICALLY FREE */
 } InterruptFunction_t;
 
 /* System Call Function Prototypes */
