@@ -1,5 +1,13 @@
 #include <programs/shell.h>
 #include <isr/system.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
+#include <tty/input/input.h>
+#include <tty/output/output.h>
+#include <drivers/iso9660.h>
+#include <programs/ex.h>
+#include <programs/delangue.h>
+#include <programs/elf/elf.h>
 
 static char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
 static char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
@@ -211,7 +219,7 @@ void shell(void)
                                 char *data = iso9660ReadFile(&file);
                                 schedPid_t sysPid = {.num = 0, .valid = true};
                                 bool iself;
-                                schedPid_t pid = elfLoadProgram(data, file.data_length[0], &iself);
+                                schedPid_t pid = elfLoadProgram((uint8_t*)data, file.data_length[0], &iself);
                                 if (!iself)
                                 {
                                         pid.num = exExecute(path, data, file.data_length[0], sysPid);

@@ -1,5 +1,10 @@
 #include <programs/scheduler.h>
 
+#include <memory/alloc.h>
+#include <memory/string.h>
+#include <tty/output/output.h>
+#include <drivers/math.h>
+
 schedProcess_t processes[MAX_PROCS];
 schedProcess_t *current_process;
 // gdtTssEntry_t *current_tss;
@@ -56,8 +61,7 @@ void schedInit(void)
 
         current_process = &processes[0];
 
-        // FIX: Pre-load the initial context into scheduler buffer
-        schedLoadContext(); // Load process 0 context into temp buffer
+        schedLoadContext();
 }
 
 bool schedSuspendProcess(schedPid_t pid)
@@ -91,6 +95,8 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                               uint8_t *Program, uint32_t EntryPOffset,
                               uint8_t *Stack, uint32_t StackLength, schedPid_t parent)
 {
+        (void)Args;
+        (void)Argc;
         uint32_t flags;
         asm volatile("pushfl; popl %0; cli" : "=r"(flags));
         int id = schedFindInvalidProcess();
@@ -300,4 +306,18 @@ void schedTimerHandler(void)
 {
         ++tick_counter;
         outb(0x20, 0x20);
+}
+
+schedPid_t schedGetKernelPid(void)
+{
+        return (schedPid_t){.num = 0, .valid = 1};
+}
+
+bool schedValidatePid(schedPid_t prId)
+{
+        if ((!prId.valid) || (prId.num < 0 || prId.num >= MAX_PROCS))
+                return false;
+        if (processes[prId.num].valid && processes[prId.num].active)
+                return true;
+        return false;
 }

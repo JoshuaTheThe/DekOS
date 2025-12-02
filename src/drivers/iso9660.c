@@ -1,4 +1,8 @@
 #include <drivers/iso9660.h>
+#include <tty/output/output.h>
+#include <drivers/math.h>
+#include <memory/string.h>
+#include <memory/alloc.h>
 
 static int cd_port = 0x1F0;
 static bool cd_slave = false;

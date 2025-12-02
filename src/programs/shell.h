@@ -1,14 +1,16 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include <memory/alloc.h>
-#include <memory/string.h>
-#include <tty/input/input.h>
-#include <tty/output/output.h>
-#include <drivers/iso9660.h>
-#include <programs/ex.h>
-#include <programs/delangue.h>
-#include <programs/elf/elf.h>
+#include <utils.h>
+
+// #include <memory/alloc.h>
+// #include <memory/string.h>
+// #include <tty/input/input.h>
+// #include <tty/output/output.h>
+// #include <drivers/iso9660.h>
+// #include <programs/ex.h>
+// #include <programs/delangue.h>
+// #include <programs/elf/elf.h>
 
 #define SHELL_KBD_BUFF_SIZE 64
 #define SHELL_MAX_ARGS 8

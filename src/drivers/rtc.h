@@ -1,7 +1,7 @@
 #ifndef RTC
 #define RTC
 
-#include <stdint.h>
+#include <utils.h>
 #include <io.h>
 
 #define RTC_ADDRESS_PORT 0x70

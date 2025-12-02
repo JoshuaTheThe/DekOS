@@ -1,16 +1,16 @@
 #include <init/idt.h>
+#include <tty/render/fonts.h>
+#include <tty/render/render.h>
 #include <symbols.h>
+#include <memory/string.h>
+#include <memory/alloc.h>
+#include <tty/output/output.h>
+#include <tty/input/input.h>
 
 static idtEntry_t idt[256];
 static idtPtr_t idtp;
 
-extern uint32_t text_start, text_end;
-extern uint32_t rodata_start, rodata_end;
-extern uint32_t data_start, data_end;
-extern uint32_t bss_start, bss_end;
-extern uint32_t _heap_start, _heap_end;
-extern uint32_t _heap_map_start, _heap_map_end;
-extern uint32_t _allocations, _allocations_end;
+extern KRNLRES *fbRes;
 
 void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idtEntries)
 {
@@ -74,22 +74,22 @@ symbol_t *__findFunction(uint32_t address)
         }
         else if (offset >= (uint32_t)&_heap_start && offset < (uint32_t)&_heap_end)
         {
-                section.address = &_heap_start;
+                section.address = (uint32_t*)&_heap_start;
                 section.name = ".heap section";
         }
         else if (offset >= (uint32_t)&_heap_map_start && offset < (uint32_t)&_heap_map_end)
         {
-                section.address = &_heap_map_start;
+                section.address = (uint32_t*)&_heap_map_start;
                 section.name = ".map section";
         }
         else if (offset >= (uint32_t)&_allocations && offset < (uint32_t)&_allocations_end)
         {
-                section.address = &_allocations;
+                section.address = (uint32_t*)&_allocations;
                 section.name = ".alloc section";
         }
         else
         {
-                section.address = &_allocations_end;
+                section.address = (uint32_t*)&_allocations_end;
                 section.name = ".unknown section";
         }
 
@@ -121,11 +121,19 @@ const char *__getFunctionName(uint32_t address)
 
 void idtDefault(int code, int eip, int cs)
 {
-        font_t *font = getfont();
+        font_t *font = RenderGetFont();
         outb(0x20, 0x20);
         clear();
-        framebuffer_t frame = getframebuffer();
-        memsetdw(frame.buffer, rgb(0, 0, 128), frame.dimensions[0] * frame.dimensions[1]);
+        
+        int iDim[3];
+        if (!fbRes || !fbRes->Region.ptr)
+        {
+                return;
+        }
+
+        RenderGetDim(iDim);
+
+        memsetdw(fbRes->Region.ptr, rgb(0, 0, 128), iDim[0] * iDim[1]);
         uint32_t px, py;
 
         /* Messages */
@@ -138,27 +146,31 @@ void idtDefault(int code, int eip, int cs)
             };
         int mc = sizeof(messages) / sizeof(*messages);
 
-        int base_y = frame.dimensions[1] / 2 - 64;
+        int base_y = iDim[1] / 2 - 64;
 
         for (int i = 0; i < mc; ++i)
         {
-                align(messages[i], &px, &py, 32, base_y + 32 + i * font->char_height, ALIGN_LEFT, ALIGN_TOP);
-                print((unsigned char *)messages[i], px, py, rgb(0, 0, 128), rgb(255, 255, 255));
+                RenderAlign(messages[i], &px, &py, 32, base_y + 32 + i * font->char_height, ALIGN_LEFT, ALIGN_TOP);
+                RenderPrint((unsigned char *)messages[i], px, py, rgb(0, 0, 128), rgb(255, 255, 255));
         }
 
         /* Other stuff */
         const char *os_name = "  DekOS  ";
-        setscale(2);
-        align(os_name, &px, &py, 32, base_y, ALIGN_CENTER, ALIGN_TOP);
-        print((unsigned char *)os_name, px, py, rgb(255, 255, 255), rgb(0, 0, 128));
+
+        int nDim[3] = {0, 0, 2};
+        BOOL nDimM[3] = {0, 0, 1};
+        RenderSetDim(nDim, nDimM);
+        RenderAlign(os_name, &px, &py, 32, base_y, ALIGN_CENTER, ALIGN_TOP);
+        RenderPrint((unsigned char *)os_name, px, py, rgb(255, 255, 255), rgb(0, 0, 128));
 
         /* Debug */
-        setscale(1);
+        nDim[2] = 1;
+        RenderSetDim(nDim, nDimM);
         symbol_t *symbol = __findFunction(eip);
         char debug_info[1024];
         snprintf(debug_info, sizeof(debug_info), "Error: %02x : %08x : %08x, in %s+%x", code, cs, eip, symbol->name, (uint32_t)symbol->address);
-        align(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font->char_height, ALIGN_LEFT, ALIGN_TOP);
-        print((unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
+        RenderAlign(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font->char_height, ALIGN_LEFT, ALIGN_TOP);
+        RenderPrint((unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
 
         char x = getchar();
         switch (x)

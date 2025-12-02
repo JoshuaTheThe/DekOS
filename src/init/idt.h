@@ -1,13 +1,8 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <io.h>
 #include <utils.h>
-#include <tty/output/output.h>
-#include <tty/input/input.h>
+#include <io.h>
 
 #define IDT_ENTRIES 256
 

@@ -1,9 +1,8 @@
 #ifndef SYS_H
 #define SYS_H
 
-#include <stdint.h>
-#include <programs/scheduler.h>
 #include <utils.h>
+#include <programs/scheduler.h>
 
 typedef enum InterruptFunction
 {

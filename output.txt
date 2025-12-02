@@ -1,0 +1,189 @@
+./src/drivers/pit.c:16:39: warning: comparison of integers of different signs: 'int' and 'uint32_t' (aka 'unsigned int') [-Wsign-compare]
+        while ((tick_counter - start) < ticks)
+                ~~~~~~~~~~~~~~~~~~~~  ^ ~~~~~
+1 warning generated.
+./src/init/idt.c:74:33: warning: incompatible pointer types assigning to 'uint32_t *' (aka 'unsigned int *') from 'uint8_t (*)[]' (aka 'unsigned char (*)[]') [-Wincompatible-pointer-types]
+                section.address = &_heap_start;
+                                ^ ~~~~~~~~~~~~
+./src/init/idt.c:79:33: warning: incompatible pointer types assigning to 'uint32_t *' (aka 'unsigned int *') from 'uint8_t (*)[]' (aka 'unsigned char (*)[]') [-Wincompatible-pointer-types]
+                section.address = &_heap_map_start;
+                                ^ ~~~~~~~~~~~~~~~~
+./src/init/idt.c:84:33: warning: incompatible pointer types assigning to 'uint32_t *' (aka 'unsigned int *') from 'region_t (*)[]' [-Wincompatible-pointer-types]
+                section.address = &_allocations;
+                                ^ ~~~~~~~~~~~~~
+./src/init/idt.c:89:33: warning: incompatible pointer types assigning to 'uint32_t *' (aka 'unsigned int *') from 'uint8_t (*)[]' (aka 'unsigned char (*)[]') [-Wincompatible-pointer-types]
+                section.address = &_allocations_end;
+                                ^ ~~~~~~~~~~~~~~~~~
+./src/init/idt.c:173:18: warning: implicit declaration of function 'getchar' is invalid in C99 [-Wimplicit-function-declaration]
+        char x = getchar();
+                 ^
+5 warnings generated.
+./src/init/init.c:54:35: warning: unused parameter 'mbi' [-Wunused-parameter]
+void kernelTask(multiboot_info_t *mbi)
+                                  ^
+./src/init/init.c:119:32: warning: incompatible integer to pointer conversion assigning to 'void *' from 'uint64_t' (aka 'unsigned long long') [-Wint-conversion]
+        fbResource->Region.ptr = mbi->framebuffer_addr;
+                               ^ ~~~~~~~~~~~~~~~~~~~~~
+2 warnings generated.
+./src/isr/system.c:238:32: warning: incompatible pointer to integer conversion returning 'void *' from a function with result type 'uint32_t' (aka 'unsigned int') [-Wint-conversion]
+                        return malloc(arg1);
+                               ^~~~~~~~~~~~
+./src/isr/system.c:240:24: warning: incompatible pointer to integer conversion returning 'void *' from a function with result type 'uint32_t' (aka 'unsigned int') [-Wint-conversion]
+                return NULL;
+                       ^~~~
+/usr/lib/llvm-14/lib/clang/14.0.0/include/stddef.h:89:16: note: expanded from macro 'NULL'
+#  define NULL ((void*)0)
+               ^~~~~~~~~~
+./src/isr/system.c:242:22: warning: incompatible integer to pointer conversion passing 'uint32_t' (aka 'unsigned int') to parameter of type 'void *' [-Wint-conversion]
+                free(arg1);
+                     ^~~~
+./src/memory/alloc.h:40:16: note: passing argument to parameter here
+void free(void*);
+               ^
+3 warnings generated.
+./src/memory/alloc.c:13:9: warning: implicit declaration of function 'memset' is invalid in C99 [-Wimplicit-function-declaration]
+        memset(_allocations, 0, 0x20000);
+        ^
+1 warning generated.
+./src/programs/delangue.c:35:9: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+        printf("IDENTIFIER: '%s'\n", state->current_token.identifier); // DEBUG
+        ^
+./src/programs/delangue.c:39:21: warning: implicit declaration of function 'strncmp' is invalid in C99 [-Wimplicit-function-declaration]
+                if (strncmp(state->current_token.identifier, keywords[i], MAX_KEYWORD_SIZE) == 0)
+                    ^
+./src/programs/delangue.c:102:9: warning: implicit declaration of function 'memset' is invalid in C99 [-Wimplicit-function-declaration]
+        memset(state->current_token.identifier, 0, IDENTIFIER_SIZE);
+        ^
+./src/programs/delangue.c:154:9: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+        printf("TOKEN TYPE: %d,%d\n", state->current_token.type, state->current_token.integer_value);
+        ^
+./src/programs/delangue.c:186:9: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+        printf("SYNTAX ERROR: Expected token %d, got %d at offset %d\n",
+        ^
+./src/programs/delangue.c:195:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("RUNTIME ERROR: stack overflow\n");
+                ^
+./src/programs/delangue.c:205:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("RUNTIME ERROR: stack underflow\n");
+                ^
+./src/programs/delangue.c:216:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("PUSH %s\n", save.identifier);
+                ^
+./src/programs/delangue.c:223:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("%d\n", value.data);
+                ^
+./src/programs/delangue.c:227:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("ERROR\n");
+                ^
+./src/programs/delangue.c:257:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("-\n");
+                ^
+./src/programs/delangue.c:247:33: warning: unused variable 'op' [-Wunused-variable]
+                delangueToken_t op = state->current_token;
+                                ^
+./src/programs/delangue.c:267:9: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+        printf("MUL");
+        ^
+./src/programs/delangue.c:293:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("+\n");
+                ^
+./src/programs/delangue.c:309:9: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+        printf("STATEMENT: current token type = %d\n", state->current_token.type); // DEBUG
+        ^
+./src/programs/delangue.c:361:9: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+        printf("Final STACK SIZE: %d\n", state->virtual_machine.stack_ptr);
+        ^
+16 warnings generated.
+./src/programs/elf/elf.c:58:24: warning: incompatible integer to pointer conversion returning 'int' from a function with result type 'void *' [-Wint-conversion]
+                return -1;
+                       ^~
+./src/programs/elf/elf.c:64:24: warning: incompatible integer to pointer conversion returning 'int' from a function with result type 'void *' [-Wint-conversion]
+                return -1;
+                       ^~
+./src/programs/elf/elf.c:132:42: warning: unused parameter 'name' [-Wunused-parameter]
+void *elfLookupSymbol(const char * const name)
+                                         ^
+./src/programs/elf/elf.c:140:51: warning: unused parameter 'table' [-Wunused-parameter]
+int elfGetSymbolExternal(elf32EHeader_t *hdr, int table, uint32_t idx, const elf32Symbol_t * const symbol, const elf32SectionHeader_t * const header)
+                                                  ^
+./src/programs/elf/elf.c:140:67: warning: unused parameter 'idx' [-Wunused-parameter]
+int elfGetSymbolExternal(elf32EHeader_t *hdr, int table, uint32_t idx, const elf32Symbol_t * const symbol, const elf32SectionHeader_t * const header)
+                                                                  ^
+./src/programs/elf/elf.c:209:25: warning: implicit declaration of function 'memset' is invalid in C99 [-Wimplicit-function-declaration]
+                        memset(mem, 0, section->sh_size);
+                        ^
+./src/programs/elf/elf.c:313:9: warning: implicit declaration of function 'memcpy' is invalid in C99 [-Wimplicit-function-declaration]
+        memcpy(program_mem, file, file_size);
+        ^
+./src/programs/elf/elf.c:315:25: warning: comparison between pointer and integer ('void *' and 'int') [-Wpointer-integer-compare]
+        if (entry_point == -1)
+            ~~~~~~~~~~~ ^  ~~
+./src/programs/elf/elf.c:345:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("FAILED TO CREATE PROC\n");
+                ^
+9 warnings generated.
+./src/programs/ex.c:9:9: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+        printf("Signature: %s\n", h.Sign);
+        ^
+./src/programs/ex.c:26:17: warning: implicit declaration of function 'memcpy' is invalid in C99 [-Wimplicit-function-declaration]
+                memcpy(func[i].name, fun->name, 16);
+                ^
+./src/programs/ex.c:44:9: warning: implicit declaration of function 'memcpy' is invalid in C99 [-Wimplicit-function-declaration]
+        memcpy(raw, text_segment, (int)h.TextSegmentSize);
+        ^
+./src/programs/ex.c:60:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("Buffer too small for header\n");
+                ^
+./src/programs/ex.c:65:9: warning: implicit declaration of function 'memcpy' is invalid in C99 [-Wimplicit-function-declaration]
+        memcpy(&h, buffer, sizeof(exHeader_t));
+        ^
+./src/programs/ex.c:69:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("Invalid executable format\n");
+                ^
+./src/programs/ex.c:73:13: warning: implicit declaration of function 'strncmp' is invalid in C99 [-Wimplicit-function-declaration]
+        if (strncmp(h.Sign, Sign, sizeof(Sign)) != 0)
+            ^
+./src/programs/ex.c:75:17: warning: implicit declaration of function 'printf' is invalid in C99 [-Wimplicit-function-declaration]
+                printf("Invalid signature. Not an EXENNEA executable.\n");
+                ^
+8 warnings generated.
+./src/programs/scheduler.c:110:50: warning: implicit declaration of function 'minu' is invalid in C99 [-Wimplicit-function-declaration]
+                memcpy(processes[id].name, Name, minu(sizeof(processes[id].name), strnlen(Name, 32)));
+                                                 ^
+./src/programs/scheduler.c:93:56: warning: unused parameter 'Args' [-Wunused-parameter]
+schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
+                                                       ^
+./src/programs/scheduler.c:93:69: warning: unused parameter 'Argc' [-Wunused-parameter]
+schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
+                                                                    ^
+./src/programs/scheduler.c:310:41: warning: initializer overrides prior initialization of this subobject [-Winitializer-overrides]
+        return (schedPid_t){0, .valid = 1};
+                                        ^
+./src/programs/scheduler.c:310:29: note: previous initialization is here
+        return (schedPid_t){0, .valid = 1};
+                            ^
+./src/programs/scheduler.c:319:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+}
+^
+5 warnings generated.
+./src/programs/shell.c:222:65: warning: passing 'char *' to parameter of type 'uint8_t *' (aka 'unsigned char *') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                schedPid_t pid = elfLoadProgram(data, file.data_length[0], &iself);
+                                                                ^~~~
+./src/programs/elf/elf.h:176:36: note: passing argument to parameter 'file' here
+schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself);
+                                   ^
+1 warning generated.
+./src/resource/main.c:102:36: warning: comparison of distinct pointer types ('void *' and 'uint8_t *' (aka 'unsigned char *')) [-Wcompare-distinct-pointer-types]
+        if (rpResource->Region.ptr > _heap_end)
+            ~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+./src/resource/main.c:155:36: warning: comparison of distinct pointer types ('void *' and 'uint8_t *' (aka 'unsigned char *')) [-Wcompare-distinct-pointer-types]
+        if (rpResource->Region.ptr > _heap_end)
+            ~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+./src/resource/main.c:223:36: warning: comparison of distinct pointer types ('void *' and 'uint8_t *' (aka 'unsigned char *')) [-Wcompare-distinct-pointer-types]
+        if (rpResource->Region.ptr > _heap_end)
+            ~~~~~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~~
+3 warnings generated.
+./src/tty/render/fonts.c:176:18: warning: initializing 'const unsigned char *' with an expression of type 'char[9]' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+    .font_name = "cascadia",
+                 ^~~~~~~~~~
+1 warning generated.

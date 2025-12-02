@@ -5,6 +5,10 @@
 #define NULL (void*)(0)
 #endif
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+
 #define cli() __asm("cli")
 #define sti() __asm("sti")
 #define hlt() __asm("hlt")
@@ -62,5 +66,42 @@ typedef struct
                 } indexed_info;
         } color_info;
 } multiboot_info_t;
+
+typedef unsigned long long SIZE;
+typedef unsigned long long SIZE_T;
+typedef void *RAWPTR;
+
+typedef bool BOOL;
+
+#define TRUE (1)
+#define FALSE (0)
+
+typedef enum
+{
+        RESULT_OK,
+        RESULT_FAILED_TO_ALLOCATE,
+        RESULT_FAILED_TO_MAP, /* malloc but it returns a structure */
+        RESULT_FAILED_TO_UNALLOCATE,
+        RESULT_FAILED_TO_UMAP,
+        RESULT_INVALID_ARGUMENTS,
+        RESULT_PERMISSIONS_ERROR,
+        RESULT_HAS_CHILDREN,
+        RESULT_ALREADY_UNLINKED,
+        RESULT_CORRUPTED,
+        RESULT_CORRUPTED_SCHEDULER, /* the holy fuck error */
+        RESULT_OK_WITH_ERRORS,
+        RESULT_TODO, /* NOT implemented */
+        RESULT_ARGUMENT_DOES_NOT_EXIST,
+        RESULT_NO_OPERATION,
+        RESULT_BOUNDING_OFFSET_ERROR,
+        RESULT_BOUNDING_OVERFLOW,
+        RESULT_BOUNDING_UNDERFLOW,
+        RESULT_UNKNOWN_ERROR,
+} RESULT;
+
+extern uint32_t text_start, text_end;
+extern uint32_t rodata_start, rodata_end;
+extern uint32_t data_start, data_end;
+extern uint32_t bss_start, bss_end;
 
 #endif

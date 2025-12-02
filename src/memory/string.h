@@ -1,6 +1,8 @@
 #ifndef STRING_H
 #define STRING_H
 
+#include <utils.h>
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>

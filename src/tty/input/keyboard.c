@@ -1,4 +1,5 @@
 #include <tty/input/input.h>
+#include <tty/output/output.h>
 
 static volatile uint8_t character = 0;
 static volatile bool keyboardPressed = false;

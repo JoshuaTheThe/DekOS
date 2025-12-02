@@ -1,12 +1,11 @@
 #ifndef DELANGUE_H
 #define DELANGUE_H
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include <utils.h>
-#include <drivers/math.h>
-#include <drivers/iso9660.h>
+
+// #include <utils.h>
+// #include <drivers/math.h>
+// #include <drivers/iso9660.h>
 
 /*
 
@@ -17,8 +16,8 @@ END.
 */
 
 /* Keyboard, Mouse, TTY Output, that kind of thing */
-#include <tty/output/output.h>
-#include <tty/input/input.h>
+// #include <tty/output/output.h>
+// #include <tty/input/input.h>
 
 #define STACK_SIZE (int)(4096)
 #define IDENTIFIER_SIZE (int)(256)

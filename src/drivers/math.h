@@ -1,8 +1,7 @@
 #ifndef MATH_H
 #define MATH_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <utils.h>
 #define M_PI 3.14159265358979323846
 #define PI M_PI
 

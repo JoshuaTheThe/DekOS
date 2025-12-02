@@ -1,9 +1,14 @@
 #ifndef EX_H
 #define EX_H
 
+#include <utils.h>
 #include <programs/scheduler.h>
 #include <memory/alloc.h>
-#include <memory/string.h>
+
+// #include <resource/main.h>
+// #include <programs/scheduler.h>
+// #include <memory/alloc.h>
+// #include <memory/string.h>
 
 typedef unsigned int DWORD;
 

@@ -1,40 +1,53 @@
 #include <tty/render/render.h>
+#include <memory/string.h>
 
-static framebuffer_t framebuffer;
+RID rdFrameRID = INVALID_RID;
+KRNLRES *fbRes;
+SIZE szFrameDimensions[3];
 static font_t *font = NULL;
 static int scale = 1;
 
-void setscale(int new_scale)
+/**
+ * RenderSetDim - set the dimensions,
+ * the third being the scale.
+ */
+void RenderSetDim(int iNewDim[3], BOOL bAffected[3])
 {
-        scale = new_scale;
+        if (bAffected[0])
+                szFrameDimensions[0] = iNewDim[0];
+        if (bAffected[1])
+                szFrameDimensions[1] = iNewDim[1];
+        if (bAffected[2])
+                szFrameDimensions[2] = iNewDim[2];
 }
 
-int getscale(void)
+void RenderGetDim(int iDim[3])
 {
-        return scale;
+        int i;
+        for (i=0; i < 3; ++i)
+                iDim[i]=szFrameDimensions[i];
 }
 
-void setframebuffer(framebuffer_t fb)
+/**
+ * Set the current drawing font.
+ */
+void RenderSetFont(font_t *fNewFont)
 {
-        framebuffer = fb;
+        font = fNewFont;
 }
 
-framebuffer_t getframebuffer(void)
-{
-        return framebuffer;
-}
-
-void setfont(font_t *new_font)
-{
-        font = new_font;
-}
-
-font_t *getfont(void)
+/**
+ * Get the current drawing font.
+ */
+font_t *RenderGetFont(void)
 {
         return font;
 }
 
-uint32_t blend_colors(uint32_t bg, uint32_t fg, uint8_t intensity, uint8_t bpp)
+/**
+ * Blend between bg and fg
+*/
+uint32_t RenderBlend(uint32_t bg, uint32_t fg, uint8_t intensity, uint8_t bpp)
 {
         if (bpp == 1)
                 return intensity ? fg : bg;
@@ -72,23 +85,29 @@ uint32_t blend_colors(uint32_t bg, uint32_t fg, uint8_t intensity, uint8_t bpp)
         return (r << 16) | (g << 8) | b;
 }
 
-void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
+/**
+ * Display a character onto the frame buffer.
+ */
+void RenderChar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
 {
-        if (framebuffer.dimensions[1] == 0 || framebuffer.dimensions[0] == 0)
-                return;
-        if (!framebuffer.buffer || !font)
-                return;
-
-        if (px >= framebuffer.dimensions[0] || py >= framebuffer.dimensions[1])
-                return;
-
-        // Treat unknown characters as space (ASCII 32)
-        if (chr < font->first_char || chr > font->last_char)
+        if (!fbRes || !fbRes->Region.ptr)
         {
-                chr = 32; // Space character
+                return;
         }
 
-        // Calculate bytes per row based on BPP
+        if (szFrameDimensions[1] == 0 || szFrameDimensions[0] == 0)
+                return;
+        if (!font)
+                return;
+
+        if (px >= szFrameDimensions[0] || py >= szFrameDimensions[1])
+                return;
+
+        if (chr < font->first_char || chr > font->last_char)
+        {
+                chr = ' ';
+        }
+
         uint32_t pixels_per_byte = 8 / font->bpp;
         uint32_t bytes_per_row = (font->char_width + pixels_per_byte - 1) / pixels_per_byte;
         uint32_t bytes_per_char = bytes_per_row * font->char_height;
@@ -100,7 +119,7 @@ void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint3
         for (uint32_t y = 0; y < font->char_height * scale; y++)
         {
                 uint32_t current_y = py + y;
-                if (current_y >= framebuffer.dimensions[1])
+                if (current_y >= szFrameDimensions[1])
                         continue;
 
                 uint32_t src_y = y / scale;
@@ -109,12 +128,11 @@ void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint3
                 for (uint32_t x = 0; x < font->char_width * scale; x++)
                 {
                         uint32_t current_x = px + x;
-                        if (current_x >= framebuffer.dimensions[0])
+                        if (current_x >= szFrameDimensions[0])
                                 continue;
 
                         uint32_t src_x = x / scale;
 
-                        // Get the pixel value based on BPP
                         uint32_t byte_index = src_x / pixels_per_byte;
                         uint32_t bit_offset = (pixels_per_byte - 1 - (src_x % pixels_per_byte)) * font->bpp;
                         uint8_t bitmap_byte = font->font_bitmap[row_offset + byte_index];
@@ -122,27 +140,26 @@ void displaychar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint3
 
                         if (font->bpp == 1)
                         {
-                                // Monochrome: 0=bg, 1=fg
                                 if ((pixel_value && skip_fg) || (!pixel_value && skip_bg))
                                         continue;
-                                framebuffer.buffer[current_y * framebuffer.dimensions[0] + current_x] =
-                                    pixel_value ? fg : bg;
+                                ((uint32_t *)fbRes->Region.ptr)[
+                                        current_y * szFrameDimensions[0] + current_x
+                                ] = pixel_value ? fg : bg;
                         }
                         else
                         {
-                                // Grayscale: blend or use gradient
                                 if (pixel_value == 0 && skip_bg)
                                         continue;
-
-                                // Simple implementation: use fg color with alpha based on pixel value
-                                uint32_t color = blend_colors(bg, fg, pixel_value, font->bpp);
-                                framebuffer.buffer[current_y * framebuffer.dimensions[0] + current_x] = color;
+                                uint32_t color = RenderBlend(bg, fg, pixel_value, font->bpp);
+                                ((uint32_t *)fbRes->Region.ptr)[
+                                        current_y * szFrameDimensions[0] + current_x
+                                ] = color;
                         }
                 }
         }
 }
 
-void print(const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
+void RenderPrint(const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
 {
         uint32_t i;
 
@@ -151,31 +168,29 @@ void print(const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uin
                 return;
         while (text[i])
         {
-                displaychar(text[i], px + (i * font->char_width * scale), py, bg, fg);
+                RenderChar(text[i], px + (i * font->char_width * scale), py, bg, fg);
                 i += 1;
         }
 }
 
-void center(const char *text, uint32_t *px, uint32_t *py)
+void RenderCenter(const char *text, uint32_t *px, uint32_t *py)
 {
-        framebuffer_t frame = getframebuffer();
         int length = strnlen(text, 1000);
-        *px = frame.dimensions[0] / 2 - length / 2;
-        *py = frame.dimensions[1] / 2;
+        *px = szFrameDimensions[0] / 2 - length / 2;
+        *py = szFrameDimensions[1] / 2;
 }
 
-void align(const char *text, uint32_t *px, uint32_t *py, int marginX, int marginY,
+void RenderAlign(const char *text, uint32_t *px, uint32_t *py, int marginX, int marginY,
            alignType_t alignX, alignType_t alignY)
 {
         if (!text || !px || !py)
                 return;
 
-        const framebuffer_t frame = getframebuffer();
         const size_t len = strnlen(text, MAX_TEXT_LENGTH);
-        const uint32_t width = frame.dimensions[0];
-        const uint32_t height = frame.dimensions[1];
+        const uint32_t width = szFrameDimensions[0];
+        const uint32_t height = szFrameDimensions[1];
 
-        font_t *font = getfont();
+        font_t *font = RenderGetFont();
         const uint32_t text_width = len * font->char_width * scale;
         const uint32_t text_height = font->char_height * scale;
 

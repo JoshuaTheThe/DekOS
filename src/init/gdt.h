@@ -1,12 +1,10 @@
 #ifndef GDT_H
 #define GDT_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <memory/string.h>
-#include <io.h>
+#include <utils.h>
+//#include <memory/string.h>
+//#include <io.h>
 
-#define MAX_PROCS 4
 #define GDT_SIZE 4
 
 typedef struct __attribute__((packed))

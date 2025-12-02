@@ -1,15 +1,11 @@
 #ifndef SCHED_H
 #define SCHED_H
 
-#include <stddef.h>
-#include <memory/alloc.h>
-#include <memory/string.h>
-#include <tty/output/output.h>
+#include <utils.h>
 #include <io.h>
-#include <drivers/math.h>
-#include <init/gdt.h>
 
 #define PROC_NAME_LEN 32
+#define MAX_PROCS 512
 
 #define SCHED_EAX *((uint32_t *)(0x1000 + (4 * 0)))
 #define SCHED_EBX *((uint32_t *)(0x1000 + (4 * 1)))
@@ -55,6 +51,8 @@ typedef struct
         uint32_t num : 31;
 } schedPid_t;
 
+typedef schedPid_t PROCID;
+
 typedef struct
 {
         uint32_t eax, ebx, ecx, edx, esp, ebp, esi, edi, eip, cs, ds, es, ss, fs, gs, flags;
@@ -66,7 +64,6 @@ typedef struct
         uint8_t name[PROC_NAME_LEN];
         uint32_t stack_size;
         uint8_t *program, *stack;
-        uint8_t tty[TTY_H][TTY_W];
         schedRegs_t regs;
         schedPid_t parent;
         uint32_t x, y;
@@ -75,6 +72,8 @@ typedef struct
         bool delete;
         bool debugger_is_present;
 } schedProcess_t;
+
+typedef schedProcess_t EINSTANCE;
 
 void schedNext(void);
 int schedFindInvalidProcess(void);
@@ -92,5 +91,7 @@ void schedLoadContext(void);
 bool schedSwitch(uint32_t npid);
 void schedSaveContext(void);
 void schedNextContext(void);
+schedPid_t schedGetKernelPid(void);
+bool schedValidatePid(schedPid_t prId);
 
 #endif

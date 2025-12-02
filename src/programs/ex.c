@@ -1,6 +1,9 @@
 /* simple custom executable format (EX) */
 
 #include <programs/ex.h>
+#include <tty/output/output.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
 
 static const char Sign[8] = "EXENNEA";
 

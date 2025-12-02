@@ -1,13 +1,9 @@
 #ifndef ISO9660_H
 #define ISO9660_H
 
-#include <stdint.h>
-#include <drivers/disk.h>
-#include <memory/alloc.h>
-#include <memory/string.h>
-#include <drivers/math.h>
 #include <utils.h>
-#include <tty/output/output.h>
+#include <drivers/disk.h>
+//#include <tty/output/output.h>
 
 #define ISO9660_IDEN CD001
 #define ISO9660_FIRST_VOLUME_DESC 0x10

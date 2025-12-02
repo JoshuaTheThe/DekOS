@@ -1,5 +1,8 @@
 
 #include <programs/delangue.h>
+#include <tty/output/output.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
 
 static char keywords[][MAX_KEYWORD_SIZE] = {
     "VAR",
@@ -245,6 +248,7 @@ void delangueUnary(delangueState_t *state)
         {
                 /* e.g. -1 */
                 delangueToken_t op = state->current_token;
+                (void)op;
                 delangueNext(state);
                 delangueUnary(state);
 

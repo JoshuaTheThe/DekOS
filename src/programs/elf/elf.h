@@ -1,15 +1,13 @@
 #ifndef ELF_H
 #define ELF_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <utils.h>
-#include <memory/alloc.h>
-#include <memory/string.h>
-#include <tty/output/output.h>
 #include <programs/scheduler.h>
+#include <memory/alloc.h>
 
-typedef uint32_t size_t;
+// #include <utils.h>
+// #include <memory/string.h>
+// #include <tty/output/output.h>
 
 #define EM_386 (3)
 #define EV_CURRENT (1)

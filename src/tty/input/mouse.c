@@ -2,6 +2,8 @@
 #include <tty/render/render.h>
 #include <drivers/math.h>
 
+extern KRNLRES *fbRes;
+
 static unsigned char mouse_icon = 0;
 static int prev_save_x = -1, prev_save_y = -1;
 static uint32_t cursor_backbuffer[CURSOR_WIDTH * CURSOR_HEIGHT];
@@ -19,6 +21,13 @@ void mouseSetIcon(unsigned char chr)
 
 void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
 {
+        int iDim[3];
+        if (!fbRes || !fbRes->Region.ptr)
+        {
+                return;
+        }
+        RenderGetDim(iDim);
+
         ps2_mouse_packet_t packet;
 
         while (ps2_read_mouse_packet(&packet))
@@ -35,18 +44,17 @@ void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 *mx += delta_x;
                 *my -= delta_y;
 
-                framebuffer_t framebuffer = getframebuffer();
-                *mx = *mx < 0 ? 0 : (*mx >= (int)framebuffer.dimensions[0] ? (int)framebuffer.dimensions[0] - 1 : *mx);
-                *my = *my < 0 ? 0 : (*my >= (int)framebuffer.dimensions[1] ? (int)framebuffer.dimensions[1] - 1 : *my);
+                *mx = *mx < 0 ? 0 : (*mx >= (int)iDim[0] ? (int)iDim[0] - 1 : *mx);
+                *my = *my < 0 ? 0 : (*my >= (int)iDim[1] ? (int)iDim[1] - 1 : *my);
 
                 mouseSavePixels(*mx, *my);
                 prev_save_x = *mx;
                 prev_save_y = *my;
                 cursor_saved = 1;
 
-                setfont(&cursors);
-                displaychar(mouse_icon, *mx, *my, 0x00000000, 0xFFFFFFFF);
-                setfont(&font_8x8);
+                RenderSetFont(&cursors);
+                RenderChar(mouse_icon, *mx, *my, 0x00000000, 0xFFFFFFFF);
+                RenderSetFont(&font_8x8);
                 *prev_mx = *mx;
                 *prev_my = *my;
 
@@ -57,16 +65,22 @@ void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
 
 void mouseSavePixels(uint32_t x, uint32_t y)
 {
-        framebuffer_t framebuffer = getframebuffer();
+        int iDim[3];
+        if (!fbRes || !fbRes->Region.ptr)
+        {
+                return;
+        }
+
+        RenderGetDim(iDim);
         uint32_t start_x = x;
         uint32_t start_y = y;
-        uint32_t end_x = minu(x + CURSOR_WIDTH, framebuffer.dimensions[0]);
-        uint32_t end_y = minu(y + CURSOR_HEIGHT, framebuffer.dimensions[1]);
+        uint32_t end_x = minu(x + CURSOR_WIDTH, iDim[0]);
+        uint32_t end_y = minu(y + CURSOR_HEIGHT, iDim[1]);
         size_t actual_width = end_x - start_x;
         size_t actual_height = end_y - start_y;
 
-        uint32_t *fb = framebuffer.buffer;
-        size_t pitch_in_pixels = framebuffer.dimensions[0]; // Assuming framebuffer is width * height array
+        uint32_t *fb = fbRes->Region.ptr;
+        size_t pitch_in_pixels = iDim[0];
 
         for (size_t j = 0; j < actual_height; j++)
         {
@@ -81,16 +95,22 @@ void mouseSavePixels(uint32_t x, uint32_t y)
 
 void mouseRestorePixels(uint32_t x, uint32_t y)
 {
-        framebuffer_t framebuffer = getframebuffer();
+        int iDim[3];
+        if (!fbRes || !fbRes->Region.ptr)
+        {
+                return;
+        }
+
+        RenderGetDim(iDim);
         uint32_t start_x = x;
         uint32_t start_y = y;
-        uint32_t end_x = minu(x + CURSOR_WIDTH, framebuffer.dimensions[0]);
-        uint32_t end_y = minu(y + CURSOR_HEIGHT, framebuffer.dimensions[1]);
+        uint32_t end_x = minu(x + CURSOR_WIDTH, iDim[0]);
+        uint32_t end_y = minu(y + CURSOR_HEIGHT, iDim[1]);
         size_t actual_width = end_x - start_x;
         size_t actual_height = end_y - start_y;
 
-        uint32_t *fb = framebuffer.buffer;
-        size_t pitch_in_pixels = framebuffer.dimensions[0];
+        uint32_t *fb = fbRes->Region.ptr;
+        size_t pitch_in_pixels = iDim[0];
 
         for (size_t j = 0; j < actual_height; j++)
         {

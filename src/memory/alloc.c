@@ -1,4 +1,5 @@
 #include <memory/alloc.h>
+#include <memory/string.h>
 
 static memory_information_t minfo;
 

@@ -1,6 +1,12 @@
 #include <isr/system.h>
 #include <programs/scheduler.h>
 #include <tty/input/input.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
+#include <tty/output/output.h>
+#include <tty/render/fonts.h>
+#include <tty/render/render.h>
+#include <drivers/math.h>
 
 bool tty_needs_flushing=false;
 extern schedProcess_t processes[];
@@ -229,11 +235,11 @@ uint32_t sysReply(void)
         case INT80_ALLOC:
                 if (arg1 > 0 && arg1 < 1024*1024)
                 {
-                        return malloc(arg1);
+                        return (uint32_t)malloc(arg1);
                 }
-                return NULL;
+                return 0;
         case INT80_UNALLOC:
-                free(arg1);
+                free((void*)arg1);
                 return 0;
         default:
                 return -1;

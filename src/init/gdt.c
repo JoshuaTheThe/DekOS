@@ -1,4 +1,5 @@
 #include <init/gdt.h>
+#include <memory/string.h>
 
 static gdtTssEntry_t tss;
 static gdtEntry_t gdt[GDT_SIZE];

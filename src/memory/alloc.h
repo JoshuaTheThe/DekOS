@@ -1,11 +1,13 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <memory/string.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
 #include <utils.h>
+
+// #include <memory/string.h>
+// #include <stdint.h>
+// #include <stdbool.h>
+// #include <stddef.h>
+// #include <utils.h>
 
 #define alloc_alignment (uint32_t)(16)
 #define alloc_align(size) (((size) + (alloc_alignment - 1)) & ~(alloc_alignment - 1))
@@ -23,6 +25,8 @@ typedef struct
         void *ptr;
         size_t size;
 } region_t;
+
+typedef region_t HREGION;
 
 // Heap boundaries (set by linker script)
 extern uint8_t _heap_start[];

@@ -1,4 +1,7 @@
 #include <programs/elf/elf.h>
+#include <tty/output/output.h>
+#include <memory/alloc.h>
+#include <memory/string.h>
 
 /**
  * elfCheckFile - check whether it is an elf file
@@ -55,13 +58,13 @@ void *elfLoadRel(elf32EHeader_t *hdr)
         if (result == ELF_ERROR)
         {
                 //printf("STAGE ONE FAILED\n");
-                return -1;
+                return (void*)-1;
         }
         result = elfLoadStageTwo(hdr);
         if (result == ELF_ERROR)
         {
                 //printf("STAGE TWO FAILED\n");
-                return -1;
+                return (void*)-1;
         }
         //printf("HEADER ENTRY: %x\n", hdr->entry);
         return (void *)hdr->entry;
@@ -131,6 +134,7 @@ char *elfLookupString(elf32EHeader_t *hdr, int offset)
  */
 void *elfLookupSymbol(const char * const name)
 {
+        (void)name;
         return NULL;
 }       /* end of elfLookupSymbol */
 
@@ -139,6 +143,8 @@ void *elfLookupSymbol(const char * const name)
  */
 int elfGetSymbolExternal(elf32EHeader_t *hdr, int table, uint32_t idx, const elf32Symbol_t * const symbol, const elf32SectionHeader_t * const header)
 {
+        (void)table;
+        (void)idx;
         const elf32SectionHeader_t * const strtab = elfSection(hdr, header->sh_link);
         if (!strtab)
                 return ELF_ERROR;
@@ -312,7 +318,7 @@ schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself)
 
         memcpy(program_mem, file, file_size);
         void *entry_point = elfLoadFile(program_mem);
-        if (entry_point == -1)
+        if (entry_point == (void*)-1)
         {
                 free(program_mem);
                 //printf("FAILED TO GET ENTRY POINT\n");

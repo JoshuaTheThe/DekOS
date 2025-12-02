@@ -1,4 +1,5 @@
 #include <drivers/disk.h>
+#include <tty/output/output.h>
 
 static void ataWait(const uint16_t p)
 {

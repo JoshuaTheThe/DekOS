@@ -12,7 +12,7 @@ void pitInit(uint32_t targetFreq)
 
 void pitDelay(uint32_t ticks)
 {
-        int start = tick_counter;
+        uint32_t start = tick_counter;
         while ((tick_counter - start) < ticks)
         { asm("pause"); }
 }

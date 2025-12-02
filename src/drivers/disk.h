@@ -1,10 +1,8 @@
 #ifndef DISK_H
 #define DISK_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <utils.h>
 #include <io.h>
-#include <tty/output/output.h>
 
 #define DATA 0
 #define ERROR_R 1

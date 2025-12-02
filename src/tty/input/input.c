@@ -1,4 +1,5 @@
 #include <tty/input/input.h>
+#include <tty/output/output.h>
 
 extern bool tty_needs_flushing;
 

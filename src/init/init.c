@@ -24,11 +24,17 @@
 #include <isr/system.h>
 
 #include <pci/pci.h>
+#include <resource/main.h>
 
 #include <symbols.h>
 
+#include <tty/render/render.h>
+#include <tty/render/fonts.h>
+
 extern schedProcess_t processes[MAX_PROCS];
 extern bool tty_needs_flushing;
+extern RID rdFrameRID;
+extern KRNLRES *fbRes;
 
 void deleteTask(size_t i)
 {
@@ -45,15 +51,10 @@ void deleteTask(size_t i)
         memset(&processes[i], 0, sizeof(schedProcess_t));
 }
 
-#define BUFFER_SIZE 8192
-#define SAMPLE_RATE 22050
-
 /* Post-Init kernel stuff, e.g. managing procs, and communication */
-void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
+void kernelTask(multiboot_info_t *mbi)
 {
-        int mouse_x = frame->dimensions[0] / 2, mouse_y = frame->dimensions[1] / 2, prev_x = -1, prev_y = -1;
-        uint8_t mouse_buttons = 0;
-
+        (void)mbi;
         size_t stack_size = 8192;
         uint8_t *stack = malloc(stack_size);
         cli();
@@ -61,9 +62,9 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
         printf("Created proc with id : %d\n", pid.num);
         sti();
 
-        //speakerPlay(300);
-        //pitDelay(10);
-        //speakerStop();
+        // speakerPlay(300);
+        // pitDelay(10);
+        // speakerStop();
 
         while (true)
         {
@@ -90,7 +91,6 @@ void kernelTask(framebuffer_t *frame, multiboot_info_t *mbi)
 void main(uint32_t magic, uint32_t mbinfo_ptr)
 {
         multiboot_info_t *mbi;
-        framebuffer_t framebuffer;
 
         cli();
         while (magic != 0x2BADB002)
@@ -99,17 +99,26 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         }
 
         mbi = (multiboot_info_t *)mbinfo_ptr;
-        framebuffer.buffer = (uint32_t *)mbi->framebuffer_addr;
-        framebuffer.dimensions[0] = mbi->framebuffer_width;
-        framebuffer.dimensions[1] = mbi->framebuffer_height;
-        setframebuffer(framebuffer);
-        setfont(&cascadia);
+        // setframebuffer(framebuffer);
+        // setfont(&cascadia); /* bitmap */
+        RenderSetFont(&cascadia);
 
         gdtInit();
         idtInit();
         memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
         pitInit(250);
         schedInit();
+
+        cli();
+        KRNLRES framebuffres={0};
+        fbRes = &framebuffres;
+        fbRes->Used = TRUE;
+        fbRes->Region.ptr = (uint32_t*)mbi->framebuffer_addr;
+        fbRes->Region.size = mbi->framebuffer_width * mbi->framebuffer_height * (mbi->framebuffer_bpp / 8);
+
+        int nDim[3] = {mbi->framebuffer_width, mbi->framebuffer_height, 1};
+        BOOL aDim[3] = {TRUE, TRUE, TRUE};
+        RenderSetDim(nDim, aDim);
 
         if (!iso9660Init())
         {
@@ -170,7 +179,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         //	printf("FUNCTION: %s, %x\n", kernel_symbols[i].name, kernel_symbols[i].address);
         // }
 
-        kernelTask(&framebuffer, mbi);
+        kernelTask(mbi);
         cli();
         while (1)
         {
