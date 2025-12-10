@@ -12,6 +12,7 @@
 #define WINDOW_POSITION_DEFAULT_Y (64)
 
 #define MAX_TITLE_LENGTH (32)
+#define MAX_SEGMENTS (1024)
 
 typedef struct
 {
@@ -19,6 +20,12 @@ typedef struct
         DWORD W,H;
         char  Title[MAX_TITLE_LENGTH];
 } WINDOW;
+
+typedef struct
+{
+        DWORD X, Y, EX, EY;
+        BOOL Dirty;
+} SEGMENT;
 
 KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H);
 void WMIterate(void);

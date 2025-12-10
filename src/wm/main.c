@@ -4,6 +4,26 @@
 extern KRNLRES grResources;
 KRNLRES *Windows;
 
+SEGMENT Segments[MAX_SEGMENTS];
+
+/**
+ * Find the segment for a given XY Position.
+ */
+SEGMENT *FindSegment(DWORD X, DWORD Y)
+{
+        int i;
+        for (i=0; i < MAX_SEGMENTS; ++i)
+        {
+                if ((X >= Segments[i].X && X < Segments[i].EX) &&
+                    (Y >= Segments[i].Y && Y < Segments[i].EY))
+                {
+                        return &Segments[i];
+                }
+        }
+
+        return NULL;
+}
+
 /**
  * WMCreateWindow, just a helper constructor function
  */
@@ -183,6 +203,7 @@ void WMMain(void)
 PROCID WMInit(void)
 {
         uint8_t *stack = malloc(8192);
+        memset(Segments, 0, sizeof(Segments));
         Windows = ResourceCreateK(&grResources, RESOURCE_TYPE_RAW, 0, schedGetKernelPid(), NULL);
         return schedCreateProcess("wm", NULL, 0, (uint8_t *)WMMain, 0, stack, 8192, schedGetKernelPid());
 }
