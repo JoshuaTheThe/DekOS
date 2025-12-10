@@ -2,9 +2,22 @@
 #include <tty/output/output.h>
 
 extern KRNLRES grResources;
+extern DWORD mx, my, mbuttons;
+
 KRNLRES *Windows;
 
 SEGMENT Segments[MAX_SEGMENTS];
+
+DWORD MovementX, MovementY;
+
+DWORD Thickness = 1;
+DWORD Padding = 4;
+DWORD TextPaddingY = 2;
+
+DWORD TitleBarHeight(WINDOW *Window)
+{
+        return TextPaddingY * 2 + font_8x8.char_height + Thickness;
+}
 
 /**
  * Find the segment for a given XY Position.
@@ -12,7 +25,7 @@ SEGMENT Segments[MAX_SEGMENTS];
 SEGMENT *FindSegment(DWORD X, DWORD Y)
 {
         int i;
-        for (i=0; i < MAX_SEGMENTS; ++i)
+        for (i = 0; i < MAX_SEGMENTS; ++i)
         {
                 if ((X >= Segments[i].X && X < Segments[i].EX) &&
                     (Y >= Segments[i].Y && Y < Segments[i].EY))
@@ -38,21 +51,28 @@ KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H)
                 return (KRNLRES *)NULL;
         ((WINDOW *)Window->Region.ptr)->X = X;
         ((WINDOW *)Window->Region.ptr)->Y = Y;
+        ((WINDOW *)Window->Region.ptr)->PX = X;
+        ((WINDOW *)Window->Region.ptr)->PY = Y;
         ((WINDOW *)Window->Region.ptr)->W = W;
         ((WINDOW *)Window->Region.ptr)->H = H;
         strncpy(((WINDOW *)Window->Region.ptr)->Title, Title, MAX_TITLE_LENGTH);
-        ((WINDOW *)Window->Region.ptr)->Title[MAX_TITLE_LENGTH-1] = 0;
+        ((WINDOW *)Window->Region.ptr)->Title[MAX_TITLE_LENGTH - 1] = 0;
+        ((WINDOW *)Window->Region.ptr)->RequiresRedraw = TRUE;
+        ((WINDOW *)Window->Region.ptr)->CanMove = TRUE;
+        ((WINDOW *)Window->Region.ptr)->START_X = 0;
+        ((WINDOW *)Window->Region.ptr)->START_Y = 0;
+        ((WINDOW *)Window->Region.ptr)->InAction = FALSE;
         return Window;
 }
 
 void WMBackgroundPattern(DWORD X, DWORD Y)
 {
         static RGBA LightB = {0};
-        static RGBA DarkB  = {0};
+        static RGBA DarkB = {0};
         if (LightB.A == 0)
         {
                 LightB = ColourRGB(0x00, 0x00, 0xFF);
-                DarkB  = ColourRGB(0x00, 0x00, 0x7F);
+                DarkB = ColourRGB(0x00, 0x00, 0x7F);
         }
         GDISetDither(X, Y, LightB, DarkB, X / 10);
         SetPixel(X, Y, GetColour());
@@ -85,11 +105,11 @@ void WMDrawBackground(void)
 void WMTitleBar(DWORD X, DWORD Y)
 {
         static RGBA LightB = {0};
-        static RGBA DarkB  = {0};
+        static RGBA DarkB = {0};
         if (LightB.A == 0)
         {
                 LightB = ColourRGB(0x40, 0x00, 0xFF);
-                DarkB  = ColourRGB(0x40, 0x00, 0x7F);
+                DarkB = ColourRGB(0x40, 0x00, 0x7F);
         }
         GDISetDither(X, Y, LightB, DarkB, X / 2);
 }
@@ -112,10 +132,17 @@ void WMDraw(KRNLRES *P)
                 printf("Window Information does not exist (??)\n");
                 return;
         }
+        if (!Window->RequiresRedraw)
+                return;
 
-        DWORD Thickness = 1;
-        DWORD Padding = 4;
-        DWORD TextPaddingY = 2;
+        /**
+         * Overwrite Previous
+         */
+        for (int Yo = 0; Yo < Window->H; ++Yo)
+                for (int Xo = 0; Xo < Window->W; ++Xo)
+                {
+                        WMBackgroundPattern(Xo + Window->PX, Yo + Window->PY);
+                }
 
         /**
          * Border
@@ -123,26 +150,26 @@ void WMDraw(KRNLRES *P)
         SetColour(ColourRGB(0xC0, 0xC0, 0xC0));
         GDIDrawRect(Window->X, Window->Y, Window->W, Window->H);
         SetColour(ColourRGB(0xF0, 0xF0, 0xF0));
-        GDIDrawRect(Window->X+Padding+Thickness, Window->Y+Padding+Thickness, Window->W-(Padding+Thickness)*2, Window->H-(Padding+Thickness)*2);
+        GDIDrawRect(Window->X + Padding + Thickness, Window->Y + Padding + Thickness, Window->W - (Padding + Thickness) * 2, Window->H - (Padding + Thickness) * 2);
         SetColour(ColourRGB(0, 0, 0));
         /* Outer */
         /* Top */
         GDIDrawRect(Window->X, Window->Y, Window->W, Thickness);
         /* Bottom */
-        GDIDrawRect(Window->X, Window->Y+Window->H, Window->W, Thickness);
+        GDIDrawRect(Window->X, Window->Y + Window->H - Thickness, Window->W, Thickness);
         /* Left */
         GDIDrawRect(Window->X, Window->Y, Thickness, Window->H);
         /* Right */
-        GDIDrawRect(Window->X+Window->W, Window->Y, Thickness, Window->H + Thickness);
+        GDIDrawRect(Window->X + Window->W - Thickness, Window->Y, Thickness, Window->H);
         /* Inner */
         /* Top */
-        GDIDrawRect(Window->X + Padding, Window->Y + Padding, Window->W - Padding*2, Thickness);
+        GDIDrawRect(Window->X + Padding, Window->Y + Padding, Window->W - Padding * 2, Thickness);
         /* Bottom */
-        GDIDrawRect(Window->X + Padding, Window->Y+Window->H-Padding, Window->W - Padding*2, Thickness);
+        GDIDrawRect(Window->X + Padding, Window->Y + Window->H - Padding - Thickness, Window->W - Padding * 2, Thickness);
         /* Left */
-        GDIDrawRect(Window->X + Padding, Window->Y + Padding, Thickness, Window->H - Padding*2);
+        GDIDrawRect(Window->X + Padding, Window->Y + Padding, Thickness, Window->H - Padding * 2);
         /* Right */
-        GDIDrawRect(Window->X+Window->W - Padding, Window->Y + Padding, Thickness, Window->H + Thickness - Padding*2);
+        GDIDrawRect(Window->X + Window->W - Padding, Window->Y + Padding, Thickness, Window->H - Padding * 2);
         /**
          * TitleBar And Icons (e.g. Close)
          */
@@ -151,17 +178,62 @@ void WMDraw(KRNLRES *P)
          */
         font_t *font = RenderGetFont();
         RenderSetFont(&font_8x8);
-        DWORD X = (Window->W-strnlen(Window->Title, MAX_TEXT_LENGTH)*font_8x8.char_width-(Thickness+Padding))/2;
-        DWORD Y = Thickness+Padding+TextPaddingY;
+        DWORD X = (Window->W - strnlen(Window->Title, MAX_TEXT_LENGTH) * font_8x8.char_width - (Thickness + Padding)) / 2;
+        DWORD Y = Thickness + Padding + TextPaddingY;
         SetColourFn(WMTitleBar);
-        GDIDrawRect(Window->X + Padding, Window->Y + Thickness+Padding, Window->W - Padding*2, TextPaddingY*2+font_8x8.char_height);
+        GDIDrawRect(Window->X + Padding, Window->Y + Thickness + Padding, Window->W - Padding * 2, TitleBarHeight(Window));
         SetColour(ColourRGB(0, 0, 0));
-        RenderPrint(Window->Title, X+Window->X, Y+Window->Y, rgb(0xf0, 0xf0, 0xf0), rgb(0, 0, 0));
+        RenderPrint(Window->Title, X + Window->X, Y + Window->Y, rgb(0xf0, 0xf0, 0xf0), rgb(0, 0, 0));
         RenderSetFont(font);
-        GDIDrawRect(Window->X + Padding, Window->Y + Thickness+Padding+TextPaddingY*2+font_8x8.char_height, Window->W - Padding*2, Thickness);
+        GDIDrawRect(Window->X + Padding, Window->Y + Thickness + Padding + TextPaddingY * 2 + font_8x8.char_height, Window->W - Padding * 2, Thickness);
         /**
          * ToolBar
          */
+
+        /* Finally State that we do not need to redraw */
+        Window->RequiresRedraw = FALSE;
+        Window->CanMove = TRUE;
+}
+
+/**
+ * The several Window actions, e.g. move
+ */
+void WMAction(KRNLRES *P)
+{
+        if (!P || !P->Region.ptr)
+                return;
+        if (P->Type != RESOURCE_TYPE_WINDOW)
+        {
+                printf("Tried to render non-window as window\n");
+                return;
+        }
+        WINDOW *Window = (WINDOW *)P->Region.ptr;
+        if (!Window)
+        {
+                printf("Window Information does not exist (??)\n");
+                return;
+        }
+        if (mbuttons & MOUSE_LEFT_BUTTON && !Window->InAction)
+        {
+                Window->START_X = mx;
+                Window->START_Y = my;
+                Window->InAction = TRUE;
+        }
+        if (Window->InAction && !(mbuttons & MOUSE_LEFT_BUTTON))
+        {
+                Window->InAction = FALSE;
+                DWORD TH = TitleBarHeight(Window);
+                int PosX = Window->START_X - Window->X;
+                int PosY = Window->START_Y - Window->Y;
+                BOOL InTitleBar = (PosX > 0 && PosX < Window->W) && (PosY > 0 && PosY <= TH);
+                if (InTitleBar)
+                {
+                        WMMove(Window, mx, my);
+                }
+                /**
+                 * Otherwise, Invoke user, let them figure it out.
+                 */
+        }
 }
 
 /**
@@ -174,10 +246,24 @@ void WMIterate(void)
                 return;
         do
         {
-                printf("Window, of (%d,%d,%d,%d) At %x\n", ((WINDOW *)P->Region.ptr)->X, ((WINDOW *)P->Region.ptr)->Y, ((WINDOW *)P->Region.ptr)->W, ((WINDOW *)P->Region.ptr)->H, P);
                 WMDraw(P);
-        }
-        while (ResourceNextOfType(&P, RESOURCE_TYPE_WINDOW));
+                WMAction(P);
+        } while (ResourceNextOfType(&P, RESOURCE_TYPE_WINDOW));
+}
+
+/**
+ * Move A Window.
+ */
+void WMMove(WINDOW *Window, DWORD X, DWORD Y)
+{
+        if (!Window->CanMove)
+                return;
+        Window->PX = Window->X;
+        Window->PY = Window->Y;
+        Window->X = X;
+        Window->Y = Y;
+        Window->RequiresRedraw = TRUE;
+        Window->CanMove = FALSE;
 }
 
 /**
@@ -187,13 +273,14 @@ void WMMain(void)
 {
         while (!Windows)
                 ;
+        static BOOL Saved = FALSE;
         WMDrawBackground();
-        WMIterate();
         while (true)
         {
                 /**
                  * WMTick()
                  */
+                WMIterate();
         }
 }
 

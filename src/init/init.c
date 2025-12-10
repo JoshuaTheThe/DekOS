@@ -38,6 +38,9 @@ extern bool tty_needs_flushing;
 extern RID rdFrameRID;
 extern KRNLRES *fbRes;
 
+KRNLRES *KernelWindow = NULL;
+volatile DWORD mx = 0, my = 0, pmx = 0, pmy = 0, mbuttons = 0;
+
 void deleteTask(size_t i)
 {
         if (processes[i].stack)
@@ -57,7 +60,6 @@ void deleteTask(size_t i)
 void kernelTask(multiboot_info_t *mbi)
 {
         (void)mbi;
-        DWORD mx = 0, my = 0, pmx = 0, pmy = 0, mbuttons = 0;
         size_t stack_size = 8192;
         uint8_t *stack = malloc(stack_size);
         cli();
@@ -71,7 +73,7 @@ void kernelTask(multiboot_info_t *mbi)
         PROCID WMId = WMInit();
         RESULT Result = ResourceHandoverK(fbRes, WMId);
         printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
-        WMCreateWindow("Kernel Window", 10, 10, 256, 128);
+        KernelWindow = WMCreateWindow("Kernel Window", 10, 10, 256, 128);
         sti();
 
         while (true)

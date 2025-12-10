@@ -4,8 +4,8 @@
 
 extern KRNLRES *fbRes;
 
-static unsigned char mouse_icon = 0;
-static int prev_save_x = -1, prev_save_y = -1;
+unsigned char mouse_icon = 0;
+int prev_save_x = -1, prev_save_y = -1;
 static uint32_t cursor_backbuffer[CURSOR_WIDTH * CURSOR_HEIGHT];
 static bool cursor_saved = false;
 
