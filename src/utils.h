@@ -104,4 +104,8 @@ extern uint32_t rodata_start, rodata_end;
 extern uint32_t data_start, data_end;
 extern uint32_t bss_start, bss_end;
 
+typedef uint32_t DWORD;
+typedef uint16_t WORD;
+typedef uint8_t  BYTE;
+
 #endif

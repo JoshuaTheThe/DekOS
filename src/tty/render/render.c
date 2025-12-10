@@ -19,6 +19,7 @@ void RenderSetDim(int iNewDim[3], BOOL bAffected[3])
                 szFrameDimensions[1] = iNewDim[1];
         if (bAffected[2])
                 szFrameDimensions[2] = iNewDim[2];
+        scale=szFrameDimensions[2];
 }
 
 void RenderGetDim(int iDim[3])

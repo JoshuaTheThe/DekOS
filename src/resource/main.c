@@ -220,7 +220,7 @@ RESULT ResourceHandoverK(KRNLRES *rpResource, PROCID dest)
         /**
          * Integrity Check.
          */
-        if ((uint8_t *)rpResource->Region.ptr > _heap_end)
+        if (((uint8_t *)rpResource->Region.ptr > _heap_end) && rpResource->Type != RESOURCE_TYPE_RAW_FAR)
         {
                 return RESULT_CORRUPTED;
         }
@@ -453,7 +453,7 @@ KRNLRES *ResourceCreateK(KRNLRES *rpParentResource,
          * Validate input
          */
         if (!schedValidatePid(idOwner) ||
-            !ResourceIsValidType(rtType) || !szBytes)
+            !ResourceIsValidType(rtType))
         {
                 *result = RESULT_INVALID_ARGUMENTS;
                 return (KRNLRES *)NULL;
@@ -462,12 +462,15 @@ KRNLRES *ResourceCreateK(KRNLRES *rpParentResource,
         /**
          * Memory allocation for data and null check.
          */
+        if (!szBytes)
+                goto AfterAllocation;
         rDataRegion = m_map(szBytes);
         if (!rDataRegion.ptr || !rDataRegion.size)
         {
                 *result = RESULT_FAILED_TO_MAP;
                 return (KRNLRES *)NULL;
         }
+AfterAllocation:
 
         /**
          * Memory allocation for body and null check.
@@ -568,4 +571,21 @@ SIZE ResourceSize(RID rdResource)
 {
         KRNLRES *rp = ResourceGetFromRID(rdResource);
         return rp->Region.size;
+}
+
+/**
+ * ResourceNextOfType - return the pointer to the next resource of a given type,
+ * Does not check child resources.
+ */
+KRNLRES *ResourceNextOfType(KRNLRES **P, RESTYPE Type)
+{
+        if(!P||!*P||Type>=RESOURCE_TYPE_COUNT)        
+                return(NULL);
+        do
+        {
+                (*P)=(*P)->NextSibling;
+        }
+        while ((*P)&&(*P)->Type!=Type);
+
+        return(*P);
 }

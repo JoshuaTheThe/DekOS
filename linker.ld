@@ -48,13 +48,13 @@ SECTIONS
 
         . = . + 0x1000;
         _heap_start = .;
-        . = . + 0x100000; /* 1Mb heap */
+        . = . + 0x1000000; /* 16Mb heap */
         _heap_end = .;
         _heap_map_start = .;
-        . = . + 0x20000;
+        . = . + 0x200000;
         _heap_map_end = .;
         _allocations = .;
-        . = . + 0x20000;
+        . = . + 0x200000;
         _allocations_end = .;
 
 	/* The compiler may produce other sections, by default it will put them in

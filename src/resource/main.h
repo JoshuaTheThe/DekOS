@@ -23,6 +23,8 @@ typedef enum
         RESOURCE_TYPE_RAW,
         RESOURCE_TYPE_PROGRAM,
         RESOURCE_TYPE_BITMAP_IMAGE,
+        RESOURCE_TYPE_WINDOW,
+        RESOURCE_TYPE_RAW_FAR,
         RESOURCE_TYPE_COUNT,
 } RESTYPE;
 
@@ -107,5 +109,11 @@ RAWPTR ResourceData(RID rdResource);
  * ResourceSize - return the size of the data in the resource.
  */
 SIZE ResourceSize(RID rdResource);
+
+/**
+ * ResourceNextOfType - return the pointer to the next resource of a given type,
+ * Does not check child resources.
+ */
+KRNLRES *ResourceNextOfType(KRNLRES **P, RESTYPE Type);
 
 #endif

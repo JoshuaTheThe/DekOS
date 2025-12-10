@@ -2,6 +2,9 @@
 #include <tty/render/fonts.h>
 #include <tty/render/render.h>
 #include <memory/string.h>
+#include <resource/main.h>
+
+extern KRNLRES *fbRes;
 
 static uint8_t system_output[TTY_H][TTY_W];
 static uint32_t tty_y = 0, tty_x = 0;
@@ -10,6 +13,8 @@ static uint32_t tty_fg = rgb(230, 230, 230);
 
 void display(void)
 {
+        if (fbRes->Owner.num != 0)
+                return;
         RenderSetFont(&cascadia);
         for (size_t y = 0; y < TTY_H; ++y)
         {

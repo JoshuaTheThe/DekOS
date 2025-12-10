@@ -31,6 +31,8 @@
 #include <tty/render/render.h>
 #include <tty/render/fonts.h>
 
+#include <wm/main.h>
+
 extern schedProcess_t processes[MAX_PROCS];
 extern bool tty_needs_flushing;
 extern RID rdFrameRID;
@@ -55,16 +57,22 @@ void deleteTask(size_t i)
 void kernelTask(multiboot_info_t *mbi)
 {
         (void)mbi;
+        DWORD mx = 0, my = 0, pmx = 0, pmy = 0, mbuttons = 0;
         size_t stack_size = 8192;
         uint8_t *stack = malloc(stack_size);
         cli();
         schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num = 0, .valid = 1});
         printf("Created proc with id : %d\n", pid.num);
-        sti();
 
         // speakerPlay(300);
         // pitDelay(10);
         // speakerStop();
+
+        PROCID WMId = WMInit();
+        RESULT Result = ResourceHandoverK(fbRes, WMId);
+        printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
+        WMCreateWindow("Kernel Window", 10, 10, 256, 128);
+        sti();
 
         while (true)
         {
@@ -83,6 +91,8 @@ void kernelTask(multiboot_info_t *mbi)
                         display();
                         tty_needs_flushing = false;
                 }
+
+                mouseFetch(&mx, &my, &pmx, &pmy, &mbuttons);
                 hlt();
         }
 }
@@ -110,9 +120,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         schedInit();
 
         cli();
-        KRNLRES framebuffres={0};
-        fbRes = &framebuffres;
-        fbRes->Used = TRUE;
+        fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_RAW_FAR, 0, schedGetKernelPid(), NULL);
         fbRes->Region.ptr = (uint32_t*)mbi->framebuffer_addr;
         fbRes->Region.size = mbi->framebuffer_width * mbi->framebuffer_height * (mbi->framebuffer_bpp / 8);
 
