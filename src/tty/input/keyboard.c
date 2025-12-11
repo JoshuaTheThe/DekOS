@@ -57,18 +57,22 @@ uint8_t keyboardFetch(volatile bool *hit)
         if (hit)
                 *hit = false;
         keyboardPressed = false;
+        cli();
         if (!(inb(0x64) & 0x01))
         {
+                sti();
                 return 0;
         }
 
         uint8_t status = inb(0x64);
         if (status & (1 << 5))
         {
+                sti();
                 return 0;
         }
 
         uint16_t scancode = inb(0x60);
+        sti();
 
         if (scancode == 0x2a || scancode == 0x36)
         {
