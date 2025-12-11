@@ -74,6 +74,7 @@ void kernelTask(multiboot_info_t *mbi)
         RESULT Result = ResourceHandoverK(fbRes, WMId);
         printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
         KernelWindow = WMCreateWindow("Kernel Window", 10, 10, 256, 128);
+        KRNLRES *TestWindow = WMCreateWindow("Test", 10, 400, 128, 128);
         sti();
 
         while (true)

@@ -6,6 +6,8 @@ extern DWORD mx, my, mbuttons;
 
 KRNLRES *Windows;
 
+KRNLRES *FocusedWindow=NULL;
+
 SEGMENT Segments[MAX_SEGMENTS];
 
 DWORD MovementX, MovementY;
@@ -213,11 +215,14 @@ void WMAction(KRNLRES *P)
                 printf("Window Information does not exist (??)\n");
                 return;
         }
+
         if (mbuttons & MOUSE_LEFT_BUTTON && !Window->InAction)
         {
                 Window->START_X = mx;
                 Window->START_Y = my;
                 Window->InAction = TRUE;
+                FocusedWindow = P;
+                Window->RequiresRedraw = TRUE;
         }
         if (Window->InAction && !(mbuttons & MOUSE_LEFT_BUTTON))
         {
@@ -225,10 +230,11 @@ void WMAction(KRNLRES *P)
                 DWORD TH = TitleBarHeight(Window);
                 int PosX = Window->START_X - Window->X;
                 int PosY = Window->START_Y - Window->Y;
-                BOOL InTitleBar = (PosX > 0 && PosX < Window->W) && (PosY > 0 && PosY <= TH);
+                BOOL InTitleBar = (PosX >= 0 && PosX <= Window->W) && (PosY >= 0 && PosY <= TH);
                 if (InTitleBar)
                 {
                         WMMove(Window, mx, my);
+                        return;
                 }
                 /**
                  * Otherwise, Invoke user, let them figure it out.
@@ -246,9 +252,17 @@ void WMIterate(void)
                 return;
         do
         {
+                if (P != FocusedWindow)
+                {
+                        WMDraw(P);
+                        WMAction(P);
+                }
+        } while (ResourceNextOfType(&P, RESOURCE_TYPE_WINDOW));
+        if (FocusedWindow)
+        {
                 WMDraw(P);
                 WMAction(P);
-        } while (ResourceNextOfType(&P, RESOURCE_TYPE_WINDOW));
+        }
 }
 
 /**
