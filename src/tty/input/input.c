@@ -1,7 +1,11 @@
 #include <tty/input/input.h>
 #include <tty/output/output.h>
+#include <wm/main.h>
 
 extern bool tty_needs_flushing;
+
+extern WINDOW *KernelWindow;
+extern KRNLRES *KernelWindowResource;
 
 int gets(char *b, int max)
 {
@@ -13,6 +17,10 @@ int gets(char *b, int max)
         while (i < max - 1)
         {
                 ch = (int)getchar();
+                if (!WMIsFocused(KernelWindowResource))
+                {
+                        continue;
+                }
 
                 if ((char)ch == '\b' || (char)ch == 127)
                 {

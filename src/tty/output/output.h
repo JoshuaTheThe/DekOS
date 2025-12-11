@@ -1,8 +1,8 @@
 #ifndef TTY_OUT
 #define TTY_OUT
 
-#define TTY_W (128)
-#define TTY_H (55)
+#define TTY_W (80) //(128)
+#define TTY_H (25) //(55)
 #define TAB_SIZE 8
 
 #include <utils.h>

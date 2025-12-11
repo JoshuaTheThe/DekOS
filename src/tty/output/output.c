@@ -3,10 +3,14 @@
 #include <tty/render/render.h>
 #include <memory/string.h>
 #include <resource/main.h>
+#include <wm/main.h>
 
 extern KRNLRES *fbRes;
 
-static uint8_t system_output[TTY_H][TTY_W];
+extern WINDOW *KernelWindow;
+extern KRNLRES *KernelWindowResource;
+
+uint8_t system_output[TTY_H][TTY_W];
 static uint32_t tty_y = 0, tty_x = 0;
 static uint32_t tty_bg = rgb(30, 30, 30);
 static uint32_t tty_fg = rgb(230, 230, 230);
@@ -87,6 +91,11 @@ void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint3
                 }
 
                 *y = TTY_H - 1;
+        }
+
+        if (KernelWindow && output == &system_output)
+        {
+                KernelWindow->RequiresRedraw = TRUE;
         }
 }
 

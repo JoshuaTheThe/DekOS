@@ -24,5 +24,4 @@ idtSB16Handler:
         call idtDefault
         add $4, %esp
         sti
-        sti
         iret

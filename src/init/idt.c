@@ -74,22 +74,22 @@ symbol_t *__findFunction(uint32_t address)
         }
         else if (offset >= (uint32_t)&_heap_start && offset < (uint32_t)&_heap_end)
         {
-                section.address = (uint32_t*)&_heap_start;
+                section.address = (uint32_t *)&_heap_start;
                 section.name = ".heap section";
         }
         else if (offset >= (uint32_t)&_heap_map_start && offset < (uint32_t)&_heap_map_end)
         {
-                section.address = (uint32_t*)&_heap_map_start;
+                section.address = (uint32_t *)&_heap_map_start;
                 section.name = ".map section";
         }
         else if (offset >= (uint32_t)&_allocations && offset < (uint32_t)&_allocations_end)
         {
-                section.address = (uint32_t*)&_allocations;
+                section.address = (uint32_t *)&_allocations;
                 section.name = ".alloc section";
         }
         else
         {
-                section.address = (uint32_t*)&_allocations_end;
+                section.address = (uint32_t *)&_allocations_end;
                 section.name = ".unknown section";
         }
 
@@ -121,10 +121,20 @@ const char *__getFunctionName(uint32_t address)
 
 void idtDefault(int code, int eip, int cs)
 {
+        cli();
+        if (code == 7 || code == 15 || code == 0xfe)
+        {
+                outb(0x20, 0x0B);
+                if (!(inb(0x20) & 0x80))
+                {
+                        outb(0x20, 0x20);
+                }
+                return;
+        }
         font_t *font = RenderGetFont();
         outb(0x20, 0x20);
         clear();
-        
+
         int iDim[3];
         if (!fbRes || !fbRes->Region.ptr)
         {
@@ -132,6 +142,7 @@ void idtDefault(int code, int eip, int cs)
         }
 
         RenderGetDim(iDim);
+        RenderSetFont(&cascadia);
 
         memsetdw(fbRes->Region.ptr, rgb(0, 0, 128), iDim[0] * iDim[1]);
         uint32_t px, py;
@@ -176,7 +187,6 @@ void idtDefault(int code, int eip, int cs)
         switch (x)
         {
         case '\n':
-                return;
         case '\e':
                 while (inb(0x64) & 0x02)
                         ;
@@ -246,6 +256,6 @@ void idtInit(void)
         outb(0xA1, 0x01);
         outb(0x21, 0x0);
         outb(0xA1, 0x0);
-        outb(0x21, 0xDE);
+        outb(0x21, 0xFE);
         outb(0xA1, 0xFF);
 }

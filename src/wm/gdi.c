@@ -4,7 +4,7 @@ extern KRNLRES *fbRes;
 
 DWORD Colour;
 
-void *(*ColourFunction)(DWORD,DWORD);
+void (*ColourFunction)(DWORD,DWORD);
 BOOL UseColourFunction=FALSE;
 BOOL InColourFunction=FALSE;
 
@@ -35,12 +35,12 @@ RGBA GetColour(void)
 
 void SetPixel(DWORD X, DWORD Y, RGBA Col)
 {
-        static DWORD Dim[3] = {-1};
+        static DWORD Dim[3] = {(DWORD)-1};
         DWORD Colour = ColourDword(Col);
         if (fbRes->Owner.num != schedGetCurrentPid().num)
                 return;
-        if (Dim[0] == -1)
-                RenderGetDim(Dim);
+        if (Dim[0] == (DWORD)-1)
+                RenderGetDim((int*)Dim);
         if (X > Dim[0] || Y > Dim[1])
                 return;
         ((DWORD *)fbRes->Region.ptr)[(Y)*Dim[0] + (X)] = Colour;
@@ -54,7 +54,7 @@ void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H)
         if (fbRes->Owner.num != schedGetCurrentPid().num)
                 return;
         DWORD Dim[3];
-        RenderGetDim(Dim);
+        RenderGetDim((int*)Dim);
 
         if (X > Dim[0] || Y > Dim[1])
                 return;
@@ -66,7 +66,7 @@ void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H)
                 {
                         if (Xo + X >= Dim[0])
                                 break;
-                        if (UseColourFunction)
+                        if (UseColourFunction && ColourFunction)
                         {
                                 InColourFunction = TRUE;
                                 ColourFunction(Xo, Yo);
@@ -75,6 +75,29 @@ void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H)
                         ((DWORD *)fbRes->Region.ptr)[(Y + Yo) * Dim[0] + (X + Xo)] = Colour;
                 }
         }
+}
+
+void GDIBorderedRect(RGBA Outer, RGBA Inner, RGBA Border, DWORD X, DWORD Y, DWORD W, DWORD H, DWORD Padding, DWORD Thickness)
+{
+        SetColour(Outer);
+        GDIDrawRect(X, Y, W, H);
+        SetColour(Inner);
+        GDIDrawRect(X + Padding + Thickness, Y + Padding + Thickness, W - (Padding + Thickness) * 2, H - (Padding + Thickness) * 2);
+        SetColour(Border);
+        /* Outer */
+        /* Top */
+        GDIDrawRect(X, Y, W, Thickness);
+        /* Bottom */
+        GDIDrawRect(X, Y + H - Thickness, W, Thickness);
+        /* Left */
+        GDIDrawRect(X, Y, Thickness, H);
+        /* Right */
+        GDIDrawRect(X + W - Thickness, Y, Thickness, H);
+        /* Inner */
+        GDIDrawRect(X + Padding, Y + Padding, W - Padding * 2, Thickness);
+        GDIDrawRect(X + Padding, Y + H - Padding - Thickness, W - Padding * 2, Thickness);
+        GDIDrawRect(X + Padding, Y + Padding, Thickness, H - Padding * 2);
+        GDIDrawRect(X + W - Padding - Thickness, Y + Padding, Thickness, H - Padding * 2);
 }
 
 /**
@@ -86,7 +109,7 @@ void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2)
                 return;
 
         DWORD Dim[3];
-        RenderGetDim(Dim);
+        RenderGetDim((int*)Dim);
 
         // Clamp coordinates to framebuffer bounds
         if (X1 >= Dim[0])
@@ -113,7 +136,7 @@ void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2)
         while (1)
         {
                 // Draw current pixel
-                if (UseColourFunction)
+                if (UseColourFunction && ColourFunction)
                 {
                         InColourFunction = TRUE;
                         ColourFunction(X1, Y1);
@@ -141,7 +164,7 @@ void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2)
 /**
  * Use a Function as the colour
  */
-void SetColourFn(void *(*Foo)(DWORD,DWORD))
+void SetColourFn(void (*Foo)(DWORD,DWORD))
 {
         ColourFunction = Foo;
         UseColourFunction = TRUE;

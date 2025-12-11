@@ -57,7 +57,6 @@ uint8_t keyboardFetch(volatile bool *hit)
         if (hit)
                 *hit = false;
         keyboardPressed = false;
-
         if (!(inb(0x64) & 0x01))
         {
                 return 0;

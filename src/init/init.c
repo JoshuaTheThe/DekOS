@@ -37,8 +37,10 @@ extern schedProcess_t processes[MAX_PROCS];
 extern bool tty_needs_flushing;
 extern RID rdFrameRID;
 extern KRNLRES *fbRes;
+extern char system_output[TTY_H][TTY_W];
 
-KRNLRES *KernelWindow = NULL;
+WINDOW *KernelWindow = NULL;
+KRNLRES *KernelWindowResource = NULL;
 volatile DWORD mx = 0, my = 0, pmx = 0, pmy = 0, mbuttons = 0;
 
 void deleteTask(size_t i)
@@ -73,8 +75,30 @@ void kernelTask(multiboot_info_t *mbi)
         PROCID WMId = WMInit();
         RESULT Result = ResourceHandoverK(fbRes, WMId);
         printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
-        KernelWindow = WMCreateWindow("Kernel Window", 10, 10, 256, 128);
-        KRNLRES *TestWindow = WMCreateWindow("Test", 10, 400, 128, 128);
+        font_t *Font = RenderGetFont();
+        DWORD Width = Font->char_width*TTY_W;
+        DWORD Height = Font->char_height*(TTY_H+1);
+        DWORD WWidth = Width + 16;
+        DWORD WHeight = Height + 32;
+        KernelWindowResource = WMCreateWindow("Kernel Window", 10, 10, WWidth, WHeight);
+        if (KernelWindowResource)
+        {
+                KernelWindow = KernelWindowResource->Region.ptr;
+                char *X[TTY_H];
+                for (int i = 0; i < TTY_H; i++)
+                {
+                        X[i] = system_output[i];
+                }
+
+                DWORD CenterX = WMMiddlePointX(KernelWindow) - Width / 2;
+                DWORD CenterY = WMMiddlePointY(KernelWindow) - Height / 2;
+                KRNLRES *TextBuff = WMCreateElement(KernelWindowResource, CenterX, CenterY, Width, Height, WINDOW_ELEMENT_TEXT);
+                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Font = Font;
+                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Columns = TTY_W;
+                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Lines = TTY_H;
+                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Text = X;
+                (void)TextBuff;
+        }
         sti();
 
         while (true)
@@ -89,13 +113,15 @@ void kernelTask(multiboot_info_t *mbi)
                         }
                 }
 
-                if (tty_needs_flushing)
-                {
-                        display();
-                        tty_needs_flushing = false;
-                }
+                // if (tty_needs_flushing)
+                // {
+                //         display();
+                //         tty_needs_flushing = false;
+                // }
 
-                mouseFetch(&mx, &my, &pmx, &pmy, &mbuttons);
+                cli();
+                mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
+                sti();
                 hlt();
         }
 }
@@ -124,7 +150,7 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
 
         cli();
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_RAW_FAR, 0, schedGetKernelPid(), NULL);
-        fbRes->Region.ptr = (uint32_t*)mbi->framebuffer_addr;
+        fbRes->Region.ptr = (uint32_t *)mbi->framebuffer_addr;
         fbRes->Region.size = mbi->framebuffer_width * mbi->framebuffer_height * (mbi->framebuffer_bpp / 8);
 
         int nDim[3] = {mbi->framebuffer_width, mbi->framebuffer_height, 1};
