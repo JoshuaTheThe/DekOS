@@ -31,6 +31,13 @@ typedef enum InterruptFunction
         /* MEMORY */
         INT80_ALLOC, /* BASICALLY MALLOC */
         INT80_UNALLOC, /* BASICALLY FREE */
+
+        /* RESOURCE */
+        INT80_RELEASE_RESOURCE,
+        /* WM */
+        INT80_CREATE_WINDOW,
+        INT80_CREATE_ELEMENT,
+        INT80_ISFOCUSED,
 } InterruptFunction_t;
 
 /* System Call Function Prototypes */

@@ -7,6 +7,7 @@
 #include <tty/render/fonts.h>
 #include <tty/render/render.h>
 #include <drivers/math.h>
+#include <wm/main.h>
 
 bool tty_needs_flushing=false;
 extern schedProcess_t processes[];
@@ -241,6 +242,20 @@ uint32_t sysReply(void)
         case INT80_UNALLOC:
                 free((void*)arg1);
                 return 0;
+
+        case INT80_RELEASE_RESOURCE:
+        {
+                ResourceReleaseK(arg1);
+                break;
+        }
+
+        case INT80_CREATE_WINDOW:
+                return WMCreateWindow(arg1, 0, 0, arg2, arg3);
+        case INT80_CREATE_ELEMENT:
+                return WMCreateElement(arg1, 0, 0, arg2, arg3, 0);
+        case INT80_ISFOCUSED:
+                return WMIsFocused(arg1);
+        
         default:
                 return -1;
                 break;

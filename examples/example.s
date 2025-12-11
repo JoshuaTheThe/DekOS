@@ -27,3 +27,4 @@ program:
 .funtable:
         db "main", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         dd .main
+        

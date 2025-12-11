@@ -9,8 +9,8 @@
 // #include <stddef.h>
 // #include <utils.h>
 
-#define alloc_alignment (uint32_t)(16)
-#define alloc_align(size) (((size) + (alloc_alignment - 1)) & ~(alloc_alignment - 1))
+#define ALLOC_ALIGNMENT (uint32_t)(16)
+#define ALLOC_ALIGN(SIZE) (((SIZE) + (ALLOC_ALIGNMENT - 1)) & ~(ALLOC_ALIGNMENT - 1))
 
 typedef struct
 {

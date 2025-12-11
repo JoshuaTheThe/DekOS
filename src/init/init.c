@@ -20,6 +20,8 @@
 #include <drivers/iso9660.h>
 #include <drivers/speaker.h>
 #include <drivers/sb16.h>
+#include <drivers/serial.h>
+#include <drivers/parallel.h>
 
 #include <isr/system.h>
 
@@ -74,12 +76,12 @@ void kernelTask(multiboot_info_t *mbi)
 
         PROCID WMId = WMInit();
         RESULT Result = ResourceHandoverK(fbRes, WMId);
-        printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
         font_t *Font = RenderGetFont();
         DWORD Width = Font->char_width*TTY_W;
         DWORD Height = Font->char_height*(TTY_H+1);
         DWORD WWidth = Width + 16;
         DWORD WHeight = Height + 32;
+        printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
         KernelWindowResource = WMCreateWindow("Kernel Window", 10, 10, WWidth, WHeight);
         if (KernelWindowResource)
         {
@@ -147,6 +149,9 @@ void main(uint32_t magic, uint32_t mbinfo_ptr)
         memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
         pitInit(250);
         schedInit();
+        SerialInit();
+        init_parallel_ports();
+        SerialPrint("--DekOS--\r\nHello, World!\r\n");
 
         cli();
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_RAW_FAR, 0, schedGetKernelPid(), NULL);

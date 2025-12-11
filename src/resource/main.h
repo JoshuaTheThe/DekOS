@@ -40,7 +40,6 @@ typedef struct KRNLRES
         PROCID Owner;
         BOOL Used;
         BOOL OnHeap;
-        /* So we can have handles instead of providing the pointers */
         RID rid;
 } KRNLRES;
 
