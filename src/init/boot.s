@@ -20,7 +20,7 @@ _start:
         cli
         push %ebx
         push %eax
-	call main
+	call kmain
 	cli
 1:	hlt
 	jmp 1b

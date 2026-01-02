@@ -125,11 +125,7 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 processes[id].parent = parent;
 
                 processes[id].regs.eip = (uint32_t)Program + EntryPOffset;
-                uint32_t *stack_top = (uint32_t *)(Stack + StackLength);
-                stack_top[-1] = 0; // No return (if process exits, it should be killed)
-                stack_top[-2] = 0; // Fake return address
-                processes[id].regs.esp = (uint32_t)&stack_top[-2];
-                processes[id].regs.ebp = processes[id].regs.esp;
+                processes[id].regs.esp = (uint32_t)(Stack + StackLength);
 
                 processes[id].regs.eax = 0;
                 processes[id].regs.ebx = 0;

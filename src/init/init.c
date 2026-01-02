@@ -129,7 +129,7 @@ void kernelTask(multiboot_info_t *mbi)
 }
 
 /* Initialize the System */
-void main(uint32_t magic, uint32_t mbinfo_ptr)
+void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
         multiboot_info_t *mbi;
 

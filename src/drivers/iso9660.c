@@ -384,7 +384,7 @@ bool iso9660FindFile(const char *path, iso9660Dir_t *file_entry)
         *last_slash = '\0';
         char *filename = last_slash + 1;
 
-        uint32_t directory_lba;
+        uint32_t directory_lba = 0;
         if (!iso9660FindDirectory(path_copy, &directory_lba))
         {
                 return false;

@@ -280,6 +280,8 @@ void delangueMultiplicative(delangueState_t *state)
                 delangueValue_t lhs = delanguePop(state);
                 if (operator.type == TOKEN_MULTIPLY)
                         lhs.data *= rhs.data;
+                else if (rhs.data == 0)
+                        lhs.data = -1;
                 else
                         lhs.data /= rhs.data;
                 delanguePush(state, lhs);

@@ -69,6 +69,8 @@ list_files_recursive() {
 
             # Add debug symbols for better function information
             clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra
+            clang --analyze -Xanalyzer -analyzer-checker=core,deadcode,security,cplusplus,unix \
+      -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file"
 
             # Generate symbols for this object file
             generate_symbols "$output_file"

@@ -6,6 +6,7 @@ extern bool tty_needs_flushing;
 
 extern WINDOW *KernelWindow;
 extern KRNLRES *KernelWindowResource;
+extern KRNLRES *fbRes;
 
 int gets(char *b, int max)
 {
@@ -17,7 +18,7 @@ int gets(char *b, int max)
         while (i < max - 1)
         {
                 ch = (int)getchar();
-                if (!WMIsFocused(KernelWindowResource))
+                if (fbRes->Owner.num != 0 && KernelWindowResource && !WMIsFocused(KernelWindowResource))
                 {
                         continue;
                 }

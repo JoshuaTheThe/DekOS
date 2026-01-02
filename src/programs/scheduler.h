@@ -5,7 +5,7 @@
 #include <io.h>
 
 #define PROC_NAME_LEN 32
-#define MAX_PROCS 512
+#define MAX_PROCS 16
 
 #define SCHED_EAX *((uint32_t *)(0x1000 + (4 * 0)))
 #define SCHED_EBX *((uint32_t *)(0x1000 + (4 * 1)))

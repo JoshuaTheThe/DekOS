@@ -173,7 +173,7 @@ static uint8_t cascadia_bitmap[] = {
 };
 
 font_t cascadia = {
-    .font_name = "cascadia",
+    .font_name = (unsigned char*)"cascadia",
     .font_bitmap = cascadia_bitmap,
     .char_width = 8,
     .char_height = 14,

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <tty/output/output.h>
 
 static memory_information_t minfo;
 
@@ -155,6 +156,7 @@ void *malloc(size_t size)
         dest = find_empty_allocation();
         if (dest == NULL)
         {
+                printf("Could not allocate %d bytes\n", size);
                 u_map(region);
                 return NULL;
         }

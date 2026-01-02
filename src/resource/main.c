@@ -12,7 +12,7 @@ static RID counter = 0;
 static KRNLRES *ResourceRecursiveSearch(KRNLRES *rpBase, RID targetRid, int depth, BOOL *found)
 {
         PROCID procIdSelf = schedGetCurrentPid();
-        BOOL temp;
+        BOOL temp = FALSE;
         if (depth > MAX_RESOURCE_DEPTH)
                 return NULL;
 
@@ -444,7 +444,7 @@ KRNLRES *ResourceCreateK(KRNLRES *rpParentResource,
          * Variables
          */
         KRNLRES *rpSibling, *rpResource, *rpParent = rpParentResource;
-        HREGION rDataRegion;
+        HREGION rDataRegion = {0};
 
         if (!result)
                 result = &resLast;

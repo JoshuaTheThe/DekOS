@@ -245,16 +245,16 @@ uint32_t sysReply(void)
 
         case INT80_RELEASE_RESOURCE:
         {
-                ResourceReleaseK(arg1);
+                ResourceReleaseK((KRNLRES *)arg1);
                 break;
         }
 
         case INT80_CREATE_WINDOW:
-                return WMCreateWindow(arg1, 0, 0, arg2, arg3);
+                return (uint32_t)WMCreateWindow((char*)arg1, 0, 0, arg2, arg3);
         case INT80_CREATE_ELEMENT:
-                return WMCreateElement(arg1, 0, 0, arg2, arg3, 0);
+                return (uint32_t)WMCreateElement((KRNLRES *)arg1, 0, 0, arg2, arg3, 0);
         case INT80_ISFOCUSED:
-                return WMIsFocused(arg1);
+                return WMIsFocused((KRNLRES *)arg1);
         
         default:
                 return -1;
