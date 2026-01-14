@@ -54,7 +54,7 @@ SECTIONS
         . = . + 0x200000;
         _heap_map_end = .;
         _allocations = .;
-        . = . + 0x200000;
+        . = . + 0x1000000;
         _allocations_end = .;
 
 	/* The compiler may produce other sections, by default it will put them in

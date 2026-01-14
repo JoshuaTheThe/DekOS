@@ -1,7 +1,6 @@
 #include <init/gdt.h>
 #include <memory/string.h>
 
-static gdtTssEntry_t tss;
 static gdtEntry_t gdt[GDT_SIZE];
 static gdtPtr_t gdtp;
 
@@ -52,10 +51,10 @@ void gdtSetTssEntry(int num, uint32_t base, uint32_t limit, uint8_t access, uint
 
 void gdtTssInit(void)
 {
-        memset(&tss, 0, sizeof(tss));
-        tss.esp0 = 0x10000;
-        tss.ss0 = 0x10;
-        tss.iomap_base = 0xFFFF;  // Allow all I/O ports
+        // memset(&tss, 0, sizeof(tss));
+        // tss.esp0 = 0x10000;
+        // tss.ss0 = 0x10;
+        // tss.iomap_base = 0xFFFF;  // Allow all I/O ports
 }
 
 void gdtInit(void)
@@ -66,11 +65,11 @@ void gdtInit(void)
         gdtSetEntry(1, 0x00000000, 0xffffffff, 0x9A, 0xCF);
         gdtSetEntry(2, 0x00000000, 0xffffffff, 0x92, 0xCF);
 
-        uint32_t tss_base = (uint32_t)&tss;
-        gdtSetTssEntry(3, tss_base, sizeof(tss) - 1, 0x89, 0x40);
+        // uint32_t tss_base = (uint32_t)&tss;
+        // gdtSetTssEntry(3, tss_base, sizeof(tss) - 1, 0x89, 0x40);
 
         __asm volatile("lgdt (%0)" : : "r"(&gdtp));
-        __asm volatile("ltr %w0" : : "r"((uint16_t)0x18)); // Load first TSS
+        // __asm volatile("ltr %w0" : : "r"((uint16_t)0x18)); // Load first TSS
 
         __asm volatile(
             "ljmp $0x08, $reload_segments \n\t"

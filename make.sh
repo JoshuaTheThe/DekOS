@@ -6,6 +6,7 @@ nasm examples/hello.s -o isodir/boot/hello.ex -f bin
 
 # test
 nasm -f elf32 examples/hello.elf.s -o isodir/boot/hello.o
+nasm -f elf32 examples/window.s -o isodir/boot/window.o
 
 nasm -f elf32 examples/start.s -o isodir/boot/start.o
 
@@ -69,8 +70,8 @@ list_files_recursive() {
 
             # Add debug symbols for better function information
             clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra
-            clang --analyze -Xanalyzer -analyzer-checker=core,deadcode,security,cplusplus,unix \
-      -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file"
+            #clang --analyze -Xanalyzer -analyzer-checker=core,deadcode,security,cplusplus,unix \
+      #-m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file"
 
             # Generate symbols for this object file
             generate_symbols "$output_file"

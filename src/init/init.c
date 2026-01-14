@@ -105,6 +105,7 @@ void kernelTask(multiboot_info_t *mbi)
 
         while (true)
         {
+                cli();
                 for (int i = 0; i < MAX_PROCS; ++i)
                 {
                         if (processes[i].delete)
@@ -115,13 +116,6 @@ void kernelTask(multiboot_info_t *mbi)
                         }
                 }
 
-                // if (tty_needs_flushing)
-                // {
-                //         display();
-                //         tty_needs_flushing = false;
-                // }
-
-                cli();
                 mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
                 sti();
                 hlt();

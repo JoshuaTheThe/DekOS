@@ -406,9 +406,6 @@ void WMMain(void)
         WMDrawBackground();
         while (true)
         {
-                /**
-                 * WMTick()
-                 */
                 WMIterate();
         }
 }

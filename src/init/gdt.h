@@ -5,7 +5,7 @@
 //#include <memory/string.h>
 //#include <io.h>
 
-#define GDT_SIZE 4
+#define GDT_SIZE 3
 
 typedef struct __attribute__((packed))
 {

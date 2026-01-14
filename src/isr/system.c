@@ -59,10 +59,10 @@ uint32_t sysReply(void)
         schedPid_t pid = schedGetCurrentPid();
         schedProcess_t *proc = schedGetProcess();
 
-        uint32_t syscall_num = *((uint32_t *)0x1000);
-        uint32_t arg1 = *((uint32_t *)0x1004);
-        uint32_t arg2 = *((uint32_t *)0x1008);
-        uint32_t arg3 = *((uint32_t *)0x100C);
+        uint32_t syscall_num = *((uint32_t *)0x9000);
+        uint32_t arg1 = *((uint32_t *)0x9004);
+        uint32_t arg2 = *((uint32_t *)0x9008);
+        uint32_t arg3 = *((uint32_t *)0x900C);
 
         //printf("Syscall: num=%d, arg1=%d, arg2=%d, arg3=%d\n", syscall_num, arg1, arg2, arg3);
 
@@ -245,10 +245,9 @@ uint32_t sysReply(void)
 
         case INT80_RELEASE_RESOURCE:
         {
-                ResourceReleaseK((KRNLRES *)arg1);
-                break;
+                //(uint32_t)ResourceReleaseK((KRNLRES *)arg1);
+                return 0;
         }
-
         case INT80_CREATE_WINDOW:
                 return (uint32_t)WMCreateWindow((char*)arg1, 0, 0, arg2, arg3);
         case INT80_CREATE_ELEMENT:
