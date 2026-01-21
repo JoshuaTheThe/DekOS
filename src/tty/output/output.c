@@ -4,6 +4,7 @@
 #include <memory/string.h>
 #include <resource/main.h>
 #include <wm/main.h>
+#include <drivers/serial.h>
 
 extern KRNLRES *fbRes;
 
@@ -41,22 +42,27 @@ void clear(void)
 
 void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint32_t *y)
 {
-        outb(0xE9,ch);
+        SerialPut(ch);
         if (ch == '\n')
         {
                 *x = 0;
                 ++(*y);
+                SerialPut('\r');
         }
         else if (ch == '\b' && *x > 0)
         {
                 (*x)--;
                 (*output)[*y][*x] = ' ';
+                SerialPut(' ');
+                SerialPut('\b');
         }
         else if (ch == '\b' && *y > 0)
         {
                 (*y)--;
                 *x = TTY_W - 1;
                 (*output)[*y][*x] = ' ';
+                SerialPut(' ');
+                SerialPut('\b');
         }
         else if (ch == '\t')
         {

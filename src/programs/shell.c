@@ -8,6 +8,7 @@
 #include <programs/ex.h>
 #include <programs/delangue.h>
 #include <programs/elf/elf.h>
+#include <forth.h>
 
 static char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
 static char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
@@ -174,6 +175,22 @@ void shell(void)
                                 char *data = iso9660ReadFile(&file);
                                 printf("%s\n", data);
                                 free(data);
+                        }
+                        else
+                        {
+                                printf("could not find file '%s'\n", path);
+                        }
+                }
+                else if (!strcmp(command_buffer[0], "forth") && argc == 2)
+                {
+                        char path[512];
+                        snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
+                        bool success = iso9660FindFile(path, &file);
+                        if (success)
+                        {
+                                char *data = iso9660ReadFile(&file);
+                                forth(data);
+                                printf("\n");
                         }
                         else
                         {

@@ -1,6 +1,7 @@
 #include <drivers/disk.h>
 #include <tty/output/output.h>
 
+__attribute__((deprecated))
 static void ataWait(const uint16_t p)
 {
         inb(p + CONTROL + ALTERNATE_STATUS);
@@ -9,6 +10,7 @@ static void ataWait(const uint16_t p)
         inb(p + CONTROL + ALTERNATE_STATUS);
 }
 
+__attribute__((deprecated))
 int cdRead(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *buffer)
 {
         volatile uint8_t read_cmd[12] = {0xA8, 0,
@@ -56,6 +58,7 @@ int cdRead(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *
         return 0;
 }
 
+__attribute__((deprecated))
 int cdDetect(uint16_t port, bool slave)
 {
         outb(port + DRIVE_SELECT, 0xA0 & (slave << 4));
@@ -95,6 +98,7 @@ int cdDetect(uint16_t port, bool slave)
         return (packet_type == 0x05);
 }
 
+__attribute__((deprecated))
 int cdMediaPresent(uint16_t port, bool slave)
 {
         volatile uint8_t test_unit_ready[12] = {0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -156,6 +160,7 @@ int cdMediaPresent(uint16_t port, bool slave)
         return 0;
 }
 
+__attribute__((deprecated))
 int cdDetectMedia(uint16_t port, bool slave)
 {
         printf("Checking for CD-ROM at port %d, slave: %d, ", port, slave);
@@ -178,6 +183,7 @@ int cdDetectMedia(uint16_t port, bool slave)
         }
 }
 
+__attribute__((deprecated))
 void cdInit(int *port, bool *slave)
 {
         int primary_status = cdDetectMedia(0x1F0, false);

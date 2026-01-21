@@ -22,6 +22,8 @@
 #include <drivers/sb16.h>
 #include <drivers/serial.h>
 #include <drivers/parallel.h>
+#include <drivers/ide.h>
+#include <drivers/storage.h>
 
 #include <isr/system.h>
 
@@ -34,6 +36,8 @@
 #include <tty/render/fonts.h>
 
 #include <wm/main.h>
+
+#include <forth.h>
 
 extern schedProcess_t processes[MAX_PROCS];
 extern bool tty_needs_flushing;
@@ -77,8 +81,8 @@ void kernelTask(multiboot_info_t *mbi)
         PROCID WMId = WMInit();
         RESULT Result = ResourceHandoverK(fbRes, WMId);
         font_t *Font = RenderGetFont();
-        DWORD Width = Font->char_width*TTY_W;
-        DWORD Height = Font->char_height*(TTY_H+1);
+        DWORD Width = Font->char_width * TTY_W;
+        DWORD Height = Font->char_height * (TTY_H + 1);
         DWORD WWidth = Width + 16;
         DWORD WHeight = Height + 32;
         printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
@@ -146,6 +150,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         SerialInit();
         init_parallel_ports();
         SerialPrint("--DekOS--\r\nHello, World!\r\n");
+        
 
         cli();
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_RAW_FAR, 0, schedGetKernelPid(), NULL);
@@ -197,6 +202,11 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 
         /* enumerate devices and save info to array */
         pciEnumerateDevices(pciRegister);
+        SMInit();
+        SMChange(0);
+
+        char *x = SMRead(0);
+        printf("DISK1: %s\n", x);
 
         iso9660Dir_t fil;
         iso9660FindFile("/boot/grub/grub.cfg", &fil);

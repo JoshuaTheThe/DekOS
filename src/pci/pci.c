@@ -19,6 +19,13 @@ size_t pciGetDevices(pci_device_t *destination, size_t start, size_t end)
         return count;
 }
 
+pci_device_t *pciGetOriginalDevice(size_t Index)
+{
+        if (Index >= MAX_DEVICES)
+                return NULL;
+        return &devices[Index];
+}
+
 const char *pciClassToString(uint8_t class_id, uint8_t subclass_id)
 {
         switch (class_id)

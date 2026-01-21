@@ -8,6 +8,8 @@
         .global idtRTCHandler
         .global idtMouseHandler
         .global idtSB16Handler
+        .global idtIDEHandler
+        .extern IDEIrq
         # stub
 idtKeyboardHandler:
 idtCascadeHandler:
@@ -23,5 +25,10 @@ idtSB16Handler:
         push $0xFE
         call idtDefault
         add $4, %esp
+        sti
+        iret
+idtIDEHandler:
+        cli
+        jmp IDEIrq
         sti
         iret

@@ -2,7 +2,7 @@
 #define UTILS_H
 
 #ifndef NULL
-#define NULL (void*)(0)
+#define NULL (void *)(0)
 #endif
 
 #include <stdint.h>
@@ -13,7 +13,12 @@
 #define sti() __asm("sti")
 #define hlt() __asm("hlt")
 
-#define rgb(r,g,b) (0xFF000000 | (r << 16) | (g << 8) | (b))
+#define pushf() __asm volatile("pushfl; popl %0" : "=r"(flags));
+#define popf() __asm volatile("pushl %0; popfl" : : "r"(flags));
+
+static uint32_t flags;
+
+#define rgb(r, g, b) (0xFF000000 | (r << 16) | (g << 8) | (b))
 
 typedef struct
 {
@@ -106,6 +111,6 @@ extern uint32_t bss_start, bss_end;
 
 typedef uint32_t DWORD;
 typedef uint16_t WORD;
-typedef uint8_t  BYTE;
+typedef uint8_t BYTE;
 
 #endif

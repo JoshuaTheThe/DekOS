@@ -35,5 +35,6 @@ void pciEnumerateDevices(void (*on_device_found)(pci_device_t *));
 void pciDisplayDeviceInfo(pci_device_t *dev);
 void pciRegister(pci_device_t *dev);
 pci_device_t *pciFindOfType(uint8_t class_id, uint8_t subclass_id);
+pci_device_t *pciGetOriginalDevice(size_t Index);
 
 #endif // PCI_H

@@ -6,6 +6,7 @@
 #include <memory/alloc.h>
 #include <tty/output/output.h>
 #include <tty/input/input.h>
+#include <drivers/ide.h>
 
 static idtEntry_t idt[256];
 static idtPtr_t idtp;
@@ -241,6 +242,9 @@ void idtInit(void)
         idtSetEntry(0x2A, (void *)idtSB16Handler, idt);
         idtSetEntry(0x2C, (void *)idtMouseHandler, idt);
 
+        idtSetEntry(0x2E, (void *)idtIDEHandler, idt);
+        idtSetEntry(0x2F, (void *)idtIDEHandler, idt);
+
         idtp.limit = (sizeof(idtEntry_t) * IDT_ENTRIES) - 1;
         idtp.base = (uint32_t)idt;
         __asm("lidt (%0)" : : "r"(&idtp));
@@ -254,8 +258,6 @@ void idtInit(void)
         outb(0xA1, 0x02);
         outb(0x21, 0x01);
         outb(0xA1, 0x01);
-        outb(0x21, 0x0);
-        outb(0xA1, 0x0);
-        outb(0x21, 0xFE);
-        outb(0xA1, 0xFF);
+        outb(0x21, 0xFA);
+        outb(0xA1, 0x3F);
 }

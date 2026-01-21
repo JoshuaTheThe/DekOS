@@ -18,8 +18,21 @@ void SerialPut(char c)
         outb(0x3F8, c);
 }
 
-void SerialPrint(const char *str)
+void SerialPrint(const char *const str)
 {
-        while (*str)
-                SerialPut(*str++);
+        for (size_t i = 0; str[i]; ++i)
+                SerialPut(str[i]);
+}
+
+bool SerialCanRead(void)
+{
+        return inb(0x3F8 + 5) & 0x01;
+}
+
+char SerialRead(void)
+{
+        while (!SerialCanRead())
+                ;
+
+        return inb(0x3F8);
 }

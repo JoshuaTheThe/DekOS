@@ -1,3 +1,7 @@
+/**
+ * DEPRECATED
+ */
+
 #ifndef DISK_H
 #define DISK_H
 
@@ -17,10 +21,10 @@
 #define CONTROL 0x206
 #define ALTERNATE_STATUS 0
 
-void cdInit(int *port, bool *slave);
-int cdDetectMedia(uint16_t port, bool slave);
-int cdDetect(uint16_t port, bool slave);
-int cdMediaPresent(uint16_t port, bool slave);
-int cdRead(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *buffer);
+__attribute__((deprecated)) void cdInit(int *port, bool *slave);
+__attribute__((deprecated)) int cdDetectMedia(uint16_t port, bool slave);
+__attribute__((deprecated)) int cdDetect(uint16_t port, bool slave);
+__attribute__((deprecated)) int cdMediaPresent(uint16_t port, bool slave);
+__attribute__((deprecated)) int cdRead(uint16_t port, bool slave, uint32_t lba, uint32_t sectors, uint16_t *buffer);
 
 #endif

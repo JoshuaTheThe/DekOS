@@ -2,14 +2,6 @@
 	section .text
 	global _start
 _start:
-        call main
-        ; Exit
-	xor eax, eax
-	xor ebx, ebx
-	int 0x80
-main:
-        push ebp
-        mov ebp, esp
 	; Puts
 	mov eax, 8
 	mov ebx, hello
@@ -23,25 +15,24 @@ main:
 	mov ecx, 128
 	mov edx, 128
 	int 0x80
-        mov [0xF000], eax
+        mov edi, eax
 	test eax, eax
 	jz .error
-;.mainloop:
-;        mov eax, 8
-;	mov ebx, title
-;	mov ecx, title.end-title
-;	xor edx, edx
-;	int 0x80
-;	jmp .mainloop
+.mainloop:
+        mov eax, 8
+	mov ebx, title
+	mov ecx, title.end-title
+	xor edx, edx
+	int 0x80
+	jmp .mainloop
         ; ReleaseResource(X)
         mov eax, 19
-        ; Evil
-	mov ebx, [0xF000]
+	mov ebx, edi
 	int 0x80
-        mov esp, ebp
-        pop ebp
 .end:
-	ret
+	xor eax, eax
+	xor ebx, ebx
+	int 0x80
 .error:
 	mov eax, 8
 	mov ebx, error

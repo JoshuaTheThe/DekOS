@@ -25,6 +25,8 @@ void idtInit(void);
 void idtDefault(int code, int eip, int cs);
 void idtSetEntry(uint8_t n, void *handler, idtEntry_t *idt);
 
+void idtIDEHandler(void);
+
 // CPU Exceptions
 void idtDivideByZeroHandler(void);
 void idtDebugHandler(void);

@@ -204,7 +204,7 @@ if [ "$1" == '--run' ]; then
                 cp grub.cfg isodir/boot/grub/grub.cfg
                 cp examples/example.ex isodir/boot/example.ex
                 grub-mkrescue -o dekos.iso isodir
-                qemu-system-i386 -debugcon stdio -cdrom dekos.iso -m 128 -boot d -soundhw pcspk
+                qemu-system-x86_64 -debugcon stdio -cdrom dekos.iso -m 128 -boot d -soundhw pcspk -hdb fat32.img
         else
                 echo the file is not multiboot
         fi

@@ -7,5 +7,7 @@
 void SerialInit(void);
 void SerialPut(char c);
 void SerialPrint(const char *str);
+bool SerialCanRead(void);
+char SerialRead(void);
 
 #endif
