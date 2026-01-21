@@ -203,7 +203,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         /* enumerate devices and save info to array */
         pciEnumerateDevices(pciRegister);
         SMInit();
-        SMChange(0);
+        SMChange(1);
 
         char *x = SMRead(0);
         printf("DISK1: %s\n", x);
