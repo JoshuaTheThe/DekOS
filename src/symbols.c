@@ -1,4 +1,4 @@
-const int kernel_symbols_count = 330;
+const int kernel_symbols_count = 332;
 #include "symbols.h"
 
 symbol_t kernel_symbols[] = {
@@ -51,6 +51,8 @@ symbol_t kernel_symbols[] = {
     {"sysHang", (uint32_t*)0x00000000},
     {"vsnprintf", (uint32_t*)0x00000000},
     {"LispTest", (uint32_t*)0x00000002},
+    {"LispTest", (uint32_t*)0x00000002},
+    {"foo", (uint32_t*)0x00000007},
     {"foo", (uint32_t*)0x00000007},
     {"idtDebugHandler", (uint32_t*)0x0000000d},
     {"idtIDEHandler", (uint32_t*)0x00000010},
