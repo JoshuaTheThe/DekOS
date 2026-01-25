@@ -49,6 +49,8 @@ WINDOW *KernelWindow = NULL;
 KRNLRES *KernelWindowResource = NULL;
 volatile DWORD mx = 0, my = 0, pmx = 0, pmy = 0, mbuttons = 0;
 
+void LispTest(void);
+
 void deleteTask(size_t i)
 {
         if (processes[i].stack)
@@ -73,6 +75,7 @@ void kernelTask(multiboot_info_t *mbi)
         cli();
         schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num = 0, .valid = 1});
         printf("Created proc with id : %d\n", pid.num);
+
 
         // speakerPlay(300);
         // pitDelay(10);
@@ -150,7 +153,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         SerialInit();
         init_parallel_ports();
         SerialPrint("--DekOS--\r\nHello, World!\r\n");
-        
+        LispTest();
 
         cli();
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_RAW_FAR, 0, schedGetKernelPid(), NULL);

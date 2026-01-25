@@ -78,6 +78,18 @@ list_files_recursive() {
 
             # Categorize the object file
             categorize_object_file "$output_file"
+        elif [[ -f "$file" && "$file" == *.lisp ]]; then
+            # using the lisp compiler at https://github.com/JoshuaTheThe/LispC
+            local base="${file#./src/}"
+            base="${base%.s}"
+            local output_file="obj/$base.o"
+            all_object_files+=("$output_file")
+            echo "Compiling $file -> $output_file"
+            mkdir -p "$(dirname "$output_file")"
+            lispc $file > temp.asm
+            nasm temp.asm -o $output_file -felf32
+            generate_symbols "$output_file"
+            categorize_object_file "$output_file"
         elif [[ -f "$file" && "$file" == *.s ]]; then
             local base="${file#./src/}"
             base="${base%.s}"
