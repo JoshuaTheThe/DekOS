@@ -24,6 +24,7 @@
 #include <drivers/parallel.h>
 #include <drivers/ide.h>
 #include <drivers/storage.h>
+#include <drivers/fat.h>
 
 #include <isr/system.h>
 
@@ -208,8 +209,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         SMInit();
         SMChange(1);
 
-        char *x = SMRead(0);
-        printf("DISK1: %s\n", x);
+        FatTest(SMGetDrive());
 
         iso9660Dir_t fil;
         iso9660FindFile("/boot/grub/grub.cfg", &fil);

@@ -6,6 +6,9 @@ DRIVE Drives[64]; /* 00 - 63 */
 DRIVE *CurrentDrive = NULL;
 size_t DriveCount;
 
+DRIVE *DriveStack[64];
+size_t DriveStackSP;
+
 void IDEReadData(DRIVE *Self)
 {
         IDEReadSectors(Self->DriveNum, 1, Self->LBA, 0x10, (unsigned int)Self->BufferA);
@@ -31,6 +34,21 @@ void *SMRead(size_t LBA)
         }
 }
 
+void *SMReadFrom(size_t LBA, DRIVE *Drive)
+{
+        if (Drive && Drive->ReadData && Drive->Valid && Drive->Present)
+        {
+                Drive->LBA = LBA;
+                Drive->ReadData(Drive);
+                return Drive->BufferA;
+        }
+        else
+        {
+                printf("ERROR: Disk Read Error (vague ik)\n");
+                return NULL;
+        }
+}
+
 void *SMWrite(size_t LBA, void *Buf, size_t BufSize)
 {
         if (CurrentDrive && CurrentDrive->WriteData && CurrentDrive->Valid && CurrentDrive->Present && BufSize <= sizeof(CurrentDrive->BufferA))
@@ -39,6 +57,22 @@ void *SMWrite(size_t LBA, void *Buf, size_t BufSize)
                 memcpy(CurrentDrive->BufferA, Buf, BufSize);
                 CurrentDrive->WriteData(CurrentDrive);
                 return CurrentDrive->BufferA;
+        }
+        else
+        {
+                printf("ERROR: Disk Write Error (vague ik)\n");
+                return NULL;
+        }
+}
+
+void *SMWriteTo(size_t LBA, void *Buf, size_t BufSize, DRIVE *Drive)
+{
+        if (Drive && Drive->WriteData && Drive->Valid && Drive->Present && BufSize <= sizeof(Drive->BufferA))
+        {
+                Drive->LBA = LBA;
+                memcpy(Drive->BufferA, Buf, BufSize);
+                Drive->WriteData(Drive);
+                return Drive->BufferA;
         }
         else
         {
@@ -118,4 +152,30 @@ void SMInit(void)
                 printf("WARNING: No drives found!\n");
         else if (DriveCount > 0)
                 CurrentDrive = &Drives[0];
+}
+
+DRIVE *SMGetDrive(void)
+{
+        return CurrentDrive;
+}
+
+DRIVE *SMPopDrive(void)
+{
+        if (DriveStackSP > 0)
+        {
+                return DriveStack[--DriveStackSP];
+        }
+
+        return NULL;
+}
+
+DRIVE *SMPushDrive(DRIVE *Drive)
+{
+        if (DriveStackSP < 63)
+        {
+                DriveStack[DriveStackSP++] = Drive;
+                return Drive;
+        }
+
+        return NULL;
 }

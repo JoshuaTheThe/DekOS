@@ -27,6 +27,11 @@ void SMChange(size_t New);
 void *SMWrite(size_t LBA, void *Buf, size_t BufSize);
 void *SMRead(size_t LBA);
 void SMInit(void);
+DRIVE *SMGetDrive(void);
+DRIVE *SMPopDrive(void);
+DRIVE *SMPushDrive(DRIVE *Drive);
+void *SMWriteTo(size_t LBA, void *Buf, size_t BufSize, DRIVE *Drive);
+void *SMReadFrom(size_t LBA, DRIVE *Drive);
 
 extern IDEDriver_t IDEState;
 
