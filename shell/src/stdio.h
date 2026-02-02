@@ -4,25 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-bool msgrecv(int sender_pid);
-int recvmsg(char *buffer, uint32_t size);
-int sendmsg(int pid, const char *msg, uint32_t size);
-char getc(void);
-int kbhit(void);
-int putc(char c);
-int write(const char *str, uint32_t len);
-void sleep(uint32_t ticks);
-int progexists(int pid);
-int fork(void);
-int getppid(void);
-int getpid(void);
-int yield_to(int pid);
-int yield(void);
-void exit(int status);
-void *malloc(unsigned int size);
-void free(void *p);
-void *ReadFile(const char *FilePath);
+#include <stdarg.h>
 
 typedef enum
 {
@@ -84,5 +66,28 @@ typedef enum InterruptFunction
 
 typedef size_t USERID;
 typedef size_t PID;
+
+bool msgrecv(int sender_pid);
+int recvmsg(char *buffer, uint32_t size);
+int sendmsg(int pid, const char *msg, uint32_t size);
+char getc(void);
+int kbhit(void);
+int putc(char c);
+int write(const char *str, uint32_t len);
+void sleep(uint32_t ticks);
+int progexists(int pid);
+int fork(void);
+int getppid(void);
+int getpid(void);
+int yield_to(int pid);
+int yield(void);
+void exit(int status);
+void *malloc(unsigned int size);
+void free(void *p);
+void *ReadFile(const char *FilePath);
+PID CreateProcess(const char *FilePath);
+int gets(char *b, int max);
+int vsnprintf(char *str, size_t size, const char *fmt, va_list args);
+int snprintf(char *str, size_t size, const char *fmt, ...);
 
 #endif

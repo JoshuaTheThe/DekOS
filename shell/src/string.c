@@ -168,7 +168,7 @@ char *strncpy(char *dest, const char *src, size_t n)
         {
                 dest[i] = '\0';
         }
-        return dest;
+        return &dest[i];
 }
 
 int strcmp(const char *s1, const char *s2)
