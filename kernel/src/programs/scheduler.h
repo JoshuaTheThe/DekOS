@@ -96,5 +96,6 @@ void schedSaveContext(void);
 void schedNextContext(void);
 schedPid_t schedGetKernelPid(void);
 bool schedValidatePid(schedPid_t prId);
+schedProcess_t *schedGetProcessN(schedPid_t Pid);
 
 #endif

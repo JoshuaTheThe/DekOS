@@ -14,7 +14,7 @@ void print(const char *s)
                 putc(s[i]);
 }
 
-int main(void)
+int main(USERID UserID, PID ParentProc, int ecx, int edx)
 {
         print("Hello, World!\n");
         return 69;

@@ -48,6 +48,7 @@ typedef enum
         RESPONSE_WTF = 0,
         RESPONSE_HANDOVER_RESOURCE,
         RESPONSE_READ_FILE,
+        RESPONSE_CREATE_PROC,
         RESPONSE_OK = 200,
 } ResponseCode;
 
@@ -123,7 +124,7 @@ void deleteTask(size_t i)
 //         // }
 // }
 
-Response KHandleRequest(size_t pidn, char *buf, size_t len)
+Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
 {
         Response resp;
         Response *msg = (Response *)buf;
@@ -136,6 +137,26 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len)
                 resp.Code = RESPONSE_OK;
                 resp.as.P = SMGetDrive()->ReadFile(SMGetDrive(), msg->as.bytes);
                 break;
+        case RESPONSE_CREATE_PROC:
+        {
+                bool iself;
+                void *data = SMGetDrive()->ReadFile(SMGetDrive(), resp.as.bytes);
+                size_t size = SMGetDrive()->FileSize(SMGetDrive(), resp.as.bytes);
+                size_t pid = -1;
+
+                if (data && size)
+                        pid = elfLoadProgram(data, size, &iself, User).num;
+                if (data && size && iself)
+                {
+                        resp.Code = RESPONSE_OK;
+                        *((uint32_t*)&resp.as.bytes[0]) = pid;
+                }
+                else
+                {
+                        resp.Code = RESPONSE_WTF;
+                }
+                break;
+        }
         default:
                 printf(" [CONFUSED] Incoming Message of unknown type from %d: %s\n", pidn, msg->as.bytes);
                 strncpy(resp.as.bytes, "wtf are you doing\n\0", 20);
@@ -232,13 +253,20 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         const char *shell = IniGet(&Cfg, "shell_path");
         const char *pass = IniGet(&Cfg, "root_pass_hash");
 
-        if (!pass)
+        /* TODO - load other users */
+
+        if (pass)
         {
                 size_t l;
                 Root.PassHash = atoi(pass, &l);
         }
+        else
+        {
+                printf(" [SERIOUS WARNING] No Shell Password defined\n");
+        }
 
-        USERID RootID = UserAdd(Root);
+        UserAdd(Root);
+        USERID User = UserLogin();
 
         if (!shell)
         {
@@ -252,7 +280,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 size_t size = SMGetDrive()->FileSize(SMGetDrive(), shell);
 
                 if (data && size)
-                        elfLoadProgram(data, size, &iself, RootID);
+                        elfLoadProgram(data, size, &iself, User);
                 if (data && size && iself)
                 {
                         printf(" [INFO] Shell started\n");
@@ -284,7 +312,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 {
                         char buf[4096];
                         size_t pidn = recvmsg(buf, 4096);
-                        Response resp = KHandleRequest(pidn, buf, 4096);
+                        schedPid_t pid = {.num = pidn, .valid = progexists(pidn)};
+                        Response resp = KHandleRequest(pidn, buf, 4096, schedGetProcessN(pid)->enactor);
                         sendmsg(pidn, &resp, sizeof(resp));
                 }
                 sti();

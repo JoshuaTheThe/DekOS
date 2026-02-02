@@ -3,6 +3,7 @@
 
 #include <utils.h>
 #include <drivers/storage.h>
+#include <drivers/serial.h>
 
 #define USER_NAME_LENGTH (0x0C)
 
@@ -47,5 +48,6 @@ int UserTest(size_t idx, int mask);
 void UserSetPassword(USERID id, char *to, char *current);
 bool UserMatch(USERID id, char *with);
 uint32_t fnv1a_hash(const char *str);
+USERID UserLogin(void);
 
 #endif

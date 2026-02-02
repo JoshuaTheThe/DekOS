@@ -3,8 +3,10 @@
  */
 
 #include <user/main.h>
+#include <tty/input/input.h>
 
 #define PASSWORD_SALT 0x8095634 /* keyboard smash */
+#define MAX_LOGIN_ATTEMPTS 3
 
 static USER users[MAX_USERS];
 static size_t user_count;
@@ -80,4 +82,50 @@ int UserTest(size_t idx, int mask)
         if (idx == 0)
                 return 0xFF;
         return 0;
+}
+
+USERID UserFind(const char *Name)
+{
+        for (size_t i = 0; i < MAX_USERS; ++i)
+        {
+                if (!ncsstrncmp(Name, users[i].Name, USER_NAME_LENGTH))
+                {
+                        return i;
+                }
+        }
+
+        return -1;
+}
+
+USERID UserLogin(void)
+{
+        char name[USER_NAME_LENGTH + 1] = {0};
+        char pass[513] = {0};
+        int attempts = 0;
+
+        while (attempts < MAX_LOGIN_ATTEMPTS)
+        {
+                printf("\n--- DekOS Login ---\n");
+                printf("Username: ");
+                gets(name, USER_NAME_LENGTH);
+
+                printf("Password: ");
+                gets(pass, 512);
+
+                USERID id = UserFind(name);
+                if (id != -1 && UserMatch(id, pass))
+                {
+                        memset(pass, 0, sizeof(pass));
+                        printf("Login successful. Welcome, %s!\n", name);
+                        return id;
+                }
+
+                memset(pass, 0, sizeof(pass));
+                memset(name, 0, sizeof(name));
+                printf("Invalid username or password.\n");
+                attempts++;
+        }
+
+        printf("Maximum login attempts reached. Access denied.\n");
+        return -1;
 }

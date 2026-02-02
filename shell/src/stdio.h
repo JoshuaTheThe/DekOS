@@ -29,6 +29,7 @@ typedef enum
         RESPONSE_WTF = 0,
         RESPONSE_HANDOVER_RESOURCE,
         RESPONSE_READ_FILE,
+        RESPONSE_CREATE_PROC,
         RESPONSE_OK = 200,
 } ResponseCode;
 
@@ -80,5 +81,8 @@ typedef enum InterruptFunction
         INT80_CREATE_ELEMENT,
         INT80_ISFOCUSED,
 } InterruptFunction_t;
+
+typedef size_t USERID;
+typedef size_t PID;
 
 #endif

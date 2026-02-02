@@ -131,8 +131,8 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 processes[id].regs.eip = (uint32_t)Program + EntryPOffset;
                 processes[id].regs.esp = (uint32_t)(Stack + StackLength);
 
-                processes[id].regs.eax = 0;
-                processes[id].regs.ebx = 0;
+                processes[id].regs.eax = User;
+                processes[id].regs.ebx = parent.num;
                 processes[id].regs.ecx = 0;
                 processes[id].regs.edx = 0;
                 processes[id].regs.esi = 0;
@@ -192,6 +192,13 @@ bool schedSwitch(uint32_t npid)
 schedProcess_t *schedGetProcess(void)
 {
         return &processes[current_pid.num];
+}
+
+schedProcess_t *schedGetProcessN(schedPid_t Pid)
+{
+        if (Pid.valid)
+                return &processes[Pid.num];
+        return NULL;
 }
 
 int32_t schedFindNextTask(void)
