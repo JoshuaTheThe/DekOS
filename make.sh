@@ -60,7 +60,7 @@ list_files_recursive() {
     local dir="$1"
     for file in "$dir"/*; do
         if [[ -f "$file" && "$file" == *.c ]]; then
-            local base="${file#./src/}"
+            local base="${file#./kernel/src/}"
             base="${base%.c}"
             local output_file="obj/$base.o"
             all_object_files+=("$output_file")
@@ -69,7 +69,7 @@ list_files_recursive() {
             mkdir -p "$(dirname "$output_file")"
 
             # Add debug symbols for better function information
-            clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra
+            clang -m32 -march=i386 -I./kernel/src -c -ffreestanding -msoft-float -fno-builtin "$file" -o "$output_file" -Wall -Wextra
             #clang --analyze -Xanalyzer -analyzer-checker=core,deadcode,security,cplusplus,unix \
       #-m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin "$file"
 
@@ -80,7 +80,7 @@ list_files_recursive() {
             categorize_object_file "$output_file"
         elif [[ -f "$file" && "$file" == *.lisp ]]; then
             # using the lisp compiler at https://github.com/JoshuaTheThe/LispC
-            local base="${file#./src/}"
+            local base="${file#./kernel/src/}"
             base="${base%.s}"
             local output_file="obj/$base.o"
             all_object_files+=("$output_file")
@@ -91,7 +91,7 @@ list_files_recursive() {
             generate_symbols "$output_file"
             categorize_object_file "$output_file"
         elif [[ -f "$file" && "$file" == *.s ]]; then
-            local base="${file#./src/}"
+            local base="${file#./kernel/src/}"
             base="${base%.s}"
             local output_file="obj/$base.o"
             all_object_files+=("$output_file")
@@ -120,39 +120,39 @@ create_symbol_table() {
     nm -n bin/kernel.elf > obj/all_symbols.sym
     
     # Generate C header with function addresses
-    echo "// Auto-generated function symbol table" > src/symbols.h
-    echo "#ifndef SYMBOLS_H" >> src/symbols.h
-    echo "#define SYMBOLS_H" >> src/symbols.h
-    echo "#include <stdint.h>" >> src/symbols.h
-    echo "" >> src/symbols.h
+    echo "// Auto-generated function symbol table" > kernel/src/symbols.h
+    echo "#ifndef SYMBOLS_H" >> kernel/src/symbols.h
+    echo "#define SYMBOLS_H" >> kernel/src/symbols.h
+    echo "#include <stdint.h>" >> kernel/src/symbols.h
+    echo "" >> kernel/src/symbols.h
     
     # Parse symbols and create C array
-    echo "typedef struct {" >> src/symbols.h
-    echo "    const char* name;" >> src/symbols.h
-    echo "    uint32_t *address;" >> src/symbols.h
-    echo "} symbol_t;" >> src/symbols.h
-    echo "" >> src/symbols.h
-    echo "extern symbol_t kernel_symbols[];" >> src/symbols.h
-    echo "extern const int kernel_symbols_count;" >> src/symbols.h
-    echo "" >> src/symbols.h
+    echo "typedef struct {" >> kernel/src/symbols.h
+    echo "    const char* name;" >> kernel/src/symbols.h
+    echo "    uint32_t *address;" >> kernel/src/symbols.h
+    echo "} symbol_t;" >> kernel/src/symbols.h
+    echo "" >> kernel/src/symbols.h
+    echo "extern symbol_t kernel_symbols[];" >> kernel/src/symbols.h
+    echo "extern const int kernel_symbols_count;" >> kernel/src/symbols.h
+    echo "" >> kernel/src/symbols.h
     
     # Count symbols and create array
     local symbol_count=$(grep " T " obj/all_symbols.sym | wc -l)
-    echo "const int kernel_symbols_count = $symbol_count;" > src/symbols.c
-    echo "#include \"symbols.h\"" >> src/symbols.c
-    echo "" >> src/symbols.c
-    echo "symbol_t kernel_symbols[] = {" >> src/symbols.c
+    echo "const int kernel_symbols_count = $symbol_count;" > kernel/src/symbols.c
+    echo "#include \"symbols.h\"" >> kernel/src/symbols.c
+    echo "" >> kernel/src/symbols.c
+    echo "symbol_t kernel_symbols[] = {" >> kernel/src/symbols.c
     
     # Add each symbol to the array
     grep " T " obj/all_symbols.sym | while read line; do
         local addr=$(echo "$line" | awk '{print $1}')
         local name=$(echo "$line" | awk '{print $3}')
-        echo "    {\"$name\", (uint32_t*)0x$addr}," >> src/symbols.c
+        echo "    {\"$name\", (uint32_t*)0x$addr}," >> kernel/src/symbols.c
     done
     
-    echo "};" >> src/symbols.c
-    echo "" >> src/symbols.h
-    echo "#endif // SYMBOLS_H" >> src/symbols.h
+    echo "};" >> kernel/src/symbols.c
+    echo "" >> kernel/src/symbols.h
+    echo "#endif // SYMBOLS_H" >> kernel/src/symbols.h
     
     echo "Generated symbols.h and symbols.c with $symbol_count functions"
 }
@@ -162,13 +162,13 @@ mkdir -p obj
 
 # Compile everything
 echo "Compiling source files..."
-list_files_recursive "./src"
+list_files_recursive "./kernel/src"
 
 # Create the symbol table
 
 # Recompile symbols.c to include it in the build
 #echo "Compiling symbols.c..."
-#clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin -g src/symbols.c -o obj/symbols.o
+#clang -m32 -march=i386 -I./src -c -ffreestanding -msoft-float -fno-builtin -g kernel/src/symbols.c -o obj/symbols.o
 #all_object_files+=("obj/symbols.o")
 #categorize_object_file "obj/symbols.o"
 
