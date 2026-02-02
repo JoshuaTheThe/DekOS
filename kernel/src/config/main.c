@@ -1,6 +1,4 @@
 #include <config/main.h>
-#include <string.h>
-#include <stdlib.h>
 
 CONFIGURATION ConfigRead(void)
 {
