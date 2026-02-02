@@ -143,7 +143,6 @@ FATFileLocation FatLocateInDir(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRI
 {
         if (Parent && !(Parent->Flags & FAT_DIRECTORY))
         {
-                printf(" [ERROR] Parent is Invalid (%s)\n", __func__);
                 return (FATFileLocation){0};
         }
 
@@ -196,7 +195,6 @@ void *FatRead(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDir
 {
         if (Parent && !(Parent->Flags & FAT_DIRECTORY))
         {
-                printf(" [ERROR] Parent is Invalid\n");
                 return NULL;
         }
 
@@ -262,6 +260,5 @@ void FatTest(DRIVE *Drive)
         printf("        fat.root-clust          %d\n", FatRootCluster(&bt));
         printf("        fat.first-root-cluster  %d\n", FatFirstSectorForCluster(&bt, FatRootCluster(&bt)));
 
-        FATFileLocation drivers = FatLocateInDir("DRIVERS", "", &bt, Drive, NULL);
-        free(FatRead("FAT", "C", &bt, Drive, &drivers.Dir));
+        free(Drive->ReadFile(Drive, "DRIVERS/FAT.C"));
 }

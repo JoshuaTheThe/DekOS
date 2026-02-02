@@ -25,29 +25,40 @@ void *IDEReadFile(DRIVE *Self, const char *Path)
         FATBootSector bt = FatReadBootSector(Self);
 
         FATFileLocation Loc = {0};
-        FATDirectory *CurrentDir = NULL;
+        FATDirectory CurrentDir = {0};
+        FATDirectory *pCurrentDir = NULL;
 
         char PathCopy[256];
         strncpy(PathCopy, Path, sizeof(PathCopy));
         PathCopy[sizeof(PathCopy) - 1] = 0;
 
         char *segment = strtok(PathCopy, "/");
-        char *lastSegment = PathCopy;
-        char Name[8], Extension[3];
+        char *lastSegment = NULL;
+        char Name[9] = {0}, Extension[4] = {0};
 
         while (segment)
         {
                 lastSegment = segment;
                 FatConvert83(segment, Name, Extension);
+                Loc = FatLocateInDir(Name, Extension, &bt, Self, pCurrentDir);
+                if (!Loc.Found)
+                {
+                        return NULL;
+                }
 
-                Loc = FatLocateInDir(Name, Extension, &bt, Self, CurrentDir);
-                CurrentDir = &Loc.Dir;
-
+                if (Loc.Dir.Flags & FAT_DIRECTORY)
+                {
+                        CurrentDir = Loc.Dir;
+                        pCurrentDir = &CurrentDir;
+                }
                 segment = strtok(NULL, "/");
         }
 
+        if (!lastSegment)
+                return NULL;
+
         FatConvert83(lastSegment, Name, Extension);
-        return FatRead(Name, Extension, &bt, Self, CurrentDir);
+        return FatRead(Name, Extension, &bt, Self, pCurrentDir);
 }
 
 void *SMRead(size_t LBA)
