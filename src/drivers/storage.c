@@ -40,25 +40,68 @@ void *IDEReadFile(DRIVE *Self, const char *Path)
         {
                 lastSegment = segment;
                 FatConvert83(segment, Name, Extension);
-                Loc = FatLocateInDir(Name, Extension, &bt, Self, pCurrentDir);
+                Loc = FatLocateInDir((BYTE *)Name, (BYTE *)Extension, &bt, Self, pCurrentDir);
                 if (!Loc.Found)
-                {
                         return NULL;
-                }
 
                 if (Loc.Dir.Flags & FAT_DIRECTORY)
                 {
                         CurrentDir = Loc.Dir;
                         pCurrentDir = &CurrentDir;
                 }
+
                 segment = strtok(NULL, "/");
         }
 
         if (!lastSegment)
+        {
                 return NULL;
+        }
+
+        return FatRead((BYTE *)Name, (BYTE *)Extension, &bt, Self, pCurrentDir);
+}
+
+DWORD IDEFileSize(DRIVE *Self, const char *Path)
+{
+        FATBootSector bt = FatReadBootSector(Self);
+
+        FATFileLocation Loc = {0};
+        FATDirectory CurrentDir = {0};
+        FATDirectory *pCurrentDir = NULL;
+
+        char PathCopy[256];
+        strncpy(PathCopy, Path, sizeof(PathCopy));
+        PathCopy[sizeof(PathCopy) - 1] = 0;
+
+        char *segment = strtok(PathCopy, "/");
+        char *lastSegment = NULL;
+        char Name[9] = {0}, Extension[4] = {0};
+
+        while (segment)
+        {
+                lastSegment = segment;
+                FatConvert83(segment, Name, Extension);
+                Loc = FatLocateInDir((BYTE *)Name, (BYTE *)Extension, &bt, Self, pCurrentDir);
+                if (!Loc.Found)
+                {
+                        return 0;
+                }
+
+                CurrentDir = Loc.Dir;
+                pCurrentDir = &CurrentDir;
+                segment = strtok(NULL, "/");
+        }
+
+        if (!lastSegment)
+                return 0;
 
         FatConvert83(lastSegment, Name, Extension);
-        return FatRead(Name, Extension, &bt, Self, pCurrentDir);
+        return CurrentDir.Size;
+}
+
+void IDEDirectoryListing(DRIVE *Self, const char *Path)
+{
+        return;
 }
 
 void *SMRead(size_t LBA)
@@ -176,6 +219,8 @@ void SMInit(void)
                                 disk->Type = IDEState.IDEDev[d].Type;
                                 disk->PCIDevIndex = i;
                                 disk->ReadFile = IDEReadFile;
+                                disk->FileSize = IDEFileSize;
+                                disk->DirectoryListing = IDEDirectoryListing;
                                 printf("dev%d: model=%s type=%d size=%dMB\n", DriveCount, disk->Model, disk->Type, (disk->Size * 512) / 1024 / 1024);
                                 DriveCount++;
                         }

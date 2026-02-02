@@ -1,7 +1,7 @@
 #include <forth.h>
 #include <memory/string.h>
 
-static int32_t stack[STACK_SIZE];
+static int32_t stack[FORTH_STACK_SIZE];
 static int32_t sp = 0;
 
 void itos(int value, char *str, int base)
@@ -63,7 +63,7 @@ int atoi(const char *const str, size_t *len)
 
 void push(int32_t val)
 {
-        if (sp < STACK_SIZE)
+        if (sp < FORTH_STACK_SIZE)
                 stack[sp++] = val;
 }
 
@@ -94,13 +94,13 @@ void executeToken(char **buf)
                 SerialPrint("INFO: Grabbing\r\n");
 #endif
                 uint32_t index = pop();
-                push(stack[index % STACK_SIZE]);
+                push(stack[index % FORTH_STACK_SIZE]);
         }
         else if (*tok == 's')
         {
                 int32_t index = pop();
                 int32_t value = pop();
-                stack[index % STACK_SIZE] = value;
+                stack[index % FORTH_STACK_SIZE] = value;
         }
         else if (*tok == '+')
         {
@@ -123,7 +123,7 @@ void executeToken(char **buf)
 #ifdef FORTH_DEBUG
                 SerialPrint("INFO: Jumping\r\n");
 #endif
-                *buf = pop();
+                *buf = (char *)pop();
                 return;
         }
         else if (*tok == '?')

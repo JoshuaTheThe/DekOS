@@ -1,6 +1,6 @@
 #include <drivers/ide.h>
 
-IDEDriver_t IDEState;
+IDEDriver_t IDEState = {0};
 uint8_t package[2048], atapi_packet[2048];
 
 void IDEWaitIRQ(void)

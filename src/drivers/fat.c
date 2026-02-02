@@ -79,7 +79,7 @@ DWORD FatFirstSectorForCluster(FATBootSector *Bt, DWORD Cluster)
 /**
  *  NOTE - Original X gets modified
  */
-static void FatConvertPaddedToNull(char *X, size_t L)
+void FatConvertPaddedToNull(char *X, size_t L)
 {
         for (size_t i = 0; i < L; ++i)
                 X[i] = (X[i] == ' ') ? '\0' : X[i];
@@ -163,7 +163,7 @@ FATFileLocation FatLocateInDir(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRI
                         memcpy(&Directory, SMReadFrom(first_root + clusterOffset, Drive), sizeof(Directory));
 
                         /* IF Byte 0 is 0, that is the end */
-                        for (size_t i = 0; Directory[i].Name[0]; ++i)
+                        for (size_t i = 0; Directory[i].Name[0] && i < entries; ++i)
                         {
                                 if (Directory[i].Name[0] == FAT_UNUSED)
                                         continue;
@@ -173,7 +173,7 @@ FATFileLocation FatLocateInDir(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRI
                                         continue;
                                 }
 
-                                if (!ncsstrncmp(Directory[i].Name, Name, 8) && !ncsstrncmp(Directory[i].Ext, Ext, 3))
+                                if (!ncsstrncmp((char*)Directory[i].Name, (char*)Name, 8) && !ncsstrncmp((char*)Directory[i].Ext, (char*)Ext, 3))
                                 {
                                         Result.Cluster = cluster;
                                         Result.Found = 1;
@@ -223,7 +223,6 @@ void *FatRead(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDir
                 cluster = FatNextCluster(bt, cluster, Drive);
         }
 
-        printf("%s", Data);
         return Data;
 }
 
@@ -259,6 +258,4 @@ void FatTest(DRIVE *Drive)
         printf("        fat.first-root          %d\n", FatFirstRoot(&bt));
         printf("        fat.root-clust          %d\n", FatRootCluster(&bt));
         printf("        fat.first-root-cluster  %d\n", FatFirstSectorForCluster(&bt, FatRootCluster(&bt)));
-
-        free(Drive->ReadFile(Drive, "DRIVERS/FAT.C"));
 }

@@ -3,7 +3,7 @@
 #include <utils.h>
 #include <drivers/serial.h>
 
-#define STACK_SIZE 256
+#define FORTH_STACK_SIZE 256
 
 void push(int32_t val);
 int32_t pop(void);

@@ -165,6 +165,7 @@ DWORD FatFirstSectorForCluster(FATBootSector *Bt, DWORD Cluster);
 void *FatRead(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent);
 void FatConvert83(const char *path, char *NameOut, char *ExtOut);
 FATFileLocation FatLocateInDir(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent);
+void FatConvertPaddedToNull(char *X, size_t L);
 
 void FatTest(DRIVE *Drive);
 

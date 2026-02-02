@@ -4,7 +4,7 @@
 #include <memory/string.h>
 #include <tty/input/input.h>
 #include <tty/output/output.h>
-#include <drivers/iso9660.h>
+#include <drivers/storage.h>
 #include <programs/ex.h>
 #include <programs/delangue.h>
 #include <programs/elf/elf.h>
@@ -76,8 +76,7 @@ void shellCoproc(void)
 
 void shell(void)
 {
-        iso9660Dir_t file;
-        char current_dir[512] = "/boot";
+        char current_dir[512] = "";
         while (1)
         {
                 printf("%s\\`(owo`)o -> ", current_dir);
@@ -105,13 +104,13 @@ void shell(void)
                 {
                         if (argc == 1)
                         {
-                                iso9660ListDir(current_dir);
+                                SMGetDrive()->DirectoryListing(SMGetDrive(), current_dir);
                         }
                         else if (argc == 2)
                         {
                                 char path[512];
                                 snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
-                                iso9660ListDir(path);
+                                SMGetDrive()->DirectoryListing(SMGetDrive(), path);
                         }
                 }
                 else if (!strcmp(command_buffer[0], "cd") && argc == 2)
@@ -130,7 +129,7 @@ void shell(void)
                         }
                         else if (!strcmp(command_buffer[1], "/"))
                         {
-                                strncpy(current_dir, "/boot", 512);
+                                strncpy(current_dir, "", 512);
                         }
                         else
                         {
@@ -141,14 +140,7 @@ void shell(void)
                                 }
                                 else
                                 {
-                                        if (strcmp(current_dir, "/") == 0)
-                                        {
-                                                snprintf(new_dir, sizeof(new_dir), "/%s", command_buffer[1]);
-                                        }
-                                        else
-                                        {
-                                                snprintf(new_dir, sizeof(new_dir), "%s/%s", current_dir, command_buffer[1]);
-                                        }
+                                        snprintf(new_dir, sizeof(new_dir), "%s/%s", current_dir, command_buffer[1]);
                                 }
 
                                 len = strlen(new_dir);
@@ -169,10 +161,9 @@ void shell(void)
                 {
                         char path[512];
                         snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
-                        bool success = iso9660FindFile(path, &file);
-                        if (success)
+                        char *data = SMGetDrive()->ReadFile(SMGetDrive(), path);
+                        if (data)
                         {
-                                char *data = iso9660ReadFile(&file);
                                 printf("%s\n", data);
                                 free(data);
                         }
@@ -181,14 +172,19 @@ void shell(void)
                                 printf("could not find file '%s'\n", path);
                         }
                 }
+                else if (!strcmp(command_buffer[0], "size") && argc == 2)
+                {
+                        char path[512];
+                        snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
+                        printf("%d\n", SMGetDrive()->FileSize(SMGetDrive(), path));
+                }
                 else if (!strcmp(command_buffer[0], "forth") && argc == 2)
                 {
                         char path[512];
                         snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
-                        bool success = iso9660FindFile(path, &file);
-                        if (success)
+                        char *data = SMGetDrive()->ReadFile(SMGetDrive(), path);
+                        if (data)
                         {
-                                char *data = iso9660ReadFile(&file);
                                 forth(data);
                                 printf("\n");
                         }
@@ -202,12 +198,11 @@ void shell(void)
                         /* OLD EX FORMAT */
                         char path[512];
                         snprintf(path, 512, "%s/%s", current_dir, command_buffer[1]);
-                        bool success = iso9660FindFile(path, &file);
-                        if (success)
+                        char *data = SMGetDrive()->ReadFile(SMGetDrive(), path);
+                        if (data)
                         {
-                                char *data = iso9660ReadFile(&file);
                                 schedPid_t sysPid = {.num = 0, .valid = true};
-                                int pid = exExecute(path, data, file.data_length[0], sysPid);
+                                int pid = exExecute(path, data, SMGetDrive()->FileSize(SMGetDrive(), path), sysPid);
                                 while (progexists(pid))
                                 {
                                         if (kbhit() && getc() == '\e')
@@ -230,16 +225,15 @@ void shell(void)
                 {
                         char path[512];
                         snprintf(path, 512, "%s/%s", current_dir, command_buffer[0]);
-                        bool success = iso9660FindFile(path, &file);
-                        if (success)
+                        char *data = SMGetDrive()->ReadFile(SMGetDrive(), path);
+                        if (data)
                         {
-                                char *data = iso9660ReadFile(&file);
                                 schedPid_t sysPid = {.num = 0, .valid = true};
                                 bool iself;
-                                schedPid_t pid = elfLoadProgram((uint8_t*)data, file.data_length[0], &iself);
+                                schedPid_t pid = elfLoadProgram((uint8_t*)data, SMGetDrive()->FileSize(SMGetDrive(), path), &iself);
                                 if (!iself)
                                 {
-                                        pid.num = exExecute(path, data, file.data_length[0], sysPid);
+                                        pid.num = exExecute(path, data, SMGetDrive()->FileSize(SMGetDrive(), path), sysPid);
                                         pid.valid = pid.num != -1;
                                 }
                                 while (pid.valid && progexists(pid.num))
