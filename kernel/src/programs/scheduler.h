@@ -25,7 +25,7 @@
 #define SCHED_FLAGS *((uint32_t *)(0x9000 + (4 * 15)))
 
 #define MAX_MSG_SIZE 256
-#define MAX_PENDING_MESSAGES 4
+#define MAX_PENDING_MESSAGES 256
 
 typedef struct
 {

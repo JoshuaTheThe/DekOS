@@ -134,7 +134,7 @@ uint32_t sysReply(void)
                 if (arg1 != 0)
                 {
                         char *_buf = (char *)arg1;
-                        for (uint32_t i = 0; i < arg2; ++i)
+                        for (uint32_t i = 0; i < arg2 && _buf[i]; ++i)
                         {
                                 putchar(_buf[i] /*, proc->tty, &proc->x, &proc->y*/);
                         }
@@ -194,7 +194,7 @@ uint32_t sysReply(void)
                 return 0;
         }
 
-                // void recvmsg(buffer, sizeof(buffer)), read the process's message buffer (recieve message)
+                // int recvmsg(buffer, sizeof(buffer)), read the process's message buffer (recieve message), return PID
         case INT80_RECVMSG:
         {
                 char *buffer = (char *)arg1;
@@ -211,7 +211,7 @@ uint32_t sysReply(void)
                 uint32_t copy_size = minu(msg.size, buffer_size);
                 memcpy(buffer, msg.data, copy_size);
 
-                return copy_size;
+                return msg.sender_pid;
         }
 
                 // bool msgrecv(pid), whether it has been read yet, -1 for any

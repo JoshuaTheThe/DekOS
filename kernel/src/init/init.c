@@ -43,6 +43,24 @@
 
 #include <config/main.h>
 
+typedef enum
+{
+        RESPONCE_WTF = 0,
+        RESPONCE_HANDOVER_RESOURCE,
+        RESPONCE_OK = 200,
+} ResponceCode;
+
+typedef struct
+{
+        DWORD Code;
+
+        union
+        {
+                void *P;
+                BYTE bytes[200];
+        } as;
+} Responce;
+
 extern schedProcess_t processes[MAX_PROCS];
 extern bool tty_needs_flushing;
 extern RID rdFrameRID;
@@ -69,66 +87,57 @@ void deleteTask(size_t i)
 }
 
 /* Post-Init kernel stuff, e.g. managing procs, and communication */
-void kernelTask(multiboot_info_t *mbi)
+// void kernelTask(multiboot_info_t *mbi)
+// {
+//         (void)mbi;
+//         // speakerPlay(300);
+//         // pitDelay(10);
+//         // speakerStop();
+//         // PROCID WMId = WMInit();
+//         // RESULT Result = ResourceHandoverK(fbRes, WMId);
+//         // font_t *Font = RenderGetFont();
+//         // DWORD Width = Font->char_width * TTY_W;
+//         // DWORD Height = Font->char_height * (TTY_H + 1);
+//         // DWORD WWidth = Width + 16;
+//         // DWORD WHeight = Height + 32;
+//         // printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
+//         // KernelWindowResource = WMCreateWindow("Kernel Window", 10, 10, WWidth, WHeight);
+//         // if (KernelWindowResource)
+//         // {
+//         //         KernelWindow = KernelWindowResource->Region.ptr;
+//         //         char *X[TTY_H];
+//         //         for (int i = 0; i < TTY_H; i++)
+//         //         {
+//         //                 X[i] = system_output[i];
+//         //         }
+//         //
+//         //         DWORD CenterX = WMMiddlePointX(KernelWindow) - Width / 2;
+//         //         DWORD CenterY = WMMiddlePointY(KernelWindow) - Height / 2;
+//         //         KRNLRES *TextBuff = WMCreateElement(KernelWindowResource, CenterX, CenterY, Width, Height, WINDOW_ELEMENT_TEXT);
+//         //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Font = Font;
+//         //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Columns = TTY_W;
+//         //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Lines = TTY_H;
+//         //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Text = X;
+//         //         (void)TextBuff;
+//         // }
+// }
+
+Responce KHandleRequest(size_t pidn, char *buf, size_t len)
 {
-        (void)mbi;
-        // speakerPlay(300);
-        // pitDelay(10);
-        // speakerStop();
-        // PROCID WMId = WMInit();
-        // RESULT Result = ResourceHandoverK(fbRes, WMId);
-        // font_t *Font = RenderGetFont();
-        // DWORD Width = Font->char_width * TTY_W;
-        // DWORD Height = Font->char_height * (TTY_H + 1);
-        // DWORD WWidth = Width + 16;
-        // DWORD WHeight = Height + 32;
-        // printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
-        // KernelWindowResource = WMCreateWindow("Kernel Window", 10, 10, WWidth, WHeight);
-        // if (KernelWindowResource)
-        // {
-        //         KernelWindow = KernelWindowResource->Region.ptr;
-        //         char *X[TTY_H];
-        //         for (int i = 0; i < TTY_H; i++)
-        //         {
-        //                 X[i] = system_output[i];
-        //         }
-        //
-        //         DWORD CenterX = WMMiddlePointX(KernelWindow) - Width / 2;
-        //         DWORD CenterY = WMMiddlePointY(KernelWindow) - Height / 2;
-        //         KRNLRES *TextBuff = WMCreateElement(KernelWindowResource, CenterX, CenterY, Width, Height, WINDOW_ELEMENT_TEXT);
-        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Font = Font;
-        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Columns = TTY_W;
-        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Lines = TTY_H;
-        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Text = X;
-        //         (void)TextBuff;
-        // }
-        sti();
-
-        while (true)
+        Responce resp;
+        switch (buf[0])
         {
-                cli();
-                for (int i = 0; i < MAX_PROCS; ++i)
-                {
-                        if (processes[i].delete)
-                        {
-                                cli();
-                                deleteTask(i);
-                                sti();
-                        }
-                }
-
-                mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
-
-                if (msgrecv(-1))
-                {
-                        char buf[4096];
-                        recvmsg(buf, 4096);
-                        buf[4095] = 0;
-                        printf(" [INFO] Incoming Message: %s\n", buf);
-                }
-                sti();
-                hlt();
+                case RESPONCE_OK:
+                        resp.Code = RESPONCE_OK;
+                        break;
+                default:
+                        printf(" [CONFUSED] Incoming Message of unknown type from %d: %s\n", pidn, buf);
+                        strncpy(resp.as.bytes, "wtf are you doing\n\0", 20);
+                        resp.Code = RESPONCE_WTF;
+                        break;
         }
+
+        return resp;
 }
 
 /* Initialize the System */
@@ -232,10 +241,31 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
         }
 
-        kernelTask(mbi);
-        cli();
-        while (1)
+        sti();
+
+        while (true)
         {
+                cli();
+                for (int i = 0; i < MAX_PROCS; ++i)
+                {
+                        if (processes[i].delete)
+                        {
+                                cli();
+                                deleteTask(i);
+                                sti();
+                        }
+                }
+
+                mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
+
+                if (msgrecv(-1))
+                {
+                        char buf[4096];
+                        size_t pidn = recvmsg(buf, 4096);
+                        Responce resp = KHandleRequest(pidn, buf, 4096);
+                        sendmsg(pidn, &resp, sizeof(resp));
+                }
+                sti();
                 hlt();
         }
 }

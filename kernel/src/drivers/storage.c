@@ -114,7 +114,7 @@ void *SMRead(size_t LBA)
         }
         else
         {
-                printf("ERROR: Disk Read Error (vague ik)\n");
+                printf(" [ERROR] Disk Read Error (vague ik)\n");
                 return NULL;
         }
 }
@@ -129,7 +129,7 @@ void *SMReadFrom(size_t LBA, DRIVE *Drive)
         }
         else
         {
-                printf("ERROR: Disk Read Error (vague ik)\n");
+                printf(" [ERROR] Disk Read Error (vague ik)\n");
                 return NULL;
         }
 }
@@ -145,7 +145,7 @@ void *SMWrite(size_t LBA, void *Buf, size_t BufSize)
         }
         else
         {
-                printf("ERROR: Disk Write Error (vague ik)\n");
+                printf(" [ERROR] Disk Write Error (vague ik)\n");
                 return NULL;
         }
 }
@@ -161,7 +161,7 @@ void *SMWriteTo(size_t LBA, void *Buf, size_t BufSize, DRIVE *Drive)
         }
         else
         {
-                printf("ERROR: Disk Write Error (vague ik)\n");
+                printf(" [ERROR] Disk Write Error (vague ik)\n");
                 return NULL;
         }
 }
@@ -170,13 +170,13 @@ void SMChange(size_t New)
 {
         if (New >= DriveCount)
         {
-                printf("ERROR: Drive index out of range\n");
+                printf(" [ERROR] Drive index out of range\n");
                 return;
         }
 
         if (!Drives[New].Valid || !Drives[New].Present)
         {
-                printf("ERROR: Drive is invalid or not present\n");
+                printf(" [ERROR] Drive is invalid or not present\n");
                 return;
         }
 

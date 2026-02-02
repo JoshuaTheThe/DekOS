@@ -9,15 +9,15 @@ static const char Sign[8] = "EXENNEA";
 
 void exHeaderInfo(const exHeader_t h)
 {
-        printf("Signature: %s\n", h.Sign);
-        printf("Version: %d.%d.%d\n", h.major, h.minor, h.patch);
-        printf("Relocation Count: %d\n", h.RelocationCount);
-        printf("Relocation Segment: %d\n", h.RelocationsStart);
-        printf("Text Start: %d\n", h.TextSegmentOrg);
-        printf("Text Size: %d\n", h.TextSegmentSize);
-        printf("FunTableOrg: %d\n", h.FunTableOrg);
-        printf("exFunction_t Count: %d\n", h.FunctionCount);
-        printf("Stack Size: %d\n", h.StackSize);
+        printf(" [INFO] Signature: %s\n", h.Sign);
+        printf(" [INFO] Version: %d.%d.%d\n", h.major, h.minor, h.patch);
+        printf(" [INFO] Relocation Count: %d\n", h.RelocationCount);
+        printf(" [INFO] Relocation Segment: %d\n", h.RelocationsStart);
+        printf(" [INFO] Text Start: %d\n", h.TextSegmentOrg);
+        printf(" [INFO] Text Size: %d\n", h.TextSegmentSize);
+        printf(" [INFO] FunTableOrg: %d\n", h.FunTableOrg);
+        printf(" [INFO] exFunction_t Count: %d\n", h.FunctionCount);
+        printf(" [INFO] Stack Size: %d\n", h.StackSize);
 }
 
 void exFindFunctions(const exHeader_t h, const char *buffer, exFunction_t *func)
@@ -60,7 +60,7 @@ int exExecute(char *name, char *buffer, size_t buffer_size, schedPid_t parent)
 {
         if (buffer_size < sizeof(exHeader_t))
         {
-                printf("Buffer too small for header\n");
+                printf(" [ERROR] Buffer too small for header\n");
                 return -1;
         }
 
@@ -69,13 +69,13 @@ int exExecute(char *name, char *buffer, size_t buffer_size, schedPid_t parent)
 
         if (h.Sign[0] == '\0')
         {
-                printf("Invalid executable format\n");
+                printf(" [ERROR] Invalid executable format\n");
                 return -1;
         }
 
         if (strncmp(h.Sign, Sign, sizeof(Sign)) != 0)
         {
-                printf("Invalid signature. Not an EXENNEA executable.\n");
+                printf(" [ERROR] Invalid signature. Not an EXENNEA executable.\n");
                 return -1;
         }
 

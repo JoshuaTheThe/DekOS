@@ -11,7 +11,6 @@ schedProcess_t *current_process;
 schedPid_t current_pid;
 uint32_t tick_counter;
 static uint32_t kStack[4096];
-void kernelTask(void);
 
 int schedFindInvalidProcess(void)
 {
@@ -36,7 +35,7 @@ void schedInit(void)
 	processes[0].valid = true;
 	processes[0].active = true;
 	processes[0].delete = false;
-	processes[0].program = (uint8_t *)kernelTask;
+	processes[0].program = (uint8_t *)NULL;
 	processes[0].stack = (uint8_t *)kStack;
 	processes[0].stack_size = 4096;
 
@@ -50,7 +49,7 @@ void schedInit(void)
 	processes[0].regs.esi = 0;
 	processes[0].regs.edi = 0;
 
-	processes[0].regs.eip = (uint32_t)kernelTask;
+	processes[0].regs.eip = (uint32_t)NULL;
 	processes[0].regs.flags = 0x202; // Interrupts enabled
 	processes[0].regs.cs = 0x08;
 	processes[0].regs.ss = 0x10;
