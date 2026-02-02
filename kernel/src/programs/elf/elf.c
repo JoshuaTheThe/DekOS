@@ -303,7 +303,7 @@ int elfLoadStageTwo(elf32EHeader_t *hdr)
 /**
  * elfLoadProgram - completely load and link the elf buffer, then create the process
  */
-schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID User)
+schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID User, int argc, char **argv)
 {
         *(iself)=false;
         if (!elfCheckSupported((elf32EHeader_t *)file))
@@ -337,8 +337,8 @@ schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID U
         //printf("ENTRY POINT: %x\n", entry_point);
         schedPid_t pid = schedCreateProcess(
                 "elf_program",    // Process name
-                NULL,             // No arguments
-                0,                // No argument count
+                argv,             // No arguments
+                argc,                // No argument count
                 program_mem,      // Program memory
                 (uint32_t)entry_point, // Entry offset
                 stack_mem,        // Stack memory

@@ -100,8 +100,6 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 return (schedPid_t){0};
         }
 
-        (void)Args;
-        (void)Argc;
         pushf();
         cli();
         uint32_t flags = 0;
@@ -127,14 +125,16 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 processes[id].regs.fs = 0x10;
                 processes[id].regs.gs = 0x10;
                 processes[id].parent = parent;
+                processes[id].argc = Argc;
+                processes[id].argv = Args;
 
                 processes[id].regs.eip = (uint32_t)Program + EntryPOffset;
                 processes[id].regs.esp = (uint32_t)(Stack + StackLength);
 
                 processes[id].regs.eax = User;
                 processes[id].regs.ebx = parent.num;
-                processes[id].regs.ecx = 0;
-                processes[id].regs.edx = 0;
+                processes[id].regs.ecx = Argc;
+                processes[id].regs.edx = Args;
                 processes[id].regs.esi = 0;
                 processes[id].regs.edi = 0;
                 processes[id].regs.ebp = processes[id].regs.esp; // Match ESP

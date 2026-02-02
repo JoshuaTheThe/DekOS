@@ -73,6 +73,9 @@ typedef struct
         bool delete;
         bool debugger_is_present;
 
+        char **argv;
+        int argc;
+
         USERID enactor;
 } schedProcess_t;
 

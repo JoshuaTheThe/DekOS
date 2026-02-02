@@ -68,29 +68,37 @@ static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
         return N;
 }
 
-int main(USERID UserID, PID ParentProc, int ecx, int edx)
+int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
 {
         char name[32];
         getusername(name, 31);
-        char prompt[768];
-        char current_dir[512] = "";
+        char prompt[256];
+        char current_dir[256] = "";
 
         snprintf(current_dir, sizeof(prompt), "users/%s/", name);
         snprintf(prompt, sizeof(prompt), "users/%s/user.ini", name);
         Ini config = IniRead(prompt);
         memset(prompt, 0, sizeof(prompt));
 
-        while (1)
+        for (size_t i = 0; i < argc; ++i)
         {
-                snprintf(prompt, sizeof(prompt), "%s:%s$", name, current_dir);
+                print(argv[i]);
+                print("\n");
+        }
+
+        bool running = true;
+
+        while (running)
+        {
+                snprintf(prompt, sizeof(prompt), "%s:%s$ ", name, current_dir);
                 print(prompt);
                 memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
                 memset(command_buffer, 0, sizeof(command_buffer));
                 size_t len = (size_t)gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
                 keyboard_buffer[len] = '\0';
-                int argc = shellParse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
+                int largc = shellParse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
 
-                if (!strcmp(command_buffer[0], "cd") && argc == 2)
+                if (!strcmp(command_buffer[0], "cd") && largc == 2)
                 {
                         if (!strcmp(command_buffer[1], ".."))
                         {
@@ -135,9 +143,23 @@ int main(USERID UserID, PID ParentProc, int ecx, int edx)
                         print(current_dir);
                         putc('\n');
                 }
+                else if (!strcmp(command_buffer[0], "exit"))
+                {
+                        running = false;
+                }
                 else if (strlen(command_buffer[0]) != 0)
                 {
-                        CreateProcess(command_buffer[0]);
+                        char **arg_v = malloc(largc * sizeof(char *));
+                        for (size_t i = 0; i < largc; ++i)
+                        {
+                                size_t len = strlen(command_buffer[i]) + 1;
+                                arg_v[i] = malloc(len);
+                                memcpy(arg_v[i], command_buffer[i], len);
+                        }
+
+                        PID pid = CreateProcess(arg_v, largc);
+                        while (progexists(pid))
+                                ;
                 }
         }
         return 69;

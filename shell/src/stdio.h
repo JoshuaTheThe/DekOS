@@ -87,7 +87,7 @@ void exit(int status);
 void *malloc(unsigned int size);
 void free(void *p);
 void *ReadFile(const char *FilePath);
-PID CreateProcess(const char *FilePath);
+PID CreateProcess(char **argv, int argc);
 int gets(char *b, int max);
 int vsnprintf(char *str, size_t size, const char *fmt, va_list args);
 int snprintf(char *str, size_t size, const char *fmt, ...);

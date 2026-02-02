@@ -147,11 +147,12 @@ void *ReadFile(const char *FilePath)
         return resp.as.P;
 }
 
-PID CreateProcess(const char *FilePath)
+PID CreateProcess(char **argv, int argc)
 {
         Response resp;
         resp.Code = RESPONSE_CREATE_PROC;
-        memcpy(resp.as.bytes, FilePath, strlen(FilePath));
+        memcpy(resp.as.bytes, &argc, sizeof(argc));
+        memcpy(resp.as.bytes+4, argv, sizeof(argv));
         sendmsg(0, &resp, sizeof(Response));
         PID pidn;
         while (1)

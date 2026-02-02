@@ -173,6 +173,6 @@ int elfGetSymbolValue(elf32EHeader_t *hdr, int table, uint32_t idx);
 int elfGetSymbolExternal(elf32EHeader_t *hdr, int table, uint32_t idx, const elf32Symbol_t *const symbol, const elf32SectionHeader_t *const header);
 int elfLoadStageOne(elf32EHeader_t *hdr);
 int elfLoadStageTwo(elf32EHeader_t *hdr);
-schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID User);
+schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID User, int argc, char **argv);
 
 #endif

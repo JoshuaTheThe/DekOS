@@ -140,12 +140,12 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
         case RESPONSE_CREATE_PROC:
         {
                 bool iself;
-                void *data = SMGetDrive()->ReadFile(SMGetDrive(), resp.as.bytes);
-                size_t size = SMGetDrive()->FileSize(SMGetDrive(), resp.as.bytes);
+                void *data = SMGetDrive()->ReadFile(SMGetDrive(), ((char**)&msg->as.bytes[4])[0]);
+                size_t size = SMGetDrive()->FileSize(SMGetDrive(), ((char**)&msg->as.bytes[4])[0]);
                 size_t pid = -1;
 
                 if (data && size)
-                        pid = elfLoadProgram(data, size, &iself, User).num;
+                        pid = elfLoadProgram(data, size, &iself, User, *(int*)msg->as.bytes, (char**)&msg->as.bytes[4]).num;
                 if (data && size && iself)
                 {
                         resp.Code = RESPONSE_OK;
@@ -264,7 +264,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 size_t size = SMGetDrive()->FileSize(SMGetDrive(), shell);
 
                 if (data && size)
-                        elfLoadProgram(data, size, &iself, User);
+                        elfLoadProgram(data, size, &iself, User, 0, NULL);
                 if (data && size && iself)
                 {
                         printf(" [INFO] Shell started\n");
