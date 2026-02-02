@@ -18,16 +18,16 @@ static uint32_t tty_fg = rgb(230, 230, 230);
 
 void display(void)
 {
-        if (fbRes->Owner.num != 0)
-                return;
-        RenderSetFont(&cascadia);
-        for (size_t y = 0; y < TTY_H; ++y)
-        {
-                for (size_t x = 0; x < TTY_W; ++x)
-                {
-                        RenderChar(system_output[y][x], x * cascadia.char_width, y * cascadia.char_height, tty_bg, tty_fg);
-                }
-        }
+        // if (fbRes->Owner.num != 0)
+        //         return;
+        // RenderSetFont(&cascadia);
+        // for (size_t y = 0; y < TTY_H; ++y)
+        // {
+        //         for (size_t x = 0; x < TTY_W; ++x)
+        //         {
+        //                 RenderChar(system_output[y][x], x * cascadia.char_width, y * cascadia.char_height, tty_bg, tty_fg);
+        //         }
+        // }
 }
 
 void clear(void)
@@ -97,11 +97,6 @@ void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint3
                 }
 
                 *y = TTY_H - 1;
-        }
-
-        if (KernelWindow && output == &system_output)
-        {
-                KernelWindow->RequiresRedraw = TRUE;
         }
 }
 

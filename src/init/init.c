@@ -11,6 +11,7 @@
 
 #include <programs/scheduler.h>
 #include <programs/shell.h>
+#include <programs/elf/elf.h>
 
 #include <tty/input/input.h>
 #include <tty/output/output.h>
@@ -40,17 +41,17 @@
 
 #include <forth.h>
 
+#include <config/main.h>
+
 extern schedProcess_t processes[MAX_PROCS];
 extern bool tty_needs_flushing;
 extern RID rdFrameRID;
 extern KRNLRES *fbRes;
 extern char system_output[TTY_H][TTY_W];
 
-WINDOW *KernelWindow = NULL;
-KRNLRES *KernelWindowResource = NULL;
+// WINDOW *KernelWindow = NULL;
+// KRNLRES *KernelWindowResource = NULL;
 volatile DWORD mx = 0, my = 0, pmx = 0, pmy = 0, mbuttons = 0;
-
-void LispTest(void);
 
 void deleteTask(size_t i)
 {
@@ -71,44 +72,36 @@ void deleteTask(size_t i)
 void kernelTask(multiboot_info_t *mbi)
 {
         (void)mbi;
-        size_t stack_size = 8192;
-        uint8_t *stack = malloc(stack_size);
-        cli();
-        schedPid_t pid = schedCreateProcess("shell", NULL, 0, (uint8_t *)shell, 0, stack, stack_size, (schedPid_t){.num = 0, .valid = 1});
-        printf("Created proc with id : %d\n", pid.num);
-
-
         // speakerPlay(300);
         // pitDelay(10);
         // speakerStop();
-
-        PROCID WMId = WMInit();
-        RESULT Result = ResourceHandoverK(fbRes, WMId);
-        font_t *Font = RenderGetFont();
-        DWORD Width = Font->char_width * TTY_W;
-        DWORD Height = Font->char_height * (TTY_H + 1);
-        DWORD WWidth = Width + 16;
-        DWORD WHeight = Height + 32;
-        printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
-        KernelWindowResource = WMCreateWindow("Kernel Window", 10, 10, WWidth, WHeight);
-        if (KernelWindowResource)
-        {
-                KernelWindow = KernelWindowResource->Region.ptr;
-                char *X[TTY_H];
-                for (int i = 0; i < TTY_H; i++)
-                {
-                        X[i] = system_output[i];
-                }
-
-                DWORD CenterX = WMMiddlePointX(KernelWindow) - Width / 2;
-                DWORD CenterY = WMMiddlePointY(KernelWindow) - Height / 2;
-                KRNLRES *TextBuff = WMCreateElement(KernelWindowResource, CenterX, CenterY, Width, Height, WINDOW_ELEMENT_TEXT);
-                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Font = Font;
-                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Columns = TTY_W;
-                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Lines = TTY_H;
-                ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Text = X;
-                (void)TextBuff;
-        }
+        // PROCID WMId = WMInit();
+        // RESULT Result = ResourceHandoverK(fbRes, WMId);
+        // font_t *Font = RenderGetFont();
+        // DWORD Width = Font->char_width * TTY_W;
+        // DWORD Height = Font->char_height * (TTY_H + 1);
+        // DWORD WWidth = Width + 16;
+        // DWORD WHeight = Height + 32;
+        // printf("Handover Result: %d, fbRes=%x\n", Result, fbRes->Region.ptr);
+        // KernelWindowResource = WMCreateWindow("Kernel Window", 10, 10, WWidth, WHeight);
+        // if (KernelWindowResource)
+        // {
+        //         KernelWindow = KernelWindowResource->Region.ptr;
+        //         char *X[TTY_H];
+        //         for (int i = 0; i < TTY_H; i++)
+        //         {
+        //                 X[i] = system_output[i];
+        //         }
+        //
+        //         DWORD CenterX = WMMiddlePointX(KernelWindow) - Width / 2;
+        //         DWORD CenterY = WMMiddlePointY(KernelWindow) - Height / 2;
+        //         KRNLRES *TextBuff = WMCreateElement(KernelWindowResource, CenterX, CenterY, Width, Height, WINDOW_ELEMENT_TEXT);
+        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Font = Font;
+        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Columns = TTY_W;
+        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Lines = TTY_H;
+        //         ((ELEMENT *)TextBuff->Region.ptr)->ElementData.Text.Text = X;
+        //         (void)TextBuff;
+        // }
         sti();
 
         while (true)
@@ -154,7 +147,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         SerialInit();
         init_parallel_ports();
         SerialPrint("--DekOS--\r\nHello, World!\r\n");
-        LispTest();
 
         cli();
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_RAW_FAR, 0, schedGetKernelPid(), NULL);
@@ -168,14 +160,12 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         if (!iso9660Init())
         {
                 printf("Could not initialize ISO9660 Driver\n");
-                display();
                 sysHang();
         }
 
         if (!keyboardIsPresent())
         {
                 printf("Keyboard is not present, please plug one in\n");
-                display();
                 while (!keyboardIsPresent())
                 {
                         sti();
@@ -186,7 +176,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         if (!mouseIsPresent())
         {
                 printf("Mouse is not present, please plug one in\n");
-                display();
                 while (!mouseIsPresent())
                 {
                         sti();
@@ -198,12 +187,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         ps2_initialize_mouse();
         ps2_initialize_keyboard();
 
-        display();
-
-        /* so we dont get
-           nuked by the scheduler */
-        cli();
-
         /* enumerate devices and save info to array */
         pciEnumerateDevices(pciRegister);
         SMInit();
@@ -211,22 +194,35 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 
         FatTest(SMGetDrive());
 
-        iso9660Dir_t fil;
-        iso9660FindFile("/boot/grub/grub.cfg", &fil);
+        for (int i = 0; i < kernel_symbols_count; ++i)
+        {
+                printf(" [INFO] Kernel Function '%s' present at %p\n", kernel_symbols[i].name, kernel_symbols[i].address);
+        }
 
-        char *data = iso9660ReadFile(&fil);
-        data[fil.data_length[0]] = 0;
-        printf("Grub Configuration:\n%s\n", data);
-        free(data);
-        display();
-        malloc(8192);
+        CONFIGURATION Cfg = ConfigRead();
+        const char *v = ConfigGet(&Cfg, "shell_path");
+        if (!v)
+        {
+                printf(" [WARN] No Shell defined\n");
+        }
+        else
+        {
+                printf(" [INFO] Attemtping to launch shell @\"%s\"\n", v);
+                bool iself;
+                void *data = SMGetDrive()->ReadFile(SMGetDrive(), v);
+                size_t size = SMGetDrive()->FileSize(SMGetDrive(), v);
 
-        /* Finally; reset the sound blaster */
-        sti();
-        // for (int i = 0; i < kernel_symbols_count; ++i)
-        //{
-        //	printf("FUNCTION: %s, %x\n", kernel_symbols[i].name, kernel_symbols[i].address);
-        // }
+                if (data && size)
+                        elfLoadProgram(data, size, &iself);
+                if (data && size && iself)
+                {
+                        printf(" [INFO] Shell started\n");
+                }
+                else
+                {
+                        printf(" [ERROR] The Shell @\"%s\" is invalid\n", v);
+                }
+        }
 
         kernelTask(mbi);
         cli();
