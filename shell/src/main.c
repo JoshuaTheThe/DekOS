@@ -160,6 +160,9 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
                         PID pid = CreateProcess(arg_v, largc);
                         while (progexists(pid))
                                 ;
+                        for (size_t i = 0; i < largc; ++i)
+                                free(arg_v[i]);
+                        free(arg_v);
                 }
         }
         return 69;
