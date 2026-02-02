@@ -8,8 +8,9 @@
 #include <tty/render/render.h>
 #include <drivers/math.h>
 #include <wm/main.h>
+#include <drivers/storage.h>
 
-bool tty_needs_flushing=false;
+bool tty_needs_flushing = false;
 extern schedProcess_t processes[];
 
 extern void jumpToProc();
@@ -64,7 +65,7 @@ uint32_t sysReply(void)
         uint32_t arg2 = *((uint32_t *)0x9008);
         uint32_t arg3 = *((uint32_t *)0x900C);
 
-        //printf("Syscall: num=%d, arg1=%d, arg2=%d, arg3=%d\n", syscall_num, arg1, arg2, arg3);
+        // printf("Syscall: num=%d, arg1=%d, arg2=%d, arg3=%d\n", syscall_num, arg1, arg2, arg3);
 
         switch (syscall_num)
         {
@@ -106,9 +107,8 @@ uint32_t sysReply(void)
                 return proc->parent.num;
                 break;
         case INT80_FORK:
-                /* clone the process, and return here, but patch to other pid by setting EAX manually */
-                return pid.num;
-                break;
+                /* TODO clone the process, and return here, but patch to other by setting EAX manually */
+                return 0;
 
         case INT80_PID_EXISTS:
         {
@@ -154,7 +154,7 @@ uint32_t sysReply(void)
         case INT80_GETCH:
                 return keyboardFetch(NULL);
         case INT80_FLUSH:
-                tty_needs_flushing=true;
+                tty_needs_flushing = true;
                 return 0;
 
                 /* IPC */
@@ -214,7 +214,7 @@ uint32_t sysReply(void)
                 return copy_size;
         }
 
-                // bool msgrecv(pid), whether it has been read yet
+                // bool msgrecv(pid), whether it has been read yet, -1 for any
         case INT80_MSGRECV:
         {
                 uint32_t sender_pid = arg1;
@@ -223,7 +223,7 @@ uint32_t sysReply(void)
                 for (int i = 0; i < inbox->count; i++)
                 {
                         int index = (inbox->tail + i) % MAX_PENDING_MESSAGES;
-                        if (inbox->messages[index].sender_pid == sender_pid &&
+                        if ((inbox->messages[index].sender_pid == sender_pid || sender_pid == -1) &&
                             !inbox->messages[index].read)
                         {
                                 return 1; // Has unread message
@@ -234,13 +234,13 @@ uint32_t sysReply(void)
         }
 
         case INT80_ALLOC:
-                if (arg1 > 0 && arg1 < 1024*1024)
+                if (arg1 > 0 && arg1 < 1024 * 1024)
                 {
                         return (uint32_t)malloc(arg1);
                 }
                 return 0;
         case INT80_UNALLOC:
-                free((void*)arg1);
+                free((void *)arg1);
                 return 0;
 
         case INT80_RELEASE_RESOURCE:
@@ -249,12 +249,12 @@ uint32_t sysReply(void)
                 return 0;
         }
         case INT80_CREATE_WINDOW:
-                return (uint32_t)WMCreateWindow((char*)arg1, 0, 0, arg2, arg3);
+                return (uint32_t)WMCreateWindow((char *)arg1, 0, 0, arg2, arg3);
         case INT80_CREATE_ELEMENT:
                 return (uint32_t)WMCreateElement((KRNLRES *)arg1, 0, 0, arg2, arg3, 0);
         case INT80_ISFOCUSED:
                 return WMIsFocused((KRNLRES *)arg1);
-        
+
         default:
                 return -1;
                 break;

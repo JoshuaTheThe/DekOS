@@ -118,6 +118,14 @@ void kernelTask(multiboot_info_t *mbi)
                 }
 
                 mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
+
+                if (msgrecv(-1))
+                {
+                        char buf[4096];
+                        recvmsg(buf, 4096);
+                        buf[4095] = 0;
+                        printf(" [INFO] Incoming Message: %s\n", buf);
+                }
                 sti();
                 hlt();
         }

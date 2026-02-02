@@ -102,5 +102,8 @@ void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint3
 
 void putchar(const uint8_t ch)
 {
-        putch(ch, &system_output, &tty_x, &tty_y);
+        if (ch == '\n')
+                SerialPut('\r');
+        SerialPut(ch);
+        //putch(ch, &system_output, &tty_x, &tty_y);
 }
