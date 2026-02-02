@@ -45,12 +45,13 @@
 
 typedef enum
 {
-        RESPONCE_WTF = 0,
-        RESPONCE_HANDOVER_RESOURCE,
-        RESPONCE_OK = 200,
-} ResponceCode;
+        RESPONSE_WTF = 0,
+        RESPONSE_HANDOVER_RESOURCE,
+        RESPONSE_READ_FILE,
+        RESPONSE_OK = 200,
+} ResponseCode;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         DWORD Code;
 
@@ -59,7 +60,7 @@ typedef struct
                 void *P;
                 BYTE bytes[200];
         } as;
-} Responce;
+} Response;
 
 extern schedProcess_t processes[MAX_PROCS];
 extern bool tty_needs_flushing;
@@ -122,19 +123,24 @@ void deleteTask(size_t i)
 //         // }
 // }
 
-Responce KHandleRequest(size_t pidn, char *buf, size_t len)
+Response KHandleRequest(size_t pidn, char *buf, size_t len)
 {
-        Responce resp;
-        switch (buf[0])
+        Response resp;
+        Response *msg = (Response *)buf;
+        switch (msg->Code)
         {
-                case RESPONCE_OK:
-                        resp.Code = RESPONCE_OK;
-                        break;
-                default:
-                        printf(" [CONFUSED] Incoming Message of unknown type from %d: %s\n", pidn, buf);
-                        strncpy(resp.as.bytes, "wtf are you doing\n\0", 20);
-                        resp.Code = RESPONCE_WTF;
-                        break;
+        case RESPONSE_OK:
+                resp.Code = RESPONSE_OK;
+                break;
+        case RESPONSE_READ_FILE:
+                resp.Code = RESPONSE_OK;
+                resp.as.P = SMGetDrive()->ReadFile(SMGetDrive(), msg->as.bytes);
+                break;
+        default:
+                printf(" [CONFUSED] Incoming Message of unknown type from %d: %s\n", pidn, msg->as.bytes);
+                strncpy(resp.as.bytes, "wtf are you doing\n\0", 20);
+                resp.Code = RESPONSE_WTF;
+                break;
         }
 
         return resp;
@@ -262,7 +268,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 {
                         char buf[4096];
                         size_t pidn = recvmsg(buf, 4096);
-                        Responce resp = KHandleRequest(pidn, buf, 4096);
+                        Response resp = KHandleRequest(pidn, buf, 4096);
                         sendmsg(pidn, &resp, sizeof(resp));
                 }
                 sti();

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 bool msgrecv(int sender_pid);
 int recvmsg(char *buffer, uint32_t size);
@@ -19,6 +20,28 @@ int getpid(void);
 int yield_to(int pid);
 int yield(void);
 void exit(int status);
+void memcpy(void *, const void *, unsigned int);
+void *malloc(unsigned int size);
+void free(void *p);
+
+typedef enum
+{
+        RESPONSE_WTF = 0,
+        RESPONSE_HANDOVER_RESOURCE,
+        RESPONSE_READ_FILE,
+        RESPONSE_OK = 200,
+} ResponseCode;
+
+typedef struct __attribute__((__packed__))
+{
+        unsigned int Code;
+
+        union
+        {
+                void *P;
+                char bytes[200];
+        } as;
+} Response;
 
 char getchar(void);
 

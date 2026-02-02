@@ -11,11 +11,11 @@ char getchar(void)
         }
 }
 
-void memcpy(char *restrict a, const char *restrict b, int c)
+void memcpy(void *a, const void *b, unsigned int c)
 {
         while (c--)
         {
-                *(a++) = *(b++);
+                *((char*)a++) = *((char*)b++);
         }
 }
 
@@ -108,4 +108,14 @@ int recvmsg(char *buffer, unsigned int size)
 bool msgrecv(int sender_pid)
 {
         return syscall(INT80_MSGRECV, sender_pid, 0, 0) != 0;
+}
+
+void *malloc(unsigned int size)
+{
+        return (void*)syscall(INT80_ALLOC, size, 0, 0);
+}
+
+void free(void *p)
+{
+        syscall(INT80_UNALLOC, (uint32_t)p, 0, 0);
 }
