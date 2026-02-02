@@ -2,7 +2,8 @@
 
 Ini IniRead(const char *iniPath)
 {
-        Ini config = {0};
+        Ini config;
+        memset(&config, 0, sizeof(config));
 
         char *Data = SMGetDrive()->ReadFile(SMGetDrive(), iniPath);
         if (!Data)

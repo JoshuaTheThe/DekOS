@@ -102,6 +102,11 @@ int sendmsg(int pid, const char *msg, unsigned int size)
         return syscall(INT80_SENDMSG, pid, (unsigned int)msg, size);
 }
 
+void getusername(char *buf, size_t bufl)
+{
+        syscall(INT80_GET_USER_NAME, buf, bufl, 0);
+}
+
 int recvmsg(char *buffer, unsigned int size)
 {
         return syscall(INT80_RECVMSG, (unsigned int)buffer, size, 0);

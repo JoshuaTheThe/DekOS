@@ -62,6 +62,8 @@ typedef enum InterruptFunction
         INT80_CREATE_WINDOW,
         INT80_CREATE_ELEMENT,
         INT80_ISFOCUSED,
+
+        INT80_GET_USER_NAME,
 } InterruptFunction_t;
 
 typedef size_t USERID;
@@ -89,5 +91,6 @@ PID CreateProcess(const char *FilePath);
 int gets(char *b, int max);
 int vsnprintf(char *str, size_t size, const char *fmt, va_list args);
 int snprintf(char *str, size_t size, const char *fmt, ...);
+void getusername(char *buf, size_t bufl);
 
 #endif

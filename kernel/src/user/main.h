@@ -49,5 +49,7 @@ void UserSetPassword(USERID id, char *to, char *current);
 bool UserMatch(USERID id, char *with);
 uint32_t fnv1a_hash(const char *str);
 USERID UserLogin(void);
+void UserName(char *buf, size_t len, USERID Id);
+void UsersLoad(void);
 
 #endif

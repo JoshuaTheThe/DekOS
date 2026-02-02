@@ -70,11 +70,20 @@ static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 
 int main(USERID UserID, PID ParentProc, int ecx, int edx)
 {
+        char name[32];
+        getusername(name, 31);
+        char prompt[768];
         char current_dir[512] = "";
+
+        snprintf(current_dir, sizeof(prompt), "users/%s/", name);
+        snprintf(prompt, sizeof(prompt), "users/%s/user.ini", name);
+        Ini config = IniRead(prompt);
+        memset(prompt, 0, sizeof(prompt));
+
         while (1)
         {
-                print(current_dir);
-                print("$");
+                snprintf(prompt, sizeof(prompt), "%s:%s$", name, current_dir);
+                print(prompt);
                 memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
                 memset(command_buffer, 0, sizeof(command_buffer));
                 size_t len = (size_t)gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);

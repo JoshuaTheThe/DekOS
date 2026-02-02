@@ -154,6 +154,7 @@ FATFileLocation FatLocateInDir(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRI
 
         FATDirectory Directory[entries];
         FATFileLocation Result = {0};
+        memset(Directory, 0, sizeof(Directory));
 
         while (cluster < 0x0FFFFFF8)
         {
@@ -202,9 +203,11 @@ void *FatRead(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDir
         FATFileLocation Location = FatLocateInDir(Name, Ext, bt, Drive, Parent);
 
         BYTE *Data = malloc(Location.Dir.Size), *p = Data;
+        memset(Data, 0, Location.Dir.Size);
         DWORD cluster = Location.Dir.EntryFirstClusterHigh << 16 | Location.Dir.EntryFirstClusterLow;
         DWORD remaining = Location.Dir.Size;
         BYTE Sector[bytes];
+        memset(Sector, 0, bytes);
 
         while (cluster < 0x0FFFFFF8)
         {

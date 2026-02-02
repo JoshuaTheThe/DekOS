@@ -38,6 +38,8 @@ typedef enum InterruptFunction
         INT80_CREATE_WINDOW,
         INT80_CREATE_ELEMENT,
         INT80_ISFOCUSED,
+
+        INT80_GET_USER_NAME,
 } InterruptFunction_t;
 
 /* System Call Function Prototypes */

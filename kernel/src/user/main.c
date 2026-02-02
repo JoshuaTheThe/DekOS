@@ -4,9 +4,11 @@
 
 #include <user/main.h>
 #include <tty/input/input.h>
+#include <drivers/storage.h>
+#include <ini/main.h>
 
 #define PASSWORD_SALT 0x8095634 /* keyboard smash */
-#define MAX_LOGIN_ATTEMPTS 3
+#define MAX_LOGIN_ATTEMPTS 4
 
 static USER users[MAX_USERS];
 static size_t user_count;
@@ -88,7 +90,7 @@ USERID UserFind(const char *Name)
 {
         for (size_t i = 0; i < MAX_USERS; ++i)
         {
-                if (!ncsstrncmp(Name, users[i].Name, USER_NAME_LENGTH))
+                if (users[i].Flags & USER_FLAG_VALID && !ncsstrncmp(Name, users[i].Name, USER_NAME_LENGTH))
                 {
                         return i;
                 }
@@ -100,7 +102,7 @@ USERID UserFind(const char *Name)
 USERID UserLogin(void)
 {
         char name[USER_NAME_LENGTH + 1] = {0};
-        char pass[513] = {0};
+        char pass[32] = {0};
         int attempts = 0;
 
         while (attempts < MAX_LOGIN_ATTEMPTS)
@@ -110,7 +112,7 @@ USERID UserLogin(void)
                 gets(name, USER_NAME_LENGTH);
 
                 printf("Password: ");
-                gets(pass, 512);
+                gets(pass, 31);
 
                 USERID id = UserFind(name);
                 if (id != -1 && UserMatch(id, pass))
@@ -128,4 +130,66 @@ USERID UserLogin(void)
 
         printf("Maximum login attempts reached. Access denied.\n");
         return -1;
+}
+
+void UserName(char *buf, size_t len, USERID Id)
+{
+        if (Id < MAX_USERS)
+                strncpy(buf, users[Id].Name, len);
+}
+
+void UsersLoad(void)
+{
+        memset(users, 0, sizeof(users));
+        user_count = 0;
+
+        Ini newusers = IniRead("users/users.ini");
+
+        for (size_t i = 0; i < newusers.count; ++i)
+        {
+                USER User = {0};
+                strncpy(User.Name, newusers.vars[i].name, USER_NAME_LENGTH-1);
+                User.Name[USER_NAME_LENGTH-1] = '\0';
+                User.UserId = i;
+                User.Flags = USER_FLAG_VALID | USER_FLAG_CAN_LAUNCH;
+
+                if (!strncmp(newusers.vars[i].value, "administrator"))
+                {
+                        User.Flags |= USER_FLAG_ADMINISTRATOR;
+                }
+                else if (!strncmp(newusers.vars[i].value, "service")) /* for future driver shi */
+                {
+                        User.Flags |= USER_FLAG_SERVICE;
+                }
+                else if (!strncmp(newusers.vars[i].value, "system")) /* for future system shi */
+                {
+                        User.Flags |= USER_FLAG_SYSTEM;
+                }
+                else if (!strncmp(newusers.vars[i].value, "guest")) /* not allowed to do shi */
+                {
+                        User.Flags &= ~USER_FLAG_CAN_LAUNCH;
+                }
+
+                char path[512];
+                snprintf(path, sizeof(path), "users/%s/user.ini", User.Name);
+                Ini userData = IniRead(path);
+
+                char *pswrd = IniGet(&userData, "pswrdhash");
+
+                if (pswrd)
+                {
+                        User.PassHash = atoi(pswrd);
+                }
+                else
+                {
+                        User.PassHash = fnv1a_hash("1");
+                }
+
+                UserAdd(User);
+        }
+
+        for (size_t i = 0; i < user_count; ++i)
+        {
+                printf("%s\n", users[i].Name);
+        }
 }

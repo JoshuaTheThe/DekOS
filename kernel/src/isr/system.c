@@ -9,6 +9,7 @@
 #include <drivers/math.h>
 #include <wm/main.h>
 #include <drivers/storage.h>
+#include <user/main.h>
 
 bool tty_needs_flushing = false;
 extern schedProcess_t processes[];
@@ -254,6 +255,15 @@ uint32_t sysReply(void)
                 return (uint32_t)WMCreateElement((KRNLRES *)arg1, 0, 0, arg2, arg3, 0);
         case INT80_ISFOCUSED:
                 return WMIsFocused((KRNLRES *)arg1);
+        case INT80_GET_USER_NAME:
+                {
+                        char *buf = (char*)arg1;
+                        size_t bufl = arg2;
+
+                        UserName(buf, bufl, proc->enactor);
+                        return buf;
+                }
+                break;
 
         default:
                 return -1;

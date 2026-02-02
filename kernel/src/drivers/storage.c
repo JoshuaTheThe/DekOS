@@ -12,6 +12,7 @@ size_t DriveStackSP;
 
 void IDEReadData(DRIVE *Self)
 {
+        memset(Self->BufferA, 0x00, sizeof(Self->BufferA));
         IDEReadSectors(Self->DriveNum, 1, Self->LBA, 0x10, (unsigned int)Self->BufferA);
 }
 
@@ -69,7 +70,7 @@ DWORD IDEFileSize(DRIVE *Self, const char *Path)
         FATDirectory CurrentDir = {0};
         FATDirectory *pCurrentDir = NULL;
 
-        char PathCopy[256];
+        char PathCopy[256] = {0};
         strncpy(PathCopy, Path, sizeof(PathCopy));
         PathCopy[sizeof(PathCopy) - 1] = 0;
 

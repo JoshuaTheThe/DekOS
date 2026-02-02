@@ -243,29 +243,13 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 printf(" [INFO] Kernel Function '%s' present at %p\n", kernel_symbols[i].name, kernel_symbols[i].address);
         }
 
-        USER Root;
-        Root.Flags = 0xFF;
-        Root.PassHash = fnv1a_hash("1234");
-        strncpy(Root.Name, "root", 12);
-        
         Ini Cfg = IniRead("system/system.ini");
+        Ini *Saved = malloc(sizeof(*Saved));
+        *Saved = Cfg;
 
-        const char *shell = IniGet(&Cfg, "shell_path");
-        const char *pass = IniGet(&Cfg, "root_pass_hash");
-
-        /* TODO - load other users */
-
-        if (pass)
-        {
-                size_t l;
-                Root.PassHash = atoi(pass, &l);
-        }
-        else
-        {
-                printf(" [SERIOUS WARNING] No Shell Password defined\n");
-        }
-
-        UserAdd(Root);
+        printf("%s\n", Saved->vars[0].value);
+        const char *shell = IniGet(Saved, "shell_path");
+        UsersLoad();
         USERID User = UserLogin();
 
         if (!shell)
