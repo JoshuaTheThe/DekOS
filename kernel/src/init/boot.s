@@ -9,8 +9,8 @@ multiboot_header:
         .long   MULTIBOOT_HEADER_CHECKSUM
         .long   0, 0, 0, 0, 0
         .long   0
-        .long   320
-        .long   240
+        .long   1024
+        .long   768
         .long   32
         .section .text
         .global _start
