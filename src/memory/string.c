@@ -198,3 +198,18 @@ int tolower(int c)
         }
         return c;
 }
+
+int ncsstrncmp(char *restrict s1, char *restrict s2, size_t len)
+{
+        const unsigned char *p1 = (unsigned char *)s1;
+        const unsigned char *p2 = (unsigned char *)s2;
+
+        for (size_t i = 0; i < len; i++)
+        {
+                if (tolower(p1[i]) != tolower(p2[i]) || p1[i] == '\0')
+                {
+                        return p1[i] - p2[i];
+                }
+        }
+        return 0;
+}

@@ -1,4 +1,5 @@
 #include <drivers/storage.h>
+#include <drivers/fat.h>
 #include <memory/string.h>
 #include <math.h>
 
@@ -17,6 +18,36 @@ void IDEReadData(DRIVE *Self)
 void IDEWriteData(DRIVE *Self)
 {
         IDEWriteSectors(Self->DriveNum, 1, Self->LBA, 0x10, (unsigned int)Self->BufferA);
+}
+
+void *IDEReadFile(DRIVE *Self, const char *Path)
+{
+        FATBootSector bt = FatReadBootSector(Self);
+
+        FATFileLocation Loc = {0};
+        FATDirectory *CurrentDir = NULL;
+
+        char PathCopy[256];
+        strncpy(PathCopy, Path, sizeof(PathCopy));
+        PathCopy[sizeof(PathCopy) - 1] = 0;
+
+        char *segment = strtok(PathCopy, "/");
+        char *lastSegment = PathCopy;
+        char Name[8], Extension[3];
+
+        while (segment)
+        {
+                lastSegment = segment;
+                FatConvert83(segment, Name, Extension);
+
+                Loc = FatLocateInDir(Name, Extension, &bt, Self, CurrentDir);
+                CurrentDir = &Loc.Dir;
+
+                segment = strtok(NULL, "/");
+        }
+
+        FatConvert83(lastSegment, Name, Extension);
+        return FatRead(Name, Extension, &bt, Self, CurrentDir);
 }
 
 void *SMRead(size_t LBA)
@@ -133,6 +164,7 @@ void SMInit(void)
                                 memcpy(disk->Model, IDEState.IDEDev[d].Model, 41);
                                 disk->Type = IDEState.IDEDev[d].Type;
                                 disk->PCIDevIndex = i;
+                                disk->ReadFile = IDEReadFile;
                                 printf("dev%d: model=%s type=%d size=%dMB\n", DriveCount, disk->Model, disk->Type, (disk->Size * 512) / 1024 / 1024);
                                 DriveCount++;
                         }

@@ -25,4 +25,7 @@ void memset(void *d, uint8_t v, size_t len);
 void memsetdw(void *d, uint32_t v, size_t len);
 size_t strnlen(const char *x, size_t max);
 
+/* Non Case Sensitive str-n compare */
+int ncsstrncmp(char *restrict s1, char *restrict s2, size_t len);
+
 #endif

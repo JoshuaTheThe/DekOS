@@ -13,6 +13,8 @@ typedef struct DRIVE
         uint32_t DriveInfo[64];
         void (*ReadData)(struct DRIVE *Drive);
         void (*WriteData)(struct DRIVE *Drive);
+        void *(*ReadFile)(struct DRIVE *Drive, const char *Path);
+        void (*WriteFile)(struct DRIVE *Drive, const char *Path);
         size_t LBA, PCIDevIndex;
         bool Valid, Present;
 

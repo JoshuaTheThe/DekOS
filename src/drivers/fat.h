@@ -1,8 +1,6 @@
 #ifndef FAT_H
 #define FAT_H
 
-#pragma pack(1)
-
 #include <utils.h>
 #include <drivers/serial.h>
 #include <drivers/storage.h>
@@ -37,7 +35,7 @@ typedef enum
         FAT_32,
 } FATType;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         BYTE __jmp_nop[3]; /* e.g. JMP _Start followed by a NOP instruction */
         BYTE OEMIdentifier[8];
@@ -55,7 +53,7 @@ typedef struct
         DWORD ExtendedSectorCount; /* offset 0x20 */
 } FATBiosParameterBlock;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         BYTE DriveNum;
         BYTE Reserved;
@@ -66,7 +64,7 @@ typedef struct
         BYTE BootCode[448];
 } FATExtBootRecord_16;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         DWORD SectorsPerFAT;
         WORD Flags;
@@ -84,7 +82,7 @@ typedef struct
         BYTE BootCode[420];
 } FATExtBootRecord_32;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         DWORD SignatureA;
         BYTE Reserved[480];
@@ -95,7 +93,7 @@ typedef struct
         DWORD SignatureC;
 } FATInfo_32;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         FATBiosParameterBlock bpb;
 
@@ -108,21 +106,21 @@ typedef struct
         WORD Magic; /* 0xAA55 */
 } FATBootSector;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         BYTE Hour : 5;
         BYTE Minutes : 6;
         BYTE Seconds : 5; /* Multiply By 2 */
 } FATTime;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         BYTE Year : 7;
         BYTE Month : 4;
         BYTE Day : 5;
 } FATDate;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         BYTE Name[8], Ext[3];
         BYTE Flags;
@@ -138,7 +136,7 @@ typedef struct
         DWORD Size; /* Bytes */
 } FATDirectory;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         FATDirectory Dir;
         DWORD Cluster;
@@ -147,12 +145,12 @@ typedef struct
         bool Found;
 } FATFileLocation;
 
-typedef struct
+typedef struct __attribute__((__packed__))
 {
         /* TODO - we dont care for now*/
 } FATLongFileName;
 
-FATBootSector FATReadBootSector(DRIVE *Drive);
+FATBootSector FatReadBootSector(DRIVE *Drive);
 DWORD FatTotalSectors(FATBootSector *Bt);
 DWORD FatSize(FATBootSector *Bt);
 DWORD FatRootDirSize(FATBootSector *Bt);
@@ -164,6 +162,9 @@ FATType FatIdentify(FATBootSector *Bt);
 DWORD FatFirstRoot(FATBootSector *Bt);
 DWORD FatRootCluster(FATBootSector *Bt);
 DWORD FatFirstSectorForCluster(FATBootSector *Bt, DWORD Cluster);
+void *FatRead(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent);
+void FatConvert83(const char *path, char *NameOut, char *ExtOut);
+FATFileLocation FatLocateInDir(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent);
 
 void FatTest(DRIVE *Drive);
 

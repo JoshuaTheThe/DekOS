@@ -117,7 +117,7 @@ create_symbol_table() {
     echo "Creating combined symbol table..."
     
     # Combine all symbol files into one
-    find obj -name "*.sym" -exec cat {} \; | sort -k1,1 > obj/all_symbols.sym
+    nm -n bin/kernel.elf > obj/all_symbols.sym
     
     # Generate C header with function addresses
     echo "// Auto-generated function symbol table" > src/symbols.h
@@ -165,7 +165,6 @@ echo "Compiling source files..."
 list_files_recursive "./src"
 
 # Create the symbol table
-create_symbol_table
 
 # Recompile symbols.c to include it in the build
 #echo "Compiling symbols.c..."
@@ -207,6 +206,8 @@ if [ $? -eq 0 ]; then
 else
     echo "Linking failed!"
 fi
+
+create_symbol_table
 
 if [ "$1" == '--run' ]; then
         if grub-file --is-x86-multiboot bin/kernel.elf; then

@@ -1,7 +1,7 @@
 #include <drivers/fat.h>
 #include <memory/alloc.h>
 
-FATBootSector FATReadBootSector(DRIVE *Drive)
+FATBootSector FatReadBootSector(DRIVE *Drive)
 {
         FATBootSector Sector;
         memcpy(&Sector, SMReadFrom(0, Drive), sizeof(Sector));
@@ -139,10 +139,11 @@ DWORD FatNextCluster(FATBootSector *bt, DWORD cluster, DRIVE *Drive)
         }
 }
 
-FATFileLocation FatLocateInDir(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent)
+FATFileLocation FatLocateInDir(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent)
 {
         if (Parent && !(Parent->Flags & FAT_DIRECTORY))
         {
+                printf(" [ERROR] Parent is Invalid (%s)\n", __func__);
                 return (FATFileLocation){0};
         }
 
@@ -173,10 +174,7 @@ FATFileLocation FatLocateInDir(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DR
                                         continue;
                                 }
 
-                                FatConvertPaddedToNull(Directory[i].Name, 11);
-                                FatConvertPaddedToNull(Directory[i].Ext, 3);
-
-                                if (!strncmp(Directory[i].Name, Name, 11) && !strncmp(Directory[i].Ext, Ext, 3))
+                                if (!ncsstrncmp(Directory[i].Name, Name, 8) && !ncsstrncmp(Directory[i].Ext, Ext, 3))
                                 {
                                         Result.Cluster = cluster;
                                         Result.Found = 1;
@@ -194,10 +192,11 @@ FATFileLocation FatLocateInDir(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DR
         return Result;
 }
 
-void *FatRead(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent)
+void *FatRead(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent)
 {
         if (Parent && !(Parent->Flags & FAT_DIRECTORY))
         {
+                printf(" [ERROR] Parent is Invalid\n");
                 return NULL;
         }
 
@@ -230,9 +229,26 @@ void *FatRead(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDi
         return Data;
 }
 
+void FatConvert83(const char *path, char *NameOut, char *ExtOut)
+{
+        memset(NameOut, ' ', 8);
+        memset(ExtOut, ' ', 3);
+
+        size_t n = 0;
+        while (*path && *path != '.' && n < 8)
+                NameOut[n++] = *path++;
+
+        if (*path == '.')
+                path++;
+
+        size_t e = 0;
+        while (*path && e < 3 && (*path != '/'))
+                ExtOut[e++] = *path++;
+}
+
 void FatTest(DRIVE *Drive)
 {
-        FATBootSector bt = FATReadBootSector(Drive);
+        FATBootSector bt = FatReadBootSector(Drive);
         printf("\n-- FAT-XX TEST FOR DRIVE @%p --\n", Drive);
         printf("        fat.type                %d\n", FatIdentify(&bt));
         printf("        fat.total-sect          %d\n", FatTotalSectors(&bt));
