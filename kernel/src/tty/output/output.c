@@ -8,26 +8,27 @@
 
 extern KRNLRES *fbRes;
 
-extern WINDOW *KernelWindow;
-extern KRNLRES *KernelWindowResource;
-
 uint8_t system_output[TTY_H][TTY_W];
 static uint32_t tty_y = 0, tty_x = 0;
 static uint32_t tty_bg = rgb(30, 30, 30);
 static uint32_t tty_fg = rgb(230, 230, 230);
+bool redraw = false;
 
 void display(void)
 {
-        // if (fbRes->Owner.num != 0)
-        //         return;
-        // RenderSetFont(&cascadia);
-        // for (size_t y = 0; y < TTY_H; ++y)
-        // {
-        //         for (size_t x = 0; x < TTY_W; ++x)
-        //         {
-        //                 RenderChar(system_output[y][x], x * cascadia.char_width, y * cascadia.char_height, tty_bg, tty_fg);
-        //         }
-        // }
+        if (redraw)
+        {
+                RenderSetFont(&cascadia);
+                for (size_t y = 0; y < TTY_H; ++y)
+                {
+                        for (size_t x = 0; x < TTY_W; ++x)
+                        {
+                                RenderChar(system_output[y][x], x * cascadia.char_width, y * cascadia.char_height, tty_bg, tty_fg);
+                        }
+                }
+
+                redraw = false;
+        }
 }
 
 void clear(void)
@@ -98,12 +99,14 @@ void putch(const uint8_t ch, uint8_t (*output)[TTY_H][TTY_W], uint32_t *x, uint3
 
                 *y = TTY_H - 1;
         }
+
+        redraw = true;
 }
 
 void putchar(const uint8_t ch)
 {
-        if (ch == '\n')
-                SerialPut('\r');
-        SerialPut(ch);
-        //putch(ch, &system_output, &tty_x, &tty_y);
+        // if (ch == '\n')
+        //         SerialPut('\r');
+        // SerialPut(ch);
+        putch(ch, &system_output, &tty_x, &tty_y);
 }

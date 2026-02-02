@@ -300,7 +300,10 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                         Response resp = KHandleRequest(pidn, buf, 4096, schedGetProcessN(pid)->enactor);
                         sendmsg(pidn, &resp, sizeof(resp));
                 }
+
                 sti();
+
+                display();
                 hlt();
         }
 }
