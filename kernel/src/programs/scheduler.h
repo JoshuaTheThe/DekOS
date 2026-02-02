@@ -3,6 +3,7 @@
 
 #include <utils.h>
 #include <io.h>
+#include <user/main.h>
 
 #define PROC_NAME_LEN 32
 #define MAX_PROCS 16
@@ -71,6 +72,8 @@ typedef struct
         bool active;
         bool delete;
         bool debugger_is_present;
+
+        USERID enactor;
 } schedProcess_t;
 
 typedef schedProcess_t EINSTANCE;
@@ -82,7 +85,7 @@ void schedInit(void);
 bool schedSuspendProcess(schedPid_t pid);
 bool schedResumeProcess(schedPid_t pid);
 void schedListProcesses(void);
-schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength, schedPid_t parent);
+schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc, uint8_t *Program, uint32_t EntryPOffset, uint8_t *Stack, uint32_t StackLength, schedPid_t parent, USERID User);
 bool schedKillProcess(schedPid_t Pid);
 bool schedIsRunning(schedPid_t Pid);
 schedPid_t schedGetCurrentPid(void);

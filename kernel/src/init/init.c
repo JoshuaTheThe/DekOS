@@ -41,7 +41,7 @@
 
 #include <forth.h>
 
-#include <config/main.h>
+#include <ini/main.h>
 
 typedef enum
 {
@@ -222,28 +222,44 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 printf(" [INFO] Kernel Function '%s' present at %p\n", kernel_symbols[i].name, kernel_symbols[i].address);
         }
 
-        CONFIGURATION Cfg = ConfigRead();
-        const char *v = ConfigGet(&Cfg, "shell_path");
-        if (!v)
+        USER Root;
+        Root.Flags = 0xFF;
+        Root.PassHash = fnv1a_hash("1234");
+        strncpy(Root.Name, "root", 12);
+        
+        Ini Cfg = IniRead("system/system.ini");
+
+        const char *shell = IniGet(&Cfg, "shell_path");
+        const char *pass = IniGet(&Cfg, "root_pass_hash");
+
+        if (!pass)
+        {
+                size_t l;
+                Root.PassHash = atoi(pass, &l);
+        }
+
+        USERID RootID = UserAdd(Root);
+
+        if (!shell)
         {
                 printf(" [WARN] No Shell defined\n");
         }
         else
         {
-                printf(" [INFO] Attemtping to launch shell @\"%s\"\n", v);
+                printf(" [INFO] Attemtping to launch shell @\"%s\"\n", shell);
                 bool iself;
-                void *data = SMGetDrive()->ReadFile(SMGetDrive(), v);
-                size_t size = SMGetDrive()->FileSize(SMGetDrive(), v);
+                void *data = SMGetDrive()->ReadFile(SMGetDrive(), shell);
+                size_t size = SMGetDrive()->FileSize(SMGetDrive(), shell);
 
                 if (data && size)
-                        elfLoadProgram(data, size, &iself);
+                        elfLoadProgram(data, size, &iself, RootID);
                 if (data && size && iself)
                 {
                         printf(" [INFO] Shell started\n");
                 }
                 else
                 {
-                        printf(" [ERROR] The Shell @\"%s\" is invalid\n", v);
+                        printf(" [ERROR] The Shell @\"%s\" is invalid\n", shell);
                 }
         }
 

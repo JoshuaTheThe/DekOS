@@ -1,4 +1,4 @@
-#include <memory/string.h>
+#include <string.h>
 
 size_t strlen(const char *x)
 {
@@ -212,61 +212,4 @@ int ncsstrncmp(char *restrict s1, char *restrict s2, size_t len)
                 }
         }
         return 0;
-}
-
-void itos(int value, char *str, int base)
-{
-        char *ptr = str;
-        char *start = str;
-        int is_negative = 0;
-
-        if (value < 0 && base == 10)
-        {
-                is_negative = 1;
-                value = -value;
-        }
-
-        do
-        {
-                int digit = value % base;
-                *ptr++ = (digit > 9) ? (digit - 10) + 'a' : digit + '0';
-                value /= base;
-        } while (value != 0);
-
-        if (is_negative)
-        {
-                *ptr++ = '-';
-        }
-
-        *ptr = '\0';
-
-        char *end = ptr - 1;
-        while (start < end)
-        {
-                char temp = *start;
-                *start++ = *end;
-                *end-- = temp;
-        }
-}
-
-bool isdigit(char chr)
-{
-        return chr >= '0' && chr <= '9';
-}
-
-int atoi(const char *const str, size_t *len)
-{
-        int k = 0, i = 0;
-        while (str[i] >= '0' && str[i] <= '9')
-        {
-                k *= 10;
-                k += str[i++] - '0';
-        }
-
-        if (len)
-        {
-                *len = i;
-        }
-
-        return k;
 }

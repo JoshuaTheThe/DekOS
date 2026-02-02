@@ -20,9 +20,9 @@ int getpid(void);
 int yield_to(int pid);
 int yield(void);
 void exit(int status);
-void memcpy(void *, const void *, unsigned int);
 void *malloc(unsigned int size);
 void free(void *p);
+void *ReadFile(const char *FilePath);
 
 typedef enum
 {

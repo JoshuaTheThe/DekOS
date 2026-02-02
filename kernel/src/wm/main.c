@@ -418,7 +418,7 @@ PROCID WMInit(void)
         uint8_t *stack = malloc(8192);
         memset(Segments, 0, sizeof(Segments));
         Windows = ResourceCreateK(&grResources, RESOURCE_TYPE_RAW, 0, schedGetKernelPid(), NULL);
-        return schedCreateProcess("wm", NULL, 0, (uint8_t *)WMMain, 0, stack, 8192, schedGetKernelPid());
+        return schedCreateProcess("wm", NULL, 0, (uint8_t *)WMMain, 0, stack, 8192, schedGetKernelPid(), 0);
 }
 
 /**

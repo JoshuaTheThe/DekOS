@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 extern int main(void);
 
@@ -8,14 +9,6 @@ char getchar(void)
         {
                 if (kbhit())
                         return getc();
-        }
-}
-
-void memcpy(void *a, const void *b, unsigned int c)
-{
-        while (c--)
-        {
-                *((char*)a++) = *((char*)b++);
         }
 }
 
@@ -34,7 +27,7 @@ unsigned int syscall(unsigned int num, unsigned int arg1, unsigned int arg2, uns
 void exit(int status)
 {
         syscall(INT80_EXIT, status, 0, 0);
-        while(1)
+        while (1)
                 ;
 }
 
@@ -112,10 +105,30 @@ bool msgrecv(int sender_pid)
 
 void *malloc(unsigned int size)
 {
-        return (void*)syscall(INT80_ALLOC, size, 0, 0);
+        return (void *)syscall(INT80_ALLOC, size, 0, 0);
 }
 
 void free(void *p)
 {
         syscall(INT80_UNALLOC, (uint32_t)p, 0, 0);
+}
+
+void *ReadFile(const char *FilePath)
+{
+        Response resp;
+        resp.Code = RESPONSE_READ_FILE;
+        memcpy(resp.as.bytes, FilePath, strlen(FilePath));
+        sendmsg(0, &resp, sizeof(Response));
+        int pidn;
+        while (1)
+        {
+                if (!msgrecv(-1))
+                        continue;
+                pidn = recvmsg(&resp, sizeof(resp));
+                if (pidn != 0)
+                        continue;
+                break;
+        }
+
+        return resp.as.P;
 }

@@ -1,10 +1,10 @@
-#include <config/main.h>
+#include <ini/main.h>
 
-CONFIGURATION ConfigRead(void)
+Ini IniRead(const char *iniPath)
 {
-        CONFIGURATION config = {0};
+        Ini config = {0};
 
-        char *Data = SMGetDrive()->ReadFile(SMGetDrive(), "system/system.ini");
+        char *Data = SMGetDrive()->ReadFile(SMGetDrive(), iniPath);
         if (!Data)
                 return config;
 
@@ -35,10 +35,11 @@ CONFIGURATION ConfigRead(void)
                 line = strtok(NULL, "\n");
         }
 
+        free(Data);
         return config;
 }
 
-const char *ConfigGet(CONFIGURATION *config, const char *name)
+const char *IniGet(Ini *config, const char *name)
 {
         for (int i = 0; i < config->count; i++)
         {

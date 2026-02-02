@@ -14,15 +14,15 @@ typedef struct
 {
         char name[MAX_VAR_NAME];
         char value[MAX_VAR_VALUE];
-} CONFIG_VAR;
+} IniVar;
 
 typedef struct
 {
-        CONFIG_VAR vars[MAX_CONFIG_VARS];
+        IniVar vars[MAX_CONFIG_VARS];
         int count;
-} CONFIGURATION;
+} Ini;
 
-CONFIGURATION ConfigRead(void);
-const char *ConfigGet(CONFIGURATION *config, const char *name);
+Ini IniRead(const char *Path);
+const char *IniGet(Ini *config, const char *name);
 
 #endif

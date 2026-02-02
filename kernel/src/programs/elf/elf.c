@@ -303,7 +303,7 @@ int elfLoadStageTwo(elf32EHeader_t *hdr)
 /**
  * elfLoadProgram - completely load and link the elf buffer, then create the process
  */
-schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself)
+schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID User)
 {
         *(iself)=false;
         if (!elfCheckSupported((elf32EHeader_t *)file))
@@ -343,7 +343,8 @@ schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself)
                 (uint32_t)entry_point, // Entry offset
                 stack_mem,        // Stack memory
                 stack_size,       // Stack size
-                schedGetCurrentPid() // Parent process
+                schedGetCurrentPid(), // Parent process
+                User
         );
 
         if (!pid.valid)
