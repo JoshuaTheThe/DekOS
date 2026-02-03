@@ -1,7 +1,7 @@
 #ifdef __WIN32
-#include "stdio.h"
-#include "string.h"
-#include "ini.h"
+#include "../dekoslibc/stdio.h"
+#include "../dekoslibc/string.h"
+#include "../dekoslibc/ini.h"
 #else
 #include <stdio.h>
 #include <string.h>
@@ -20,9 +20,9 @@ void print(const char *s)
 static char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
 static char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
 
-static int shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
+static size_t shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 {
-        int N = 0, i = 0;
+        size_t N = 0, i = 0;
 
         while (*b && N < SHELL_MAX_ARGS)
         {
@@ -96,9 +96,11 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
                 memset(command_buffer, 0, sizeof(command_buffer));
                 size_t len = (size_t)gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
                 keyboard_buffer[len] = '\0';
-                int largc = shellParse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
+                size_t largc = shellParse(keyboard_buffer, (char(*)[SHELL_KBD_BUFF_SIZE]) & command_buffer);
 
-                if (!strcmp(command_buffer[0], "cd") && largc == 2)
+                if (largc == 0)
+                        continue;
+                else if (!strcmp(command_buffer[0], "cd") && largc == 2)
                 {
                         if (!strcmp(command_buffer[1], ".."))
                         {
