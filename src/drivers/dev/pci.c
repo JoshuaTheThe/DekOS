@@ -1,4 +1,4 @@
-#include <pci/pci.h>
+#include <drivers/dev/pci.h>
 
 static pci_device_t devices[MAX_DEVICES];
 static uint32_t device_count = 0;

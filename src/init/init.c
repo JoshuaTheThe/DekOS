@@ -29,7 +29,7 @@
 
 #include <isr/system.h>
 
-#include <pci/pci.h>
+#include <drivers/dev/pci.h>
 #include <resource/main.h>
 
 #include <tty/render/render.h>

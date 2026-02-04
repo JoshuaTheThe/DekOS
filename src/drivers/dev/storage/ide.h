@@ -1,7 +1,7 @@
 #ifndef IDE_H
 #define IDE_H
 
-#include <pci/pci.h>
+#include <drivers/dev/pci.h>
 #include <drivers/dev/serial.h>
 #include <drivers/sys/pit.h>
 #include <io.h>

@@ -2,7 +2,7 @@
 #define STORAGE_H
 
 #include <utils.h>
-#include <pci/pci.h>
+#include <drivers/dev/pci.h>
 #include <drivers/dev/serial.h>
 #include <drivers/dev/storage/ide.h>
 
