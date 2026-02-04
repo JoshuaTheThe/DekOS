@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define __VER__ "1.2"
+
 #define cli() __asm("cli")
 #define sti() __asm("sti")
 #define hlt() __asm("hlt")

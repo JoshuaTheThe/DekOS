@@ -3,12 +3,6 @@
 
 #include <utils.h>
 
-//#include <tty/render/render.h>
-//#include <tty/render/fonts.h>
-//#include <tty/output/output.h>
-//#include <utils.h>
-//#include <io.h>
-
 // PS/2 Port Definitions
 #define PS2_DATA_PORT 0x60
 #define PS2_STATUS_PORT 0x64

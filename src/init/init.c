@@ -10,7 +10,6 @@
 #include <memory/string.h>
 
 #include <programs/scheduler.h>
-#include <programs/shell.h>
 #include <programs/elf/elf.h>
 
 #include <tty/input/input.h>
