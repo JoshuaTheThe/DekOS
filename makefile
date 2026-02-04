@@ -86,12 +86,13 @@ obj/%.asm.o: src/%.asm
 
 .PHONY: clean
 clean:
-	rm -rf bin obj
+	rm -rf obj
+	rm bin/kernel
 
 .PHONY: disk
 disk:
-	dd if=/dev/zero of=fat32.img bs=1M count=64
-	mkfs.vfat -F 32 -n SLAVE_DISK fat32.img
+	dd if=/dev/zero of=bin/fat32.img bs=1M count=64
+	mkfs.vfat -F 32 -n SLAVE_DISK bin/fat32.img
 
 .PHONY: run
 run:
