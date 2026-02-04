@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include <tty/output/output.h>
+#include <tty/output.h>
 #include <utils.h>
 #include <io.h>
 

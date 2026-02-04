@@ -1,10 +1,10 @@
-#include <tty/input/input.h>
-#include <tty/output/output.h>
+#include <drivers/dev/ps2/ps2.h>
+#include <tty/output.h>
 
 static volatile uint8_t character = 0;
 static volatile bool keyboardPressed = false;
 
-uint8_t keyboardLastCharacter(void)
+uint8_t ps2_last_character(void)
 {
         if (keyboardPressed)
         {
@@ -13,16 +13,16 @@ uint8_t keyboardLastCharacter(void)
         return (uint8_t)-1;
 }
 
-bool keyboardKeyPressed(void)
+bool ps2_pressed(void)
 {
         return keyboardPressed;
 }
 
-uint8_t getchar(void)
+uint8_t ps2_getchar(void)
 {
         while (!keyboardPressed)
         {
-                character = keyboardFetch(NULL);
+                character = ps2_keyboard_fetch(NULL);
         }
         uint8_t x = character;
         keyboardPressed = false;
@@ -50,7 +50,7 @@ static uint8_t keyboard_map_shifted[256] =
         0x8F, 0x90, '-', 0x91, '5', 0x92, '+', 0x93, 0x94, 0x95, 0x96, 0x97, '\n',
         0x81, '\\', 0x98, 0x99};
 
-uint8_t keyboardFetch(volatile bool *hit)
+uint8_t ps2_keyboard_fetch(volatile bool *hit)
 {
         static uint32_t shifted = 0;
         static uint32_t ctrl = 0;
@@ -125,17 +125,14 @@ uint8_t keyboardFetch(volatile bool *hit)
 
 void ps2_initialize_keyboard(void)
 {
-        // Enable keyboard port
         ps2_write_command(PS2_CMD_ENABLE_PORT1);
         for (volatile int i = 0; i < 10000; i++)
                 __asm volatile("nop");
 
-        // Reset keyboard
         ps2_write_data(0xFF);
         for (volatile int i = 0; i < 100000; i++)
                 __asm volatile("nop");
 
-        // Wait for reset completion
         if (!ps2_wait_output())
                 return;
 
@@ -146,37 +143,29 @@ void ps2_initialize_keyboard(void)
                 return;
         }
 
-        // Read any additional bytes from reset
         while (ps2_wait_output())
                 ps2_read_data();
 
-        // Set scan code set to 2 (most common)
         ps2_write_data(0xF0);
         ps2_write_data(0x02);
         for (volatile int i = 0; i < 10000; i++)
                 __asm volatile("nop");
-
-        // Enable scanning (keyboard will start sending scan codes)
         ps2_write_data(0xF4);
         for (volatile int i = 0; i < 10000; i++)
                 __asm volatile("nop");
-
-        // Set typematic rate and delay (optional)
         ps2_write_data(0xF3);
-        ps2_write_data(0x20); // 500ms delay, 30.0 repeats/sec
+        ps2_write_data(0x20);
         for (volatile int i = 0; i < 10000; i++)
                 __asm volatile("nop");
 }
 
-bool keyboardIsPresent(void)
+bool ps2_keyboard_present(void)
 {
-        // Clear any pending data
         while (ps2_read_status() & PS2_STATUS_OUTPUT_FULL)
         {
                 ps2_read_data();
         }
 
-        // Test keyboard by sending echo command
         ps2_write_data(0xEE);
 
         if (!ps2_wait_output())
@@ -185,13 +174,12 @@ bool keyboardIsPresent(void)
         }
 
         uint8_t response = ps2_read_data();
-        if (response != 0xEE) // Echo should return the same byte
+        if (response != 0xEE)
         {
                 return false;
         }
 
-        // Alternative: Try reset and check for basic response
-        ps2_write_data(0xFF); // Reset command
+        ps2_write_data(0xFF);
 
         if (!ps2_wait_output())
         {
@@ -199,7 +187,7 @@ bool keyboardIsPresent(void)
         }
 
         uint8_t ack = ps2_read_data();
-        if (ack != 0xFA) // Should get ACK
+        if (ack != 0xFA)
         {
                 return false;
         }
@@ -210,7 +198,7 @@ bool keyboardIsPresent(void)
         }
 
         uint8_t reset_code = ps2_read_data();
-        if (reset_code != 0xAA) // Should get BAT completion code
+        if (reset_code != 0xAA)
         {
                 return false;
         }

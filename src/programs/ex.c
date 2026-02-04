@@ -1,7 +1,7 @@
 /* simple custom executable format (EX) */
 
 #include <programs/ex.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 #include <memory/alloc.h>
 #include <memory/string.h>
 

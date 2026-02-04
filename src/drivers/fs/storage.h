@@ -11,8 +11,8 @@ typedef struct DRIVE
         uint8_t BufferA[4096];
         uint8_t BufferB[4096];
         uint32_t DriveInfo[64];
-        void (*ReadData)(struct DRIVE *Drive);
-        void (*WriteData)(struct DRIVE *Drive);
+        void *(*ReadData)(struct DRIVE *Drive);
+        void *(*WriteData)(struct DRIVE *Drive);
         void *(*ReadFile)(struct DRIVE *Drive, const char *Path);
         void (*WriteFile)(struct DRIVE *Drive, const char *Path);
         DWORD (*FileSize)(struct DRIVE *Drive, const char *Path);
@@ -25,6 +25,7 @@ typedef struct DRIVE
         uint8_t Channel;
         uint8_t DriveNum;
         uint64_t Size;
+        uint64_t SizeOfOp;
 } DRIVE;
 
 void SMChange(size_t New);

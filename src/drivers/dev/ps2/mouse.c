@@ -1,4 +1,4 @@
-#include <tty/input/input.h>
+#include <drivers/dev/ps2/ps2.h>
 #include <tty/render/render.h>
 #include <drivers/math.h>
 
@@ -9,12 +9,12 @@ int prev_save_x = -1, prev_save_y = -1;
 static uint32_t cursor_backbuffer[CURSOR_WIDTH * CURSOR_HEIGHT];
 static bool cursor_saved = false;
 
-unsigned char mouseGetIcon(void)
+unsigned char ps2_mouse_icon(void)
 {
         return mouse_icon;
 }
 
-void mouseSetIcon(unsigned char chr)
+void ps2_mouse_set_icon(unsigned char chr)
 {
         mouse_icon = chr;
 }
@@ -123,7 +123,7 @@ void mouseRestorePixels(uint32_t x, uint32_t y)
         }
 }
 
-bool mouseIsPresent(void)
+bool ps2_mouse_present(void)
 {
         ps2_write_command(PS2_CMD_ENABLE_PORT2);
 

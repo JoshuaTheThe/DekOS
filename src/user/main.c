@@ -4,7 +4,7 @@
 
 #include <user/main.h>
 #include <memory/string.h>
-#include <tty/input/input.h>
+#include <drivers/dev/ps2/ps2.h>
 #include <drivers/fs/storage.h>
 #include <ini.h>
 

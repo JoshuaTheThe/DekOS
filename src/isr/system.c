@@ -1,9 +1,9 @@
 #include <isr/system.h>
 #include <programs/scheduler.h>
-#include <tty/input/input.h>
+#include <drivers/dev/ps2/ps2.h>
 #include <memory/alloc.h>
 #include <memory/string.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 #include <tty/render/fonts.h>
 #include <tty/render/render.h>
 #include <drivers/math.h>
@@ -173,11 +173,11 @@ uint32_t sysReply(void)
 
                 /* test whether there is a key available */
         case INT80_KBHIT:
-                return keyboardKeyPressed();
+                return ps2_pressed();
 
                 /* get the ps/2 key pressed, need to use kbhit before to make sure that its actually gonna work */
         case INT80_GETCH:
-                return keyboardFetch(NULL);
+                return ps2_keyboard_fetch(NULL);
         case INT80_FLUSH:
                 tty_needs_flushing = true;
                 return 0;

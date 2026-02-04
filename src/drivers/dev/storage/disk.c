@@ -1,5 +1,5 @@
 #include <drivers/dev/storage/disk.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 
 __attribute__((deprecated))
 static void ataWait(const uint16_t p)

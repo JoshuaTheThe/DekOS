@@ -1,4 +1,4 @@
-#include <tty/output/output.h>
+#include <tty/output.h>
 
 static size_t vsnprintf_helper(char *str, size_t size, const char *fmt, va_list args)
 {

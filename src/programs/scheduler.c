@@ -2,7 +2,7 @@
 
 #include <memory/alloc.h>
 #include <memory/string.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 #include <drivers/math.h>
 
 schedProcess_t processes[MAX_PROCS];

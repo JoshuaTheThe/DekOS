@@ -1,7 +1,7 @@
 #include <drivers/dev/parallel.h>
 #include <io.h>
 #include <memory/string.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 
 static parallel_port_t ports[3] = {
     {LPT1_BASE, PAR_MODE_SPP, false, 7, false, "LPT1"},

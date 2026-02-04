@@ -3,8 +3,8 @@
 #include <tty/render/render.h>
 #include <memory/string.h>
 #include <memory/alloc.h>
-#include <tty/output/output.h>
-#include <tty/input/input.h>
+#include <tty/output.h>
+#include <drivers/dev/ps2/ps2.h>
 #include <drivers/dev/storage/ide.h>
 
 static idtEntry_t idt[256];
@@ -84,7 +84,7 @@ void idtDefault(int code, int eip, int cs)
         RenderAlign(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font->char_height, ALIGN_LEFT, ALIGN_TOP);
         RenderPrint((unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
 
-        char x = getchar();
+        char x = ps2_getchar();
         switch (x)
         {
         case '\n':

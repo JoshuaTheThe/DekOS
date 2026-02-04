@@ -7,7 +7,7 @@
 #include<memory/alloc.h>
 #include<memory/string.h>
 #include<wm/gdi.h>
-#include<tty/input/input.h>
+#include <drivers/dev/ps2/ps2.h>
 #include<drivers/math.h>
 
 #define WINDOW_POSITION_DEFAULT_X (64)

@@ -8,6 +8,8 @@
 #define PROC_NAME_LEN 32
 #define MAX_PROCS 16
 
+typedef size_t PID;
+
 #define SCHED_EAX   *((uint32_t *)(0x9000 + (4 * 0)))
 #define SCHED_EBX   *((uint32_t *)(0x9000 + (4 * 1)))
 #define SCHED_ECX   *((uint32_t *)(0x9000 + (4 * 2)))

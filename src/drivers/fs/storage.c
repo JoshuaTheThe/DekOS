@@ -2,6 +2,7 @@
 #include <drivers/fs/fat.h>
 #include <memory/string.h>
 #include <math.h>
+#include <tty/tty.h>
 
 DRIVE Drives[64]; /* 00 - 63 */
 DRIVE *CurrentDrive = NULL;
@@ -10,15 +11,17 @@ size_t DriveCount;
 DRIVE *DriveStack[64];
 size_t DriveStackSP;
 
-void IDEReadData(DRIVE *Self)
+void *IDEReadData(DRIVE *Self)
 {
         memset(Self->BufferA, 0x00, sizeof(Self->BufferA));
         IDEReadSectors(Self->DriveNum, 1, Self->LBA, 0x10, (unsigned int)Self->BufferA);
+        return Self->BufferA;
 }
 
-void IDEWriteData(DRIVE *Self)
+void *IDEWriteData(DRIVE *Self)
 {
         IDEWriteSectors(Self->DriveNum, 1, Self->LBA, 0x10, (unsigned int)Self->BufferA);
+        return Self->BufferA;
 }
 
 void *IDEReadFile(DRIVE *Self, const char *Path)
@@ -113,8 +116,7 @@ void *SMRead(size_t LBA)
         if (CurrentDrive && CurrentDrive->ReadData && CurrentDrive->Valid && CurrentDrive->Present)
         {
                 CurrentDrive->LBA = LBA;
-                CurrentDrive->ReadData(CurrentDrive);
-                return CurrentDrive->BufferA;
+                return CurrentDrive->ReadData(CurrentDrive);
         }
         else
         {
@@ -128,8 +130,7 @@ void *SMReadFrom(size_t LBA, DRIVE *Drive)
         if (Drive && Drive->ReadData && Drive->Valid && Drive->Present)
         {
                 Drive->LBA = LBA;
-                Drive->ReadData(Drive);
-                return Drive->BufferA;
+                return Drive->ReadData(Drive);
         }
         else
         {
@@ -144,8 +145,8 @@ void *SMWrite(size_t LBA, void *Buf, size_t BufSize)
         {
                 CurrentDrive->LBA = LBA;
                 memcpy(CurrentDrive->BufferA, Buf, BufSize);
-                CurrentDrive->WriteData(CurrentDrive);
-                return CurrentDrive->BufferA;
+                CurrentDrive->SizeOfOp = BufSize;
+                return CurrentDrive->WriteData(CurrentDrive);
         }
         else
         {
@@ -160,8 +161,8 @@ void *SMWriteTo(size_t LBA, void *Buf, size_t BufSize, DRIVE *Drive)
         {
                 Drive->LBA = LBA;
                 memcpy(Drive->BufferA, Buf, BufSize);
-                Drive->WriteData(Drive);
-                return Drive->BufferA;
+                Drive->SizeOfOp = BufSize;
+                return Drive->WriteData(Drive);
         }
         else
         {
@@ -193,8 +194,27 @@ void SMInit(void)
         pci_device_t Dev[DevCount];
         pciGetDevices(Dev, 0, DevCount);
 
-        DriveCount = 0;
+        _iob[STDIN_FILENO].Drive = (DRIVE *)&Drives[STDIN_FILENO];
+        _iob[STDOUT_FILENO].Drive = (DRIVE *)&Drives[STDOUT_FILENO];
+        _iob[STDERR_FILENO].Drive = (DRIVE *)&Drives[STDERR_FILENO];
 
+        /* We ignore LBA for this, because, well, duh */
+        Drives[STDIN_FILENO].ReadData = ttyRead;
+        Drives[STDIN_FILENO].WriteData = ttyWrite;
+        Drives[STDOUT_FILENO].ReadData = ttyRead;
+        Drives[STDOUT_FILENO].WriteData = ttyWrite;
+        Drives[STDERR_FILENO].ReadData = ttyRead;
+        Drives[STDERR_FILENO].WriteData = ttyWrite;
+
+        Drives[STDIN_FILENO].Present = true;
+        Drives[STDOUT_FILENO].Present = true;
+        Drives[STDERR_FILENO].Present = true;
+
+        Drives[STDIN_FILENO].Valid = true;
+        Drives[STDOUT_FILENO].Valid = true;
+        Drives[STDERR_FILENO].Valid = true;
+
+        DriveCount = STDFILECNT;
         for (size_t i = 0; i < DevCount; ++i)
         {
                 if (Dev[i].class_id == 0x01 && Dev[i].subclass_id == 0x01)
@@ -243,7 +263,7 @@ void SMInit(void)
         if (DriveCount == 0)
                 printf("WARNING: No drives found!\n");
         else if (DriveCount > 0)
-                CurrentDrive = &Drives[0];
+                CurrentDrive = &Drives[STDFILECNT];
 }
 
 DRIVE *SMGetDrive(void)

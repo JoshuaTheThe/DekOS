@@ -1,5 +1,5 @@
 #include <drivers/fs/iso9660.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 #include <drivers/math.h>
 #include <memory/string.h>
 #include <memory/alloc.h>

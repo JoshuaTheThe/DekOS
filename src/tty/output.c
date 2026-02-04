@@ -1,4 +1,4 @@
-#include <tty/output/output.h>
+#include <tty/output.h>
 #include <tty/render/fonts.h>
 #include <tty/render/render.h>
 #include <memory/string.h>

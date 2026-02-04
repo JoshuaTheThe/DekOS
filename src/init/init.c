@@ -12,8 +12,8 @@
 #include <programs/scheduler.h>
 #include <programs/elf/elf.h>
 
-#include <tty/input/input.h>
-#include <tty/output/output.h>
+#include <drivers/dev/ps2/ps2.h>
+#include <tty/output.h>
 #include <tty/render/render.h>
 
 #include <drivers/sys/pit.h>
@@ -40,6 +40,8 @@
 
 #include <ini.h>
 
+#include <tty/tty.h>
+
 typedef enum
 {
         RESPONSE_WTF = 0,
@@ -65,6 +67,8 @@ extern bool tty_needs_flushing;
 extern RID rdFrameRID;
 extern KRNLRES *fbRes;
 extern char system_output[TTY_H][TTY_W];
+
+uint8_t stdinstack[1024]  __attribute__((aligned(16)));
 
 // WINDOW *KernelWindow = NULL;
 // KRNLRES *KernelWindowResource = NULL;
@@ -205,20 +209,20 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 sysHang();
         }
 
-        if (!keyboardIsPresent())
+        if (!ps2_keyboard_present())
         {
                 printf("Keyboard is not present, please plug one in\n");
-                while (!keyboardIsPresent())
+                while (!ps2_keyboard_present())
                 {
                         sti();
                         hlt();
                 }
         }
 
-        if (!mouseIsPresent())
+        if (!ps2_mouse_present())
         {
                 printf("Mouse is not present, please plug one in\n");
-                while (!mouseIsPresent())
+                while (!ps2_mouse_present())
                 {
                         sti();
                         hlt();
@@ -232,8 +236,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         /* enumerate devices and save info to array */
         pciEnumerateDevices(pciRegister);
         SMInit();
-        SMChange(1);
-
+        SMChange(4); /* Secondary ATA */
         FatTest(SMGetDrive());
 
 //        for (int i = 0; i < kernel_symbols_count; ++i)

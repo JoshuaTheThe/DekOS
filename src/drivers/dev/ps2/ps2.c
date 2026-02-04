@@ -1,54 +1,54 @@
-#include <tty/input/input.h>
-#include <tty/output/output.h>
+#include <drivers/dev/ps2/ps2.h>
+#include <tty/output.h>
 #include <wm/main.h>
 
 extern bool tty_needs_flushing;
 
-int gets(char *b, int max)
-{
-        if (!b || max <= 0)
-                return 0;
-
-        int i = 0, ch;
-
-        while (i < max - 1)
-        {
-                ch = (int)getchar();
-                // if (fbRes->Owner.num != 0 && KernelWindowResource && !WMIsFocused(KernelWindowResource))
-                // {
-                //         continue;
-                // }
-
-                if ((char)ch == '\b' || (char)ch == 127)
-                {
-                        if (i > 0)
-                        {
-                                i--;
-                                putchar('\b');
-                                putchar(' ');
-                                putchar('\b');
-                                tty_needs_flushing=true;
-                                b[i] = '\0';
-                        }
-                }
-                else if (ch == '\n' || ch == '\r')
-                {
-                        putchar((uint8_t)ch);
-                        tty_needs_flushing=true;
-                        break;
-                }
-                else if (ch >= 32 && ch <= 126)
-                {
-                        putchar((uint8_t)ch);
-                        tty_needs_flushing=true;
-                        b[i] = (char)ch;
-                        i++;
-                }
-        }
-
-        b[i] = '\0';
-        return i;
-}
+// int gets(char *b, int max)
+// {
+//         if (!b || max <= 0)
+//                 return 0;
+// 
+//         int i = 0, ch;
+// 
+//         while (i < max - 1)
+//         {
+//                 ch = (int)getchar();
+//                 // if (fbRes->Owner.num != 0 && KernelWindowResource && !WMIsFocused(KernelWindowResource))
+//                 // {
+//                 //         continue;
+//                 // }
+// 
+//                 if ((char)ch == '\b' || (char)ch == 127)
+//                 {
+//                         if (i > 0)
+//                         {
+//                                 i--;
+//                                 putchar('\b');
+//                                 putchar(' ');
+//                                 putchar('\b');
+//                                 tty_needs_flushing=true;
+//                                 b[i] = '\0';
+//                         }
+//                 }
+//                 else if (ch == '\n' || ch == '\r')
+//                 {
+//                         putchar((uint8_t)ch);
+//                         tty_needs_flushing=true;
+//                         break;
+//                 }
+//                 else if (ch >= 32 && ch <= 126)
+//                 {
+//                         putchar((uint8_t)ch);
+//                         tty_needs_flushing=true;
+//                         b[i] = (char)ch;
+//                         i++;
+//                 }
+//         }
+// 
+//         b[i] = '\0';
+//         return i;
+// }
 
 uint8_t ps2_read_status(void)
 {

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 
 static memory_information_t minfo;
 

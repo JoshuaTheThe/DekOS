@@ -1,6 +1,6 @@
 
 #include <programs/delangue.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 #include <memory/alloc.h>
 #include <memory/string.h>
 

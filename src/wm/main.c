@@ -1,5 +1,5 @@
 #include <wm/main.h>
-#include <tty/output/output.h>
+#include <tty/output.h>
 
 extern KRNLRES grResources;
 extern DWORD mx, my, mbuttons;
@@ -456,30 +456,30 @@ BOOL WMIsFocused(KRNLRES *Window)
         return FocusedWindow == Window;
 }
 
-/**
- * For User
- */
-char WMGetChar(KRNLRES *Window)
-{
-        if (!Window || Window->Type != RESOURCE_TYPE_WINDOW)
-                return 0;
-
-        WINDOW *target_window = (WINDOW *)Window->Region.ptr;
-        if (!target_window)
-                return 0;
-
-        while (true)
-        {
-                if (FocusedWindow == Window)
-                {
-                        return getchar();
-                }
-                else
-                {
-                        if (target_window->State == WINDOW_CLOSED)
-                                return 0;
-                }
-        }
-
-        return 0;
-}
+// /**
+//  * For User
+//  */
+// char WMGetChar(KRNLRES *Window)
+// {
+//         if (!Window || Window->Type != RESOURCE_TYPE_WINDOW)
+//                 return 0;
+// 
+//         WINDOW *target_window = (WINDOW *)Window->Region.ptr;
+//         if (!target_window)
+//                 return 0;
+// 
+//         while (true)
+//         {
+//                 if (FocusedWindow == Window)
+//                 {
+//                         return getchar();
+//                 }
+//                 else
+//                 {
+//                         if (target_window->State == WINDOW_CLOSED)
+//                                 return 0;
+//                 }
+//         }
+// 
+//         return 0;
+// }
