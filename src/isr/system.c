@@ -87,6 +87,8 @@ uint32_t sysReply(void)
         uint32_t arg1 = *((uint32_t *)0x9004);
         uint32_t arg2 = *((uint32_t *)0x9008);
         uint32_t arg3 = *((uint32_t *)0x900C);
+        uint32_t arg4 = *((uint32_t *)0x9018);
+        uint32_t arg5 = *((uint32_t *)0x901C);
 
         // printf("Syscall: num=%d, arg1=%d, arg2=%d, arg3=%d\n", syscall_num, arg1, arg2, arg3);
 
@@ -294,7 +296,7 @@ uint32_t sysReply(void)
         return 0;
 }
 
-uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3)
+uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {
         uint32_t result;
         asm volatile(
@@ -308,77 +310,77 @@ uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 /* Process Management */
 void exit(int status)
 {
-        syscall(INT80_EXIT, status, 0, 0);
+        syscall(INT80_EXIT, status, 0, 0, 0, 0);
 }
 
 int yield(void)
 {
-        return syscall(INT80_YIELD, 0, 0, 0);
+        return syscall(INT80_YIELD, 0, 0, 0, 0, 0);
 }
 
 int yield_to(int pid)
 {
-        return syscall(INT80_YIELD, pid, 0, 0);
+        return syscall(INT80_YIELD, pid, 0, 0, 0, 0);
 }
 
 int getpid(void)
 {
-        return syscall(INT80_GET_PID, 0, 0, 0);
+        return syscall(INT80_GET_PID, 0, 0, 0, 0, 0);
 }
 
 int getppid(void)
 {
-        return syscall(INT80_GET_PARENT_PID, 0, 0, 0);
+        return syscall(INT80_GET_PARENT_PID, 0, 0, 0, 0, 0);
 }
 
 int fork(void)
 {
-        return syscall(INT80_FORK, 0, 0, 0);
+        return syscall(INT80_FORK, 0, 0, 0, 0, 0);
 }
 
 int progexists(int pid)
 {
-        return syscall(INT80_PID_EXISTS, pid, 0, 0);
+        return syscall(INT80_PID_EXISTS, pid, 0, 0, 0, 0);
 }
 
 void sleep(uint32_t ticks)
 {
-        syscall(INT80_SLEEP, ticks, 0, 0);
+        syscall(INT80_SLEEP, ticks, 0, 0, 0, 0);
 }
 
 /* I/O Operations */
 int write(const char *str, uint32_t len)
 {
-        return syscall(INT80_WRITE, (uint32_t)str, len, 0);
+        return syscall(INT80_WRITE, (uint32_t)str, len, 0, 0, 0);
 }
 
 int putc(char c)
 {
-        return syscall(INT80_PUTCH, c, 0, 0);
+        return syscall(INT80_PUTCH, c, 0, 0, 0, 0);
 }
 
 int kbhit(void)
 {
-        return syscall(INT80_KBHIT, 0, 0, 0);
+        return syscall(INT80_KBHIT, 0, 0, 0, 0, 0);
 }
 
 char getc(void)
 {
-        return (char)syscall(INT80_GETCH, 0, 0, 0);
+        return (char)syscall(INT80_GETCH, 0, 0, 0, 0, 0);
 }
 
 /* IPC */
 int sendmsg(int pid, const void *msg, uint32_t size)
 {
-        return syscall(INT80_SENDMSG, pid, (uint32_t)msg, size);
+        return syscall(INT80_SENDMSG, pid, (uint32_t)msg, size, 0, 0);
 }
 
 int recvmsg(void *buffer, uint32_t size)
 {
-        return syscall(INT80_RECVMSG, (uint32_t)buffer, size, 0);
+        return syscall(INT80_RECVMSG, (uint32_t)buffer, size, 0, 0, 0);
 }
 
 bool msgrecv(int sender_pid)
 {
-        return syscall(INT80_MSGRECV, sender_pid, 0, 0) != 0;
+        return syscall(INT80_MSGRECV, sender_pid, 0, 0, 0, 0) != 0;
 }

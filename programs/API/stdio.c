@@ -21,13 +21,13 @@ char getchar(void)
         return x;
 }
 
-unsigned int syscall(unsigned int num, unsigned int arg1, unsigned int arg2, unsigned int arg3)
+uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {
-        unsigned int result;
+        uint32_t result;
         asm volatile(
             "int $0x80"
             : "=a"(result)
-            : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3)
+            : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "D"(arg5)
             : "memory");
         return result;
 }
@@ -35,96 +35,95 @@ unsigned int syscall(unsigned int num, unsigned int arg1, unsigned int arg2, uns
 /* Process Management */
 void exit(int status)
 {
-        syscall(INT80_EXIT, status, 0, 0);
+        syscall(INT80_EXIT, status, 0, 0, 0, 0);
         while (1)
                 ;
 }
 
 int yield(void)
 {
-        return syscall(INT80_YIELD, 0, 0, 0);
+        return syscall(INT80_YIELD, 0, 0, 0, 0, 0);
 }
 
 int yield_to(int pid)
 {
-        return syscall(INT80_YIELD, pid, 0, 0);
+        return syscall(INT80_YIELD, pid, 0, 0, 0, 0);
 }
 
 int getpid(void)
 {
-        return syscall(INT80_GET_PID, 0, 0, 0);
+        return syscall(INT80_GET_PID, 0, 0, 0, 0, 0);
 }
 
 int getppid(void)
 {
-        return syscall(INT80_GET_PARENT_PID, 0, 0, 0);
+        return syscall(INT80_GET_PARENT_PID, 0, 0, 0, 0, 0);
 }
 
 int fork(void)
 {
-        return syscall(INT80_FORK, 0, 0, 0);
+        return syscall(INT80_FORK, 0, 0, 0, 0, 0);
 }
 
 int progexists(int pid)
 {
-        return syscall(INT80_PID_EXISTS, pid, 0, 0);
+        return syscall(INT80_PID_EXISTS, pid, 0, 0, 0, 0);
 }
 
-void sleep(unsigned int ticks)
+void sleep(uint32_t ticks)
 {
-        syscall(INT80_SLEEP, ticks, 0, 0);
+        syscall(INT80_SLEEP, ticks, 0, 0, 0, 0);
 }
 
 /* I/O Operations */
-int write(const char *str, unsigned int len)
+int write(const char *str, uint32_t len)
 {
-        return syscall(INT80_WRITE, (unsigned int)str, len, 0);
+        return syscall(INT80_WRITE, (uint32_t)str, len, 0, 0, 0);
 }
 
 int putc(char c)
 {
-        return syscall(INT80_PUTCH, c, 0, 0);
+        return syscall(INT80_PUTCH, c, 0, 0, 0, 0);
 }
 
 int kbhit(void)
 {
-        return syscall(INT80_KBHIT, 0, 0, 0);
+        return syscall(INT80_KBHIT, 0, 0, 0, 0, 0);
 }
 
 char getc(void)
 {
-        return (char)syscall(INT80_GETCH, 0, 0, 0);
+        return (char)syscall(INT80_GETCH, 0, 0, 0, 0, 0);
 }
 
-/* IPC */
 int sendmsg(int pid, const char *msg, unsigned int size)
 {
-        return syscall(INT80_SENDMSG, pid, (unsigned int)msg, size);
-}
-
-void getusername(char *buf, size_t bufl)
-{
-        syscall(INT80_GET_USER_NAME, (uint32_t)buf, bufl, 0);
-}
-
-int recvmsg(char *buffer, unsigned int size)
-{
-        return syscall(INT80_RECVMSG, (unsigned int)buffer, size, 0);
+        return syscall(INT80_SENDMSG, pid, (unsigned int)msg, size, 0, 0);
 }
 
 bool msgrecv(int sender_pid)
 {
-        return syscall(INT80_MSGRECV, sender_pid, 0, 0) != 0;
+        return syscall(INT80_MSGRECV, sender_pid, 0, 0, 0, 0) != 0;
+}
+
+int recvmsg(char *buffer, unsigned int size)
+{
+        return syscall(INT80_RECVMSG, (unsigned int)buffer, size, 0, 0, 0);
+}
+
+void getusername(char *buf, size_t bufl)
+{
+        syscall(INT80_GET_USER_NAME, (uint32_t)buf, bufl, 0, 0, 0);
 }
 
 void *malloc(unsigned int size)
 {
-        return (void *)syscall(INT80_ALLOC, size, 0, 0);
+        return (void *)syscall(INT80_ALLOC, size, 0, 0, 0, 0);
 }
 
 void free(void *p)
 {
-        syscall(INT80_UNALLOC, (uint32_t)p, 0, 0);
+        syscall(INT80_UNALLOC, (uint32_t)p, 0, 0, 0, 0);
 }
 
 void *ReadFile(const char *FilePath)
