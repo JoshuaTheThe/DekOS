@@ -2,8 +2,8 @@
 #define FAT_H
 
 #include <utils.h>
-#include <drivers/serial.h>
-#include <drivers/storage.h>
+#include <drivers/dev/serial.h>
+#include <drivers/fs/storage.h>
 #include <memory/string.h>
 
 #define FAT_BOOT_SECTOR_SIGN (0xAA55)

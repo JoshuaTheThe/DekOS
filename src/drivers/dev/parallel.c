@@ -1,4 +1,4 @@
-#include <drivers/parallel.h>
+#include <drivers/dev/parallel.h>
 #include <io.h>
 #include <memory/string.h>
 #include <tty/output/output.h>

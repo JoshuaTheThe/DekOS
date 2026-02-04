@@ -1,5 +1,5 @@
-#include <drivers/storage.h>
-#include <drivers/fat.h>
+#include <drivers/fs/storage.h>
+#include <drivers/fs/fat.h>
 #include <memory/string.h>
 #include <math.h>
 
@@ -102,6 +102,9 @@ DWORD IDEFileSize(DRIVE *Self, const char *Path)
 
 void IDEDirectoryListing(DRIVE *Self, const char *Path)
 {
+        /* TODO */
+        (void)Self;
+        (void)Path;
         return;
 }
 

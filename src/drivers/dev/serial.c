@@ -1,4 +1,4 @@
-#include <drivers/serial.h>
+#include <drivers/dev/serial.h>
 
 void SerialInit(void)
 {

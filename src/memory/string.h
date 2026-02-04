@@ -30,6 +30,6 @@ bool isdigit(char chr);
 void itos(int value, char *str, int base);
 
 /* Non Case Sensitive str-n compare */
-int ncsstrncmp(char *restrict s1, char *restrict s2, size_t len);
+int ncsstrncmp(const char *restrict s1, const char *restrict s2, size_t len);
 
 #endif

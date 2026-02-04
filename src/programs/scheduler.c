@@ -134,7 +134,7 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 processes[id].regs.eax = User;
                 processes[id].regs.ebx = parent.num;
                 processes[id].regs.ecx = Argc;
-                processes[id].regs.edx = Args;
+                processes[id].regs.edx = (uintptr_t)Args;
                 processes[id].regs.esi = 0;
                 processes[id].regs.edi = 0;
                 processes[id].regs.ebp = processes[id].regs.esp; // Match ESP

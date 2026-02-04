@@ -154,7 +154,7 @@ char getc(void);
  * @size: Message size in bytes
  * Returns: 0 on success, negative error code on failure
  */
-int sendmsg(int pid, const char *msg, uint32_t size);
+int sendmsg(int pid, const void *msg, uint32_t size);
 
 /**
  * recvmsg - Receive message from process inbox
@@ -162,7 +162,7 @@ int sendmsg(int pid, const char *msg, uint32_t size);
  * @size: Size of buffer in bytes
  * Returns: Number of bytes received, -1 if no messages
  */
-int recvmsg(char *buffer, uint32_t size);
+int recvmsg(void *buffer, uint32_t size);
 
 /**
  * msgrecv - Check for unread messages from specific sender

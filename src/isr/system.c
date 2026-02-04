@@ -8,7 +8,7 @@
 #include <tty/render/render.h>
 #include <drivers/math.h>
 #include <wm/main.h>
-#include <drivers/storage.h>
+#include <drivers/fs/storage.h>
 #include <user/main.h>
 
 bool tty_needs_flushing = false;
@@ -246,7 +246,7 @@ uint32_t sysReply(void)
                 for (int i = 0; i < inbox->count; i++)
                 {
                         int index = (inbox->tail + i) % MAX_PENDING_MESSAGES;
-                        if ((inbox->messages[index].sender_pid == sender_pid || sender_pid == -1) &&
+                        if ((inbox->messages[index].sender_pid == sender_pid || sender_pid == (size_t)-1) &&
                             !inbox->messages[index].read)
                         {
                                 return 1; // Has unread message
@@ -283,7 +283,7 @@ uint32_t sysReply(void)
                         size_t bufl = arg2;
 
                         UserName(buf, bufl, proc->enactor);
-                        return buf;
+                        return (uintptr_t)buf;
                 }
                 break;
 
@@ -368,12 +368,12 @@ char getc(void)
 }
 
 /* IPC */
-int sendmsg(int pid, const char *msg, uint32_t size)
+int sendmsg(int pid, const void *msg, uint32_t size)
 {
         return syscall(INT80_SENDMSG, pid, (uint32_t)msg, size);
 }
 
-int recvmsg(char *buffer, uint32_t size)
+int recvmsg(void *buffer, uint32_t size)
 {
         return syscall(INT80_RECVMSG, (uint32_t)buffer, size, 0);
 }

@@ -5,7 +5,7 @@
 #include <memory/alloc.h>
 #include <tty/output/output.h>
 #include <tty/input/input.h>
-#include <drivers/ide.h>
+#include <drivers/dev/storage/ide.h>
 
 static idtEntry_t idt[256];
 static idtPtr_t idtp;

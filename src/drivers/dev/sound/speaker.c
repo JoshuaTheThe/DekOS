@@ -1,5 +1,5 @@
 /* PC Speaker */
-#include <drivers/speaker.h>
+#include <drivers/dev/sound/speaker.h>
 
 void speakerPlay(uint32_t nFrequence)
 {

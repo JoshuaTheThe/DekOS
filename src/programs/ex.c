@@ -55,52 +55,51 @@ void exApplyRelocations(const exHeader_t h, const exRelocation_t *relocations, c
                 *(DWORD *)(raw + off) += (DWORD)raw;
         }
 }
-// 
-// int exExecute(char *name, char *buffer, size_t buffer_size, schedPid_t parent)
-// {
-//         if (buffer_size < sizeof(exHeader_t))
-//         {
-//                 printf(" [ERROR] Buffer too small for header\n");
-//                 return -1;
-//         }
-// 
-//         exHeader_t h;
-//         memcpy(&h, buffer, sizeof(exHeader_t));
-// 
-//         if (h.Sign[0] == '\0')
-//         {
-//                 printf(" [ERROR] Invalid executable format\n");
-//                 return -1;
-//         }
-// 
-//         if (strncmp(h.Sign, Sign, sizeof(Sign)) != 0)
-//         {
-//                 printf(" [ERROR] Invalid signature. Not an EXENNEA executable.\n");
-//                 return -1;
-//         }
-// 
-//         exFunction_t functions[h.FunctionCount];
-//         exRelocation_t relocations[h.RelocationCount];
-// 
-//         void *ExeMem = malloc(h.TextSegmentSize);
-//         if (!ExeMem)
-//         {
-//                 return -1;
-//         }
-// 
-//         exFindFunctions(h, buffer, functions);
-//         exFindRelocations(h, buffer, relocations);
-//         exFindRawData(h, buffer, (char *)ExeMem);
-//         exApplyRelocations(h, relocations, (char *)ExeMem);
-// 
-//         uint8_t *stack = malloc(h.StackSize * 4);
-// 
-//         // Execute the first function (entry point)
-//         if (h.FunctionCount > 0)
-//         {
-//                 return schedCreateProcess(name, NULL, 0, ExeMem, (uint32_t)functions[0].offset, stack, (uint32_t)h.StackSize, parent, ).num;
-//         }
-//         free(ExeMem);
-//         return -1;
-// }
-// 
+ 
+int exExecute(char *name, char *buffer, size_t buffer_size, schedPid_t parent)
+{
+        if (buffer_size < sizeof(exHeader_t))
+        {
+                printf(" [ERROR] Buffer too small for header\n");
+                return -1;
+        }
+
+        exHeader_t h;
+        memcpy(&h, buffer, sizeof(exHeader_t));
+
+        if (h.Sign[0] == '\0')
+        {
+                printf(" [ERROR] Invalid executable format\n");
+                return -1;
+        }
+
+        if (strncmp(h.Sign, Sign, sizeof(Sign)) != 0)
+        {
+                printf(" [ERROR] Invalid signature. Not an EXENNEA executable.\n");
+                return -1;
+        }
+
+        exFunction_t functions[h.FunctionCount];
+        exRelocation_t relocations[h.RelocationCount];
+
+        void *ExeMem = malloc(h.TextSegmentSize);
+        if (!ExeMem)
+        {
+                return -1;
+        }
+
+        exFindFunctions(h, buffer, functions);
+        exFindRelocations(h, buffer, relocations);
+        exFindRawData(h, buffer, (char *)ExeMem);
+        exApplyRelocations(h, relocations, (char *)ExeMem);
+
+        uint8_t *stack = malloc(h.StackSize * 4);
+
+        // Execute the first function (entry point)
+        if (h.FunctionCount > 0)
+        {
+                return schedCreateProcess(name, NULL, 0, ExeMem, (uint32_t)functions[0].offset, stack, (uint32_t)h.StackSize, parent, 0).num;
+        }
+        free(ExeMem);
+        return -1;
+}

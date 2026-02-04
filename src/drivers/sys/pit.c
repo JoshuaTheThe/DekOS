@@ -1,4 +1,4 @@
-#include <drivers/pit.h>
+#include <drivers/sys/pit.h>
 
 extern int tick_counter;
 

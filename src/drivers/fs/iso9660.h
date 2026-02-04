@@ -2,7 +2,7 @@
 #define ISO9660_H
 
 #include <utils.h>
-#include <drivers/disk.h>
+#include <drivers/dev/storage/disk.h>
 //#include <tty/output/output.h>
 
 #define ISO9660_IDEN CD001

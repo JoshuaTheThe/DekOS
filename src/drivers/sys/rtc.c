@@ -1,4 +1,4 @@
-#include <drivers/rtc.h>
+#include <drivers/sys/rtc.h>
 
 static uint8_t bcd2Bin(uint8_t bcd)
 {

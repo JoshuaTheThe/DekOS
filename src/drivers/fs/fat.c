@@ -1,4 +1,4 @@
-#include <drivers/fat.h>
+#include <drivers/fs/fat.h>
 #include <memory/alloc.h>
 
 FATBootSector FatReadBootSector(DRIVE *Drive)

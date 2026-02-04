@@ -2,8 +2,8 @@
 #define IDE_H
 
 #include <pci/pci.h>
-#include <drivers/serial.h>
-#include <drivers/pit.h>
+#include <drivers/dev/serial.h>
+#include <drivers/sys/pit.h>
 #include <io.h>
 
 #define ATA_SR_BSY 0x80  // Busy

@@ -4,7 +4,7 @@
 #include <memory/string.h>
 #include <resource/main.h>
 #include <wm/main.h>
-#include <drivers/serial.h>
+#include <drivers/dev/serial.h>
 
 extern KRNLRES *fbRes;
 

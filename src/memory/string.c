@@ -199,7 +199,7 @@ int tolower(int c)
         return c;
 }
 
-int ncsstrncmp(char *restrict s1, char *restrict s2, size_t len)
+int ncsstrncmp(const char *restrict s1, const char *restrict s2, size_t len)
 {
         const unsigned char *p1 = (unsigned char *)s1;
         const unsigned char *p2 = (unsigned char *)s2;

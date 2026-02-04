@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <drivers/storage.h>
+#include <drivers/fs/storage.h>
 #include <utils.h>
 
 #define MAX_VAR_NAME 32
@@ -19,7 +19,7 @@ typedef struct
 typedef struct
 {
         IniVar vars[MAX_CONFIG_VARS];
-        int count;
+        size_t count;
 } Ini;
 
 Ini IniRead(const char *Path);

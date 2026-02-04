@@ -3,9 +3,10 @@
  */
 
 #include <user/main.h>
+#include <memory/string.h>
 #include <tty/input/input.h>
-#include <drivers/storage.h>
-#include <ini/main.h>
+#include <drivers/fs/storage.h>
+#include <ini.h>
 
 #define PASSWORD_SALT 0x8095634 /* keyboard smash */
 #define MAX_LOGIN_ATTEMPTS 4
@@ -115,7 +116,7 @@ USERID UserLogin(void)
                 gets(pass, 31);
 
                 USERID id = UserFind(name);
-                if (id != -1 && UserMatch(id, pass))
+                if (id != (size_t)-1 && UserMatch(id, pass))
                 {
                         memset(pass, 0, sizeof(pass));
                         printf("Login successful. Welcome, %s!\n", name);
@@ -153,19 +154,19 @@ void UsersLoad(void)
                 User.UserId = i;
                 User.Flags = USER_FLAG_VALID | USER_FLAG_CAN_LAUNCH;
 
-                if (!strncmp(newusers.vars[i].value, "administrator"))
+                if (!strncmp(newusers.vars[i].value, "administrator", 14))
                 {
                         User.Flags |= USER_FLAG_ADMINISTRATOR;
                 }
-                else if (!strncmp(newusers.vars[i].value, "service")) /* for future driver shi */
+                else if (!strncmp(newusers.vars[i].value, "service", 8)) /* for future driver shi */
                 {
                         User.Flags |= USER_FLAG_SERVICE;
                 }
-                else if (!strncmp(newusers.vars[i].value, "system")) /* for future system shi */
+                else if (!strncmp(newusers.vars[i].value, "system", 7)) /* for future system shi */
                 {
                         User.Flags |= USER_FLAG_SYSTEM;
                 }
-                else if (!strncmp(newusers.vars[i].value, "guest")) /* not allowed to do shi */
+                else if (!strncmp(newusers.vars[i].value, "guest", 6)) /* not allowed to do shi */
                 {
                         User.Flags &= ~USER_FLAG_CAN_LAUNCH;
                 }
@@ -174,11 +175,12 @@ void UsersLoad(void)
                 snprintf(path, sizeof(path), "users/%s/user.ini", User.Name);
                 Ini userData = IniRead(path);
 
-                char *pswrd = IniGet(&userData, "pswrdhash");
+                const char *pswrd = IniGet(&userData, "pswrdhash");
 
                 if (pswrd)
                 {
-                        User.PassHash = atoi(pswrd);
+                        size_t len;
+                        User.PassHash = atoi(pswrd, &len);
                 }
                 else
                 {

@@ -17,15 +17,15 @@
 #include <tty/output/output.h>
 #include <tty/render/render.h>
 
-#include <drivers/pit.h>
-#include <drivers/iso9660.h>
-#include <drivers/speaker.h>
-#include <drivers/sb16.h>
-#include <drivers/serial.h>
-#include <drivers/parallel.h>
-#include <drivers/ide.h>
-#include <drivers/storage.h>
-#include <drivers/fat.h>
+#include <drivers/sys/pit.h>
+#include <drivers/fs/iso9660.h>
+#include <drivers/dev/sound/speaker.h>
+#include <drivers/dev/sound/sb16.h>
+#include <drivers/dev/serial.h>
+#include <drivers/dev/parallel.h>
+#include <drivers/dev/storage/ide.h>
+#include <drivers/fs/storage.h>
+#include <drivers/fs/fat.h>
 
 #include <isr/system.h>
 
@@ -39,7 +39,7 @@
 
 #include <forth.h>
 
-#include <ini/main.h>
+#include <ini.h>
 
 typedef enum
 {
@@ -124,6 +124,7 @@ void deleteTask(size_t i)
 
 Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
 {
+        (void)len;
         Response resp;
         Response *msg = (Response *)buf;
         switch (msg->Code)
@@ -133,7 +134,7 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
                 break;
         case RESPONSE_READ_FILE:
                 resp.Code = RESPONSE_OK;
-                resp.as.P = SMGetDrive()->ReadFile(SMGetDrive(), msg->as.bytes);
+                resp.as.P = SMGetDrive()->ReadFile(SMGetDrive(), (char *)msg->as.bytes);
                 break;
         case RESPONSE_CREATE_PROC:
         {
@@ -157,7 +158,7 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
         }
         default:
                 printf(" [CONFUSED] Incoming Message of unknown type from %d: %s\n", pidn, msg->as.bytes);
-                strncpy(resp.as.bytes, "wtf are you doing\n\0", 20);
+                strncpy((char *)resp.as.bytes, "wtf are you doing\n\0", 20);
                 resp.Code = RESPONSE_WTF;
                 break;
         }

@@ -1,5 +1,5 @@
 #include <wm/gdi2.h>
-#include <drivers/serial.h>
+#include <drivers/dev/serial.h>
 #include <string.h>
 
 void GDI2Pixel32(SURFACE *Surface, float X, float Y, float Z, ColourRGBA Col)

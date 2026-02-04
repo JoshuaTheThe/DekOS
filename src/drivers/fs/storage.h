@@ -3,8 +3,8 @@
 
 #include <utils.h>
 #include <pci/pci.h>
-#include <drivers/serial.h>
-#include <drivers/ide.h>
+#include <drivers/dev/serial.h>
+#include <drivers/dev/storage/ide.h>
 
 typedef struct DRIVE
 {
@@ -16,7 +16,7 @@ typedef struct DRIVE
         void *(*ReadFile)(struct DRIVE *Drive, const char *Path);
         void (*WriteFile)(struct DRIVE *Drive, const char *Path);
         DWORD (*FileSize)(struct DRIVE *Drive, const char *Path);
-        void *(*DirectoryListing)(struct DRIVE *Drive, const char *Path);
+        void (*DirectoryListing)(struct DRIVE *Drive, const char *Path);
         size_t LBA, PCIDevIndex;
         bool Valid, Present;
 

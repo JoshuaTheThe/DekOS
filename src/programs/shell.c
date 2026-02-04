@@ -4,7 +4,7 @@
 #include <memory/string.h>
 #include <tty/input/input.h>
 #include <tty/output/output.h>
-#include <drivers/storage.h>
+#include <drivers/fs/storage.h>
 #include <programs/ex.h>
 #include <programs/delangue.h>
 #include <programs/elf/elf.h>

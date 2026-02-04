@@ -1,7 +1,7 @@
 #ifndef FORTH_H
 
 #include <utils.h>
-#include <drivers/serial.h>
+#include <drivers/dev/serial.h>
 
 #define FORTH_STACK_SIZE 256
 

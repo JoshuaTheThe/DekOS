@@ -1,4 +1,4 @@
-#include <drivers/ide.h>
+#include <drivers/dev/storage/ide.h>
 
 IDEDriver_t IDEState = {0};
 uint8_t package[2048], atapi_packet[2048];
@@ -444,7 +444,7 @@ void IDEReadSectors(unsigned char drive, unsigned char numsects, unsigned int lb
                 package[0] = 0x2;
         else
         {
-                unsigned char err;
+                unsigned char err = 0;
                 if (IDEState.IDEDev[drive].Type == IDE_ATA)
                         err = IDEAccess(ATA_READ, drive, lba, numsects, es, edi);
                 else if (IDEState.IDEDev[drive].Type == IDE_ATAPI)
@@ -463,7 +463,7 @@ void IDEWriteSectors(unsigned char drive, unsigned char numsects, unsigned int l
                 package[0] = 0x2;
         else
         {
-                unsigned char err;
+                unsigned char err = 0;
                 if (IDEState.IDEDev[drive].Type == IDE_ATA)
                         err = IDEAccess(ATA_WRITE, drive, lba, numsects, es, edi);
                 else if (IDEState.IDEDev[drive].Type == IDE_ATAPI)

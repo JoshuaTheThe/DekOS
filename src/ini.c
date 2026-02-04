@@ -1,4 +1,6 @@
-#include <ini/main.h>
+#include <ini.h>
+#include <memory/string.h>
+#include <memory/alloc.h>
 
 Ini IniRead(const char *iniPath)
 {
@@ -42,7 +44,7 @@ Ini IniRead(const char *iniPath)
 
 const char *IniGet(Ini *config, const char *name)
 {
-        for (int i = 0; i < config->count; i++)
+        for (size_t i = 0; i < config->count; i++)
         {
                 if (strcmp(config->vars[i].name, name) == 0)
                         return config->vars[i].value;

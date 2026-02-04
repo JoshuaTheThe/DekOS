@@ -2,8 +2,8 @@
 #define USER_H
 
 #include <utils.h>
-#include <drivers/storage.h>
-#include <drivers/serial.h>
+#include <drivers/fs/storage.h>
+#include <drivers/dev/serial.h>
 
 #define USER_NAME_LENGTH (0x0C)
 
