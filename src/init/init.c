@@ -6,6 +6,8 @@
 #include <init/idt.h>
 #include <init/gdt.h>
 
+#include <drivers/features/feature.h>
+
 #include <memory/alloc.h>
 #include <memory/string.h>
 
@@ -184,7 +186,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         // setframebuffer(framebuffer);
         // setfont(&cascadia); /* bitmap */
         RenderSetFont(&cascadia);
-
+        FeaturesInit();
         gdtInit();
         idtInit();
         memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
