@@ -55,7 +55,6 @@ void gdtTssInit(void)
         memset(&tss, 0, sizeof(tss));
         tss.esp0 = 0x10000;
         tss.ss0 = 0x10;
-        tss.iomap_base = 0xFFFF;  // Allow all I/O ports
 }
 
 void gdtInit(void)
