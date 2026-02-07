@@ -44,6 +44,8 @@
 
 #include <tty/tty.h>
 
+#include <init/pde.h>
+
 typedef enum
 {
         RESPONSE_WTF = 0,
@@ -175,6 +177,7 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
         multiboot_info_t *mbi;
+        PDEInit();
 
         cli();
         while (magic != 0x2BADB002)
