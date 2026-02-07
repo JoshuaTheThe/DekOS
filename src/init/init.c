@@ -258,6 +258,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         UsersLoad();
         USERID User = UserLogin();
 
+        schedPid_t pid = {0};
+
         if (!shell)
         {
                 printf(" [WARN] No Shell defined\n");
@@ -270,7 +272,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 size_t size = SMGetDrive()->FileSize(SMGetDrive(), shell);
 
                 if (data && size)
-                        elfLoadProgram(data, size, &iself, User, 0, NULL);
+                        pid = elfLoadProgram(data, size, &iself, User, 0, NULL);
                 if (data && size && iself)
                 {
                         printf(" [INFO] Shell started\n");
@@ -286,6 +288,11 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         while (true)
         {
                 cli();
+                if (!schedValidatePid(pid))
+                {
+                        break;
+                }
+
                 for (int i = 0; i < MAX_PROCS; ++i)
                 {
                         if (processes[i].delete)
@@ -312,4 +319,10 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 display();
                 hlt();
         }
+
+        printf(" [INFO] It is okay to reboot or shutdown your computer now\n");
+        display();
+
+        cli();
+        hlt();
 }
