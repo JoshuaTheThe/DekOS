@@ -72,7 +72,7 @@ extern RID rdFrameRID;
 extern KRNLRES *fbRes;
 extern char system_output[TTY_H][TTY_W];
 
-uint8_t stdinstack[1024]  __attribute__((aligned(16)));
+uint8_t stdinstack[1024] __attribute__((aligned(16)));
 
 // WINDOW *KernelWindow = NULL;
 // KRNLRES *KernelWindowResource = NULL;
@@ -146,16 +146,16 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
         case RESPONSE_CREATE_PROC:
         {
                 bool iself;
-                void *data = SMGetDrive()->ReadFile(SMGetDrive(), ((char**)&msg->as.bytes[4])[0]);
-                size_t size = SMGetDrive()->FileSize(SMGetDrive(), ((char**)&msg->as.bytes[4])[0]);
+                void *data = SMGetDrive()->ReadFile(SMGetDrive(), ((char **)&msg->as.bytes[4])[0]);
+                size_t size = SMGetDrive()->FileSize(SMGetDrive(), ((char **)&msg->as.bytes[4])[0]);
                 size_t pid = -1;
 
                 if (data && size)
-                        pid = elfLoadProgram(data, size, &iself, User, *(int*)msg->as.bytes, (char**)&msg->as.bytes[4]).num;
+                        pid = elfLoadProgram(data, size, &iself, User, *(int *)msg->as.bytes, (char **)&msg->as.bytes[4]).num;
                 if (data && size && iself)
                 {
                         resp.Code = RESPONSE_OK;
-                        *((uint32_t*)&resp.as.bytes[0]) = pid;
+                        *((uint32_t *)&resp.as.bytes[0]) = pid;
                 }
                 else
                 {
@@ -244,10 +244,10 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         SMChange(4); /* Secondary ATA */
         FatTest(SMGetDrive());
 
-//        for (int i = 0; i < kernel_symbols_count; ++i)
-//        {
-//                printf(" [INFO] Kernel Function '%s' present at %p\n", kernel_symbols[i].name, kernel_symbols[i].address);
-//        }
+        //        for (int i = 0; i < kernel_symbols_count; ++i)
+        //        {
+        //                printf(" [INFO] Kernel Function '%s' present at %p\n", kernel_symbols[i].name, kernel_symbols[i].address);
+        //        }
 
         Ini Cfg = IniRead("system/system.ini");
         Ini *Saved = malloc(sizeof(*Saved));
@@ -320,8 +320,24 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 hlt();
         }
 
-        printf(" [INFO] It is okay to reboot or shutdown your computer now\n");
-        display();
+        outw(0xB004, 0x2000);
+        outw(0x604, 0x2000);
+        outw(0x4004, 0x3400);
+
+        asm volatile("cli");
+
+        outb(0x20, 0x11);
+        outb(0xA0, 0x11);
+        outb(0x21, 0x20);
+        outb(0xA1, 0x28);
+        outb(0x21, 0x04);
+        outb(0xA1, 0x02);
+        outb(0x21, 0x01);
+        outb(0xA1, 0x01);
+        outb(0x21, 0x0);
+        outb(0xA1, 0x0);
+
+        outb(0x64, 0xFE);
 
         cli();
         hlt();
