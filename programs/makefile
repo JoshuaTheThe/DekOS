@@ -10,7 +10,8 @@ LDFLAGS := -m elf_i386 -nostdlib
 LIBOBJS := API/start.o \
            API/stdio.o \
            API/ini.o \
-           API/string.o
+           API/string.o \
+           API/dek.o
 
 SRCS    := $(wildcard *.c)
 OBJS    := $(SRCS:.c=.o)

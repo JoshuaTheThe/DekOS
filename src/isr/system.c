@@ -1,18 +1,12 @@
 #include <isr/system.h>
-#include <programs/scheduler.h>
-#include <drivers/dev/ps2/ps2.h>
-#include <memory/alloc.h>
 #include <memory/string.h>
-#include <tty/output.h>
-#include <tty/render/fonts.h>
-#include <tty/render/render.h>
 #include <drivers/math.h>
-#include <wm/main.h>
-#include <drivers/fs/storage.h>
-#include <user/main.h>
+#include <drivers/fs/file.h>
+#include <drivers/dev/ps2/ps2.h>
 
 bool tty_needs_flushing = false;
 extern schedProcess_t processes[];
+extern int tick_counter;
 
 extern void jumpToProc();
 
@@ -97,7 +91,7 @@ uint32_t sysReply(void)
                 /* PROC MANAGEMENT */
 
                 /* exit program */
-        case INT80_EXIT:
+        case EXIT:
         {
                 schedKillProcess(pid);
                 sti();
@@ -108,7 +102,7 @@ uint32_t sysReply(void)
                 break;
         }
                 /* yield to the given pid */
-        case INT80_YIELD:
+        case YIELD:
         {
                 schedSaveContext();
                 if (!arg1)
@@ -125,19 +119,15 @@ uint32_t sysReply(void)
                 return -1;
                 break;
         }
-        case INT80_GET_PID:
+        case GET_MY_PID:
                 return pid.num;
                 break;
-        case INT80_GET_PARENT_PID:
+        case GET_PARENTS_PID:
                 return proc->parent.num;
                 break;
-        case INT80_FORK:
-                /* TODO clone the process, and return here, but patch to other by setting EAX manually */
-                return 0;
-
-        case INT80_PID_EXISTS:
+        case CHECK_PROCESS:
         {
-                if (arg1 >= MAX_PROCS)
+                if (arg1 < MAX_PROCS)
                 {
                         return 0;
                 }
@@ -145,47 +135,78 @@ uint32_t sysReply(void)
                 return processes[arg1].valid;
         }
 
-        case INT80_RESERVED_1:
-                break;
+	case KILL_PROCESS:
+	{
+		if (arg1 < MAX_PROCS)
+		{
+			schedPid_t p = {1,1};
+			p.num = arg1;
+			schedKillProcess(p);
+		}
+		return 0;
+	}
 
-                /* sleep for a given amount of ticks - not implemented yet */
-        case INT80_SLEEP:
-                break;
+	case CREATE_PROCESS:
+	{
+		/* TODO - Allow drive switching by proc */
+		DRIVE *Drive = SMGetDrive();
+		const size_t sz = Drive->FileSize(Drive, (char*)arg1);
+		bool iself = false;
+		void *data = Drive->ReadFile(Drive, (char*)arg1);
+		schedPid_t pid = elfLoadProgram(data, sz, &iself, proc->enactor, arg2, (char**)arg3);
+                if (!iself)
+                        return -1;
+		return pid.num;
+	}
 
-                /* I/O */
+	case RESUME_PROCESS:
+	{
+		if (arg1 < MAX_PROCS)
+		{
+			schedPid_t p = {1,1};
+			p.num = arg1;
+			schedResumeProcess(p);
+		}
+		return 0;
+	}
 
-                /* write a buffer to the process's tty buffer */
-        case INT80_WRITE:
-                if (arg1 != 0)
-                {
-                        char *_buf = (char *)arg1;
-                        for (uint32_t i = 0; i < arg2 && _buf[i]; ++i)
-                        {
-                                putchar(_buf[i] /*, proc->tty, &proc->x, &proc->y*/);
-                        }
-                }
-                break;
+	case SUSPEND_PROCESS:
+	{
+		if (arg1 < MAX_PROCS)
+		{
+			schedPid_t p = {1,1};
+			p.num = arg1;
+			schedSuspendProcess(p);
+		}
+		return 0;
+	}
 
-                /* put a singular character on the process's tty buffer */
-        case INT80_PUTCH:
-                putchar(arg1 /* , proc->tty, &proc->x, &proc->y */);
-                break;
-
-                /* test whether there is a key available */
-        case INT80_KBHIT:
-                return ps2_pressed();
-
-                /* get the ps/2 key pressed, need to use kbhit before to make sure that its actually gonna work */
-        case INT80_GETCH:
-                return ps2_keyboard_fetch(NULL);
-        case INT80_FLUSH:
-                tty_needs_flushing = true;
+        /**
+         * Life without UB and with safety is boring
+         */
+        case OPEN:
+                return FOpen((const char*const)arg1, strnlen((const char*)arg1, MAX_PATH), arg2);
+        case CLOSE:
+                FClose((SYSFILE *)arg1);
                 return 0;
 
-                /* IPC */
+                /* write a buffer to the process's tty buffer */
+        case WRITE:
+                FWrite((char*)arg1, arg2, arg3, (SYSFILE*)arg4);
+                break;
+        case READ:
+                FRead((char*)arg1, arg2, arg3, (SYSFILE*)arg4);
+                break;
+        case GETCH:
+                return ps2_keyboard_fetch(NULL);
+        case PUTCH:
+                putchar(arg1);
+                return 0;
 
+                /* put a singular character on the process's tty buffer */
+                /* IPC */
                 // void sendmsg(pid, msg, sizeof(msg)), max size of 1024
-        case INT80_SENDMSG:
+        case SEND:
         {
                 uint32_t target_pid = arg1;
                 const char *message = (const char *)arg2;
@@ -220,7 +241,7 @@ uint32_t sysReply(void)
         }
 
                 // int recvmsg(buffer, sizeof(buffer)), read the process's message buffer (recieve message), return PID
-        case INT80_RECVMSG:
+        case FETCH:
         {
                 char *buffer = (char *)arg1;
                 uint32_t buffer_size = arg2;
@@ -240,7 +261,7 @@ uint32_t sysReply(void)
         }
 
                 // bool msgrecv(pid), whether it has been read yet, -1 for any
-        case INT80_MSGRECV:
+        case UNREAD:
         {
                 uint32_t sender_pid = arg1;
                 IPCInbox_t *inbox = &processes[pid.num].inbox;
@@ -258,28 +279,16 @@ uint32_t sysReply(void)
                 return 0; // No unread messages from this sender
         }
 
-        case INT80_ALLOC:
+        case MALLOC:
                 if (arg1 > 0 && arg1 < 1024 * 1024)
                 {
                         return (uint32_t)malloc(arg1);
                 }
                 return 0;
-        case INT80_UNALLOC:
+        case FREE:
                 free((void *)arg1);
                 return 0;
-
-        case INT80_RELEASE_RESOURCE:
-        {
-                //(uint32_t)ResourceReleaseK((KRNLRES *)arg1);
-                return 0;
-        }
-        case INT80_CREATE_WINDOW:
-                return (uint32_t)WMCreateWindow((char *)arg1, 0, 0, arg2, arg3);
-        case INT80_CREATE_ELEMENT:
-                return (uint32_t)WMCreateElement((KRNLRES *)arg1, 0, 0, arg2, arg3, 0);
-        case INT80_ISFOCUSED:
-                return WMIsFocused((KRNLRES *)arg1);
-        case INT80_GET_USER_NAME:
+        case USERNAME:
                 {
                         char *buf = (char*)arg1;
                         size_t bufl = arg2;
@@ -288,6 +297,8 @@ uint32_t sysReply(void)
                         return (uintptr_t)buf;
                 }
                 break;
+	case TICKS:
+		return tick_counter;
 
         default:
                 return -1;
@@ -302,85 +313,8 @@ uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint
         asm volatile(
             "int $0x80"
             : "=a"(result)
-            : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3)
+            : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "D"(arg5)
             : "memory");
         return result;
 }
 
-/* Process Management */
-void exit(int status)
-{
-        syscall(INT80_EXIT, status, 0, 0, 0, 0);
-}
-
-int yield(void)
-{
-        return syscall(INT80_YIELD, 0, 0, 0, 0, 0);
-}
-
-int yield_to(int pid)
-{
-        return syscall(INT80_YIELD, pid, 0, 0, 0, 0);
-}
-
-int getpid(void)
-{
-        return syscall(INT80_GET_PID, 0, 0, 0, 0, 0);
-}
-
-int getppid(void)
-{
-        return syscall(INT80_GET_PARENT_PID, 0, 0, 0, 0, 0);
-}
-
-int fork(void)
-{
-        return syscall(INT80_FORK, 0, 0, 0, 0, 0);
-}
-
-int progexists(int pid)
-{
-        return syscall(INT80_PID_EXISTS, pid, 0, 0, 0, 0);
-}
-
-void sleep(uint32_t ticks)
-{
-        syscall(INT80_SLEEP, ticks, 0, 0, 0, 0);
-}
-
-/* I/O Operations */
-int write(const char *str, uint32_t len)
-{
-        return syscall(INT80_WRITE, (uint32_t)str, len, 0, 0, 0);
-}
-
-int putc(char c)
-{
-        return syscall(INT80_PUTCH, c, 0, 0, 0, 0);
-}
-
-int kbhit(void)
-{
-        return syscall(INT80_KBHIT, 0, 0, 0, 0, 0);
-}
-
-char getc(void)
-{
-        return (char)syscall(INT80_GETCH, 0, 0, 0, 0, 0);
-}
-
-/* IPC */
-int sendmsg(int pid, const void *msg, uint32_t size)
-{
-        return syscall(INT80_SENDMSG, pid, (uint32_t)msg, size, 0, 0);
-}
-
-int recvmsg(void *buffer, uint32_t size)
-{
-        return syscall(INT80_RECVMSG, (uint32_t)buffer, size, 0, 0, 0);
-}
-
-bool msgrecv(int sender_pid)
-{
-        return syscall(INT80_MSGRECV, sender_pid, 0, 0, 0, 0) != 0;
-}

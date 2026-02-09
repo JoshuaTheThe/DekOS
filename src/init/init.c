@@ -27,6 +27,7 @@
 #include <drivers/dev/storage/ide.h>
 #include <drivers/fs/storage.h>
 #include <drivers/fs/fat.h>
+#include <drivers/fs/file.h>
 
 #include <isr/system.h>
 
@@ -129,6 +130,10 @@ void deleteTask(size_t i)
 //         // }
 // }
 
+/**
+ * Nuh Uh */
+
+/*
 Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
 {
         (void)len;
@@ -172,6 +177,7 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
 
         return resp;
 }
+*/
 
 /* Initialize the System */
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
@@ -304,16 +310,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
 
                 mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
-
-                if (msgrecv(-1))
-                {
-                        char buf[4096];
-                        size_t pidn = recvmsg(buf, 4096);
-                        schedPid_t pid = {.num = pidn, .valid = progexists(pidn)};
-                        Response resp = KHandleRequest(pidn, buf, 4096, schedGetProcessN(pid)->enactor);
-                        sendmsg(pidn, &resp, sizeof(resp));
-                }
-
                 sti();
 
                 display();

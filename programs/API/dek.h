@@ -1,0 +1,102 @@
+#ifndef DEK_H
+#define DEK_H
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#define MAX_FILES (8192)
+#define FILE_PRESENT (0x01)
+#define FILE_READABLE (0x02)
+#define FILE_WRITABLE (0x04)
+#define FILE_EXECUTABLE (0x08)
+
+typedef size_t USERID;
+typedef size_t PID;
+
+typedef enum InterruptFunction
+{
+        EXIT,
+        GET_MY_PID,
+        GET_PARENTS_PID,
+        YIELD,
+        CREATE_PROCESS,
+        KILL_PROCESS,
+        CHECK_PROCESS,
+        RESUME_PROCESS,
+        SUSPEND_PROCESS,
+        USERNAME,
+        TICKS,
+
+        /** .. */
+
+        OPEN = 0x10,
+        CLOSE,
+        READ,
+        WRITE,
+        GETCH,
+        PUTCH,
+
+        /** .. */
+
+        SEND = 0x20,
+        FETCH,
+        UNREAD,
+
+        /** .. */
+
+        MALLOC = 0x30,
+        FREE,
+} InterruptFunction_t;
+
+/**
+ * WARNING -- UNSAFE
+ * THIS DATA IS SHARED, AND IS STORED **IN KERNEL STACK** (oh no)
+*/
+typedef struct _iobuf
+{
+	char *ptr;
+	size_t remaining;
+	char *base;
+	int flags;
+} FILE;
+
+FILE *open(char *path, int flags);
+void close(FILE *fil);
+
+void read(char *buf, size_t n, size_t size, FILE *fil);
+void write(char *buf, size_t n, size_t size, FILE *fil);
+
+void exit(int);
+PID getmypid(void);
+PID getparentspid(void);
+void yield(PID);
+PID createproc(char *,int,char **);
+void killproc(PID);
+int checkproc(PID);
+void resumeproc(PID);
+void suspendproc(PID);
+void username(char *,int);
+int ticks(void);
+void send(PID,void *,int);
+void fetch(PID,void *,int);
+int unread(PID);
+
+char getch(void);
+void putch(char);
+
+void *malloc(int);
+void free(void *);
+
+static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
+{
+        uint32_t result;
+        asm volatile(
+            "int $0x80"
+            : "=a"(result)
+            : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "D"(arg5)
+            : "memory");
+        return result;
+}
+
+#endif

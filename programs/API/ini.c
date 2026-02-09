@@ -4,8 +4,9 @@ Ini IniRead(const char *iniPath)
 {
         Ini config = {0};
 
-        char *Data = ReadFile(iniPath);
-        if (!Data)
+        FILE *File = open((char*)iniPath, FILE_PRESENT | FILE_READABLE);
+        char *Data = File->base;
+        if (!Data || !File)
                 return config;
 
         char *line = strtok(Data, "\n");
@@ -35,7 +36,7 @@ Ini IniRead(const char *iniPath)
                 line = strtok(NULL, "\n");
         }
 
-        free(Data);
+        close(File);
         return config;
 }
 

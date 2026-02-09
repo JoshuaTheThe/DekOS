@@ -1,12 +1,20 @@
 #ifdef __WIN32
-#include "../dekoslibc/stdio.h"
-#include "../dekoslibc/string.h"
-#include "../dekoslibc/ini.h"
+#include "./API/stdio.h"
+#include "./API/string.h"
+#include "./API/ini.h"
 #else
 #include <stdio.h>
 #include <string.h>
 #include <ini.h>
 #endif
+
+void puts(char *str, size_t len)
+{
+        for (size_t i = 0; i < len && str[i]; ++i)
+        {
+                putch(str[i]);
+        }
+}
 
 int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
 {
@@ -14,21 +22,22 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
         char Message_2[] = " [ERROR] File does not exist or could not read from ";
         if (argc < 2)
         {
-                write(Message_1, sizeof(Message_1));
+                puts(Message_1, sizeof(Message_1));
                 return 69;
         }
 
-        char *FileData = ReadFile(argv[1]);
+        FILE *File = open(argv[1], FILE_PRESENT | FILE_READABLE);
+        char *FileData = File->base;
         
         if (!FileData)
         {
-                write(Message_2, sizeof(Message_2));
-                write(argv[1], strnlen(argv[1], 256));
-                putc('\n');
+                puts(Message_2, sizeof(Message_2));
+                puts(argv[1], strnlen(argv[1], 256));
+                putch('\n');
                 return 69;
         }
 
-        write(FileData, 65536);
-        free(FileData);
+        puts(FileData, 65536);
+        close(File);
         return 0;
 }

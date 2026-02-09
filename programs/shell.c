@@ -1,7 +1,7 @@
 #ifdef __WIN32
-#include "../dekoslibc/stdio.h"
-#include "../dekoslibc/string.h"
-#include "../dekoslibc/ini.h"
+#include "./API/stdio.h"
+#include "./API/string.h"
+#include "./API/ini.h"
 #else
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +11,7 @@
 void print(const char *s)
 {
         for (unsigned int i = 0; s[i]; ++i)
-                putc(s[i]);
+                putch(s[i]);
 }
 
 #define SHELL_KBD_BUFF_SIZE 64
@@ -71,20 +71,16 @@ static size_t shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
 {
         char name[32];
-        getusername(name, 31);
+        username(name, 31);
         char prompt[256];
         char current_dir[256] = "";
+
+        print("Hello, World!\n");
 
         snprintf(current_dir, sizeof(prompt), "users/%s/", name);
         snprintf(prompt, sizeof(prompt), "users/%s/user.ini", name);
         Ini config = IniRead(prompt);
         memset(prompt, 0, sizeof(prompt));
-
-        for (size_t i = 0; i < argc; ++i)
-        {
-                print(argv[i]);
-                print("\n");
-        }
 
         bool running = true;
 
@@ -143,7 +139,7 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
                 else if (!strcmp(command_buffer[0], "pwd"))
                 {
                         print(current_dir);
-                        putc('\n');
+                        putch('\n');
                 }
                 else if (!strcmp(command_buffer[0], "exit"))
                 {
@@ -159,8 +155,10 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
                                 memcpy(arg_v[i], command_buffer[i], len);
                         }
 
-                        PID pid = CreateProcess(arg_v, largc);
-                        while (progexists(pid))
+                        PID pid = createproc(command_buffer[0], largc, arg_v);
+                        if (pid == -1)
+                                continue;
+                        while (!checkproc(pid))
                                 ;
                         for (size_t i = 0; i < largc; ++i)
                                 free(arg_v[i]);

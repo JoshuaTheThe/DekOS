@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <dek.h>
+
 #define MAX_VAR_NAME 64
 #define MAX_VAR_VALUE 256
 #define MAX_CONFIG_VARS 32

@@ -1,0 +1,30 @@
+0x00-0x0F: # This segment is process related #
+	EXIT                @ebx=code, noreturn
+	GET_MY_PID          @returns pid
+	GET_PARENTS_PID     @returns pid
+	YIELD               @ebx=pid/none
+	CREATE_PROCESS      @ebx=path, ecx=argc, edx=argv, returns pid
+	KILL_PROCESS        @ebx=pid
+	CHECK_PROCESS       @ebx=pid, returns 1 ? 0
+	RESUME_PROCESS      @ebx=pid
+	SUSPEND_PROCESS     @ebx=pid
+	USERNAME            @ebx=buf,ecx=sizeof(buf)
+	TICKS               @returns kernel tick count
+	...
+	# Rest Reserved
+0x10-0x1F: # This segment is I/O related #
+UNIMPL	OPEN                @ebx=path,ecx=sizeof(path), returns struct<*_FILE_>
+UNIMPL	CLOSE               @ebx=struct<*_FILE_>
+UNIMPL	READ                @ebx=struct<*_FILE_>, ecx=buf, edx=len
+UNIMPL	WRITE               @ebx=struct<*_FILE_>, ecx=buf, edx=len
+        GETCH               @returns from stdin
+        PUTCH               @ebx=chr
+
+0x20-0x2F: # MISC // IPC #
+	SEND
+	FETCH
+	UNREAD
+
+0x30-0x3F: # Memory Management #
+	MALLOC              @returns heap allocated ptr
+	FREE                @ebx = p

@@ -6,6 +6,8 @@
 #include <drivers/dev/serial.h>
 #include <drivers/dev/storage/ide.h>
 
+#define MAX_PATH 512
+
 typedef struct DRIVE
 {
         uint8_t BufferA[4096];
