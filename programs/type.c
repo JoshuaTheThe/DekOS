@@ -1,12 +1,6 @@
-#ifdef __WIN32
-#include "./API/stdio.h"
-#include "./API/string.h"
-#include "./API/ini.h"
-#else
 #include <stdio.h>
 #include <string.h>
 #include <ini.h>
-#endif
 
 void puts(char *str, size_t len)
 {

@@ -127,7 +127,7 @@ uint32_t sysReply(void)
                 break;
         case CHECK_PROCESS:
         {
-                if (arg1 < MAX_PROCS)
+                if (arg1 >= MAX_PROCS)
                 {
                         return 0;
                 }

@@ -1,11 +1,5 @@
-#ifdef __WIN32
-#include "stdio.h"
-#include "string.h"
-#else
 #include <stdio.h>
 #include <string.h>
-#endif
-
 #include <stdarg.h>
 
 extern int main(void);

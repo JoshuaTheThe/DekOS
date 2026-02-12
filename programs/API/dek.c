@@ -1,10 +1,5 @@
-#ifdef __WIN32
-#include "dek.h"
-#include "string.h"
-#else
 #include <dek.h>
 #include <string.h>
-#endif
 
 void exit(int code)
 {
