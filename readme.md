@@ -12,3 +12,6 @@ username: root<br>
 password: 1<br>
 
 after the login as completed, it will start drawing<br>
+
+<h1>Minimum Requirements</h1>
+A CPU Capable of SSE2 and with more than 5MB of ram.
