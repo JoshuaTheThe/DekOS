@@ -24,7 +24,7 @@ void memInit(size_t memory_size)
         uintptr_t kernel_end_addr = (uintptr_t)&_kernel_end;
 
         const size_t sizeof_kernel = kernel_end_addr - kernel_start_addr;
-        const size_t reserved = 1 * 1024 * 1024;
+        const size_t reserved = 0;//1 * 1024 * 1024;
         size_t available = memory_size - sizeof_kernel - reserved;
         size_t heap_size = (available * 7) / 10;
 

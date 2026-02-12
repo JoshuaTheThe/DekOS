@@ -9,7 +9,7 @@ if grub-file --is-x86-multiboot bin/kernel; then
         sudo cp fat32dir/* mnt/ -rf
         sudo umount mnt
         grub-mkrescue -o bin/dekos.iso isodir
-        qemu-system-x86_64 -debugcon stdio -cdrom bin/dekos.iso -m 16 -boot d -soundhw pcspk -hdb bin/fat32.img
+        qemu-system-x86_64 -debugcon stdio -cdrom bin/dekos.iso -m 5 -boot d -soundhw pcspk -hdb bin/fat32.img
 else
         echo the file is not multiboot
 fi

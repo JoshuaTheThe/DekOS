@@ -2,7 +2,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-	. = 2M;
+	. = 1M;
         _kernel_start = .;
 
         /* First, ensure multiboot header is at the very beginning */
