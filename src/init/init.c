@@ -183,7 +183,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
         multiboot_info_t *mbi = (multiboot_info_t *)mbinfo_ptr;
         PDEInit();
-        memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
 
         cli();
         while (magic != 0x2BADB002)
@@ -198,6 +197,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         gdtInit();
         idtInit();
         pitInit(250);
+        memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
         schedInit();
         SerialInit();
         init_parallel_ports();
@@ -211,9 +211,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         int nDim[3] = {mbi->framebuffer_width, mbi->framebuffer_height, 1};
         BOOL aDim[3] = {TRUE, TRUE, TRUE};
         RenderSetDim(nDim, aDim);
-
-        printf(" [INFO] %dMB of memory\n", (mbi->mem_upper + mbi->mem_lower) / 1024);
-        printf(" [INFO] %dMB of heap space\n", (_heap_end - _heap_start) / (1024*1024));
 
         if (!iso9660Init())
         {
@@ -316,6 +313,9 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 display();
                 hlt();
         }
+
+        while (SerialRead() != '=')
+        {}
 
         outw(0xB004, 0x2000);
         outw(0x604, 0x2000);

@@ -1,27 +1,16 @@
-/* The bootloader will look at this image and start execution at the symbol
-   designated as the entry point. */
 ENTRY(_start)
 
-/* Tell where the various sections of the object files will be put in the final
-   kernel image. */
 SECTIONS
 {
-	/* It used to be universally recommended to use 1M as a start offset,
-	   as it was effectively guaranteed to be available under BIOS systems.
-	   However, UEFI has made things more complicated, and experimental data
-	   strongly suggests that 2M is a safer place to load. In 2016, a new
-	   feature was introduced to the multiboot2 spec to inform bootloaders
-	   that a kernel can be loaded anywhere within a range of addresses and
-	   will be able to relocate itself to run from such a loader-selected
-	   address, in order to give the loader freedom in selecting a span of
-	   memory which is verified to be available by the firmware, in order to
-	   work around this issue. This does not use that feature, so 2M was
-	   chosen as a safer option than the traditional 1M. */
 	. = 2M;
+        _kernel_start = .;
 
+        /* First, ensure multiboot header is at the very beginning */
         .text : {
                 *(.multiboot)
+                *(.multiboot2)
                 *(.text)
+                *(.text.*)      /* Catch all .text.* sections */
                 text_start = .;
                 *(.text*)
                 text_end = .;
@@ -29,13 +18,29 @@ SECTIONS
         
         .rodata : {
                 rodata_start = .;
-                *(.rodata*)
+                *(.rodata)
+                *(.rodata.*)    /* Catch all .rodata.* sections */
+                *(.rodata*)     /* Catch any other rodata variants */
+                *(.eh_frame)    /* Exception handling frames */
+                *(.eh_frame_hdr)
+                *(.comment)     /* Compiler comments */
+                *(.comment.*)
                 rodata_end = .;
         }
         
         .data : {
                 data_start = .;
                 *(.data)
+                *(.data.*)      /* Catch all .data.* sections */
+                *(.got)         /* Global offset table */
+                *(.got.*)       /* GOT entries */
+                *(.got.plt)     /* GOT PLT entries */
+                *(.plt)         /* Procedure linkage table */
+                *(.plt.*)
+                *(.iplt)        /* Inline PLT */
+                *(.igot.*)
+                *(.toc)         /* Table of contents (PPC) */
+                *(.toc.*)
                 data_end = .;
         }
         
@@ -43,11 +48,85 @@ SECTIONS
                 bss_start = .;
                 *(COMMON)
                 *(.bss)
+                *(.bss.*)       /* Catch all .bss.* sections */
+                *(COMMON.*)
                 bss_end = .;
         }
 
-        _kernel_end = .;
+        /* Catch any stragglers that didn't fit in above sections */
+        . = ALIGN(4);
+        .init : {
+                *(.init)
+                *(.init.*)
+        }
+        
+        .fini : {
+                *(.fini)
+                *(.fini.*)
+        }
+        
+        .ctors : {
+                *(.ctors)
+                *(.ctors.*)
+                *(.init_array)
+                *(.init_array.*)
+        }
+        
+        .dtors : {
+                *(.dtors)
+                *(.dtors.*)
+                *(.fini_array)
+                *(.fini_array.*)
+        }
+        
+        /* Exception handling sections */
+        .gcc_except_table : {
+                *(.gcc_except_table)
+                *(.gcc_except_table.*)
+        }
+        
+        .jcr : {
+                *(.jcr)
+        }
+        
+        /* Debug sections - usually stripped, but catch them just in case */
+        .debug : {
+                *(.debug)
+                *(.debug.*)
+        }
+        
+        .stab : {
+                *(.stab)
+                *(.stab.*)
+        }
+        
+        .stabstr : {
+                *(.stabstr)
+                *(.stabstr.*)
+        }
+        
+        /* ARM specific */
+        .ARM.exidx : {
+                *(.ARM.exidx*)
+                *(.gnu.linkonce.armexidx.*)
+        }
+        
+        .ARM.extab : {
+                *(.ARM.extab*)
+                *(.gnu.linkonce.armextab.*)
+        }
 
-	/* The compiler may produce other sections, by default it will put them in
-	   a segment with the same name. Simply add stuff here as needed. */
+        /* Ensure we catch everything else that might have slipped through */
+        . = ALIGN(4);
+        _kernel_end = .;
+        _kernel_size = _kernel_end - _kernel_start;
+        
+        /* Discard any remaining sections we don't need */
+        /DISCARD/ : {
+                *(.note.GNU-stack)
+                *(.gnu_debuglink)
+                *(.gnu.lto_*)
+                *(.comment)
+                *(.comment.*)
+        }
 }

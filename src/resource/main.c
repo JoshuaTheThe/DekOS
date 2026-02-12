@@ -99,7 +99,7 @@ RESULT ResourceBlitK(KRNLRES *rpResource,
         /**
          * Integrity Check.
          */
-        if ((uint8_t *)rpResource->Region.ptr > _heap_end)
+        if ((uintptr_t)rpResource->Region.ptr > _heap_end)
         {
                 return RESULT_CORRUPTED;
         }
@@ -152,7 +152,7 @@ RESULT ResourceReleaseK(KRNLRES *rpResource)
         /**
          * Integrity Check.
          */
-        if ((uint8_t *)rpResource->Region.ptr > _heap_end)
+        if ((uintptr_t)rpResource->Region.ptr > _heap_end)
         {
                 return RESULT_CORRUPTED;
         }
@@ -220,7 +220,7 @@ RESULT ResourceHandoverK(KRNLRES *rpResource, PROCID dest)
         /**
          * Integrity Check.
          */
-        if (((uint8_t *)rpResource->Region.ptr > _heap_end) && rpResource->Type != RESOURCE_TYPE_RAW_FAR)
+        if (((uintptr_t)rpResource->Region.ptr > _heap_end) && rpResource->Type != RESOURCE_TYPE_RAW_FAR)
         {
                 return RESULT_CORRUPTED;
         }
