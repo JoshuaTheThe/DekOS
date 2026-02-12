@@ -16,7 +16,7 @@
 	OPEN                @ebx=path,ecx=sizeof(path), returns struct<*_FILE_>
 	CLOSE               @ebx=struct<*_FILE_>
 	READ                @ebx=struct<*_FILE_>, ecx=buf, edx=len
-UNIMPL	WRITE               @ebx=struct<*_FILE_>, ecx=buf, edx=len
+	WRITE               @ebx=struct<*_FILE_>, ecx=buf, edx=len
         GETCH               @returns from stdin
         PUTCH               @ebx=chr
 

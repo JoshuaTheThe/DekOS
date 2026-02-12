@@ -65,6 +65,79 @@ void *IDEReadFile(DRIVE *Self, const char *Path)
         return FatRead((BYTE *)Name, (BYTE *)Extension, &bt, Self, pCurrentDir);
 }
 
+int IDEWriteFile(DRIVE *Self, const char *Path, void *Data, size_t Size)
+{
+        FATBootSector bt = FatReadBootSector(Self);
+
+        char PathCopy[256];
+        strncpy(PathCopy, Path, sizeof(PathCopy));
+        PathCopy[sizeof(PathCopy) - 1] = 0;
+
+        char *lastSlash = strrchr(PathCopy, '/');
+        char *filename;
+        FATDirectory *pParentDir = NULL;
+        FATDirectory ParentDir = {0};
+
+        if (lastSlash)
+        {
+                *lastSlash = 0;
+                filename = lastSlash + 1;
+
+                char *segment = strtok(PathCopy, "/");
+                char Name[9] = {0}, Extension[4] = {0};
+
+                while (segment)
+                {
+                        FatConvert83(segment, Name, Extension);
+                        FATFileLocation Loc = FatLocateInDir((BYTE *)Name, (BYTE *)Extension, &bt, Self, pParentDir);
+                        if (!Loc.Found || !(Loc.Dir.Flags & FAT_DIRECTORY))
+                        {
+                                printf(" [ERROR] Directory not found: %s\n", segment);
+                                return -1;
+                        }
+
+                        ParentDir = Loc.Dir;
+                        pParentDir = &ParentDir;
+                        segment = strtok(NULL, "/");
+                }
+        }
+        else
+        {
+                filename = PathCopy;
+                pParentDir = NULL;
+        }
+
+        char Name[9] = {0}, Extension[4] = {0};
+        FatConvert83(filename, Name, Extension);
+
+        FATFileLocation Existing = FatLocateInDir((BYTE *)Name, (BYTE *)Extension, &bt, Self, pParentDir);
+        if (Existing.Found)
+        {
+                printf(" [WARN] File exists, overwriting: %s\n", filename);
+                // TODO: Free old clusters
+        }
+
+        DWORD parentCluster = pParentDir ? (pParentDir->EntryFirstClusterHigh << 16 | pParentDir->EntryFirstClusterLow) : FatRootCluster(&bt);
+        DWORD firstCluster = FatWriteData(&bt, Data, Size, Self);
+        if (!firstCluster)
+        {
+                printf(" [ERROR] No free clusters\n");
+                return -2;
+        }
+
+        FATDirectory entry = FatCreateEntry(filename, firstCluster, Size, FAT_ARCHIVE);
+        DWORD location = FatFindFreeEntry(&bt, parentCluster, Self);
+        if (!location)
+        {
+                printf(" [ERROR] Directory full\n");
+                return -3;
+        }
+
+        FatWriteDirectoryEntry(&bt, parentCluster, location, &entry, Self);
+        printf(" [OK] Wrote %s (%d bytes) to cluster %d\n", filename, Size, firstCluster);
+        return 0;
+}
+
 DWORD IDEFileSize(DRIVE *Self, const char *Path)
 {
         FATBootSector bt = FatReadBootSector(Self);
@@ -243,6 +316,7 @@ void SMInit(void)
                                 disk->Type = IDEState.IDEDev[d].Type;
                                 disk->PCIDevIndex = i;
                                 disk->ReadFile = IDEReadFile;
+                                disk->WriteFile = IDEWriteFile;
                                 disk->FileSize = IDEFileSize;
                                 disk->DirectoryListing = IDEDirectoryListing;
                                 printf("dev%d: model=%s type=%d size=%dMB\n", DriveCount, disk->Model, disk->Type, (disk->Size * 512) / 1024 / 1024);

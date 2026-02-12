@@ -20,6 +20,7 @@ typedef struct _iobuf
 	size_t size;
 	char *base;
 	int flags;
+        char *path;
 } SYSFILE;
 
 extern struct _iobuf _iofiles[MAX_FILES];

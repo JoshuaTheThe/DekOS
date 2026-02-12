@@ -15,7 +15,7 @@ typedef struct DRIVE
         void *(*ReadData)(struct DRIVE *Drive);
         void *(*WriteData)(struct DRIVE *Drive);
         void *(*ReadFile)(struct DRIVE *Drive, const char *Path);
-        void (*WriteFile)(struct DRIVE *Drive, const char *Path);
+        void (*WriteFile)(struct DRIVE *Drive, const char *Path, void *Data, size_t Size);
         DWORD (*FileSize)(struct DRIVE *Drive, const char *Path);
         void (*DirectoryListing)(struct DRIVE *Drive, const char *Path);
         size_t LBA, PCIDevIndex;

@@ -44,6 +44,8 @@ SYSFILE *FOpen(const char *const Path,
         File->ptr = File->base = Dat;
         File->remaining = FileSize;
         File->size = FileSize;
+        File->path = malloc(PathLength);
+        memcpy(File->path, Path, PathLength);
         return File;
 }
 
@@ -58,9 +60,8 @@ void FClose(SYSFILE *File)
                 return;
         if (File->flags & FILE_WRITABLE)
         {
-                /**
-                 * TODO - Implement writing to FS.
-                 */
+                Drive->WriteFile(Drive, File->path, File->base, File->size);
+                free(File->path);
         }
 
         free(File->base);

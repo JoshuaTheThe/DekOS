@@ -204,6 +204,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         //                printf(" [INFO] Kernel Function '%s' present at %p\n", kernel_symbols[i].name, kernel_symbols[i].address);
         //        }
 
+        SMGetDrive()->WriteFile(SMGetDrive(), "balls.txt", "balls", 5);
+
         Ini Cfg = IniRead("system/system.ini");
         Ini *Saved = malloc(sizeof(*Saved));
         *Saved = Cfg;
