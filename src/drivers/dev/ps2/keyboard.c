@@ -1,8 +1,8 @@
 #include <drivers/dev/ps2/ps2.h>
 #include <tty/output.h>
 
-static volatile uint8_t character = 0;
-static volatile bool keyboardPressed = false;
+volatile uint8_t character = 0;
+volatile bool keyboardPressed = false;
 
 uint8_t ps2_last_character(void)
 {

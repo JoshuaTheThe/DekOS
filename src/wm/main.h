@@ -14,7 +14,7 @@
 #define WINDOW_POSITION_DEFAULT_Y (64)
 
 #define MAX_TITLE_LENGTH (32)
-#define MAX_SEGMENTS (1024)
+#define MAX_SEGMENTS (64)
 
 typedef enum
 {

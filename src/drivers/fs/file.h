@@ -5,9 +5,9 @@
 #include <drivers/fs/storage.h>
 
 /**
- *	A Maximum of 2^13 files may be open at once.
+ *	A Maximum of 2^10 files may be open at once.
  * */
-#define MAX_FILES (8192)
+#define MAX_FILES (1024)
 #define FILE_PRESENT (0x01)
 #define FILE_READABLE (0x02)
 #define FILE_WRITABLE (0x04)

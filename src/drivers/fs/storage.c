@@ -4,11 +4,11 @@
 #include <math.h>
 #include <tty/tty.h>
 
-DRIVE Drives[64]; /* 00 - 63 */
+DRIVE Drives[32]; /* 00 - 63 */
 DRIVE *CurrentDrive = NULL;
 size_t DriveCount;
 
-DRIVE *DriveStack[64];
+DRIVE *DriveStack[32];
 size_t DriveStackSP;
 
 void *IDEReadData(DRIVE *Self)

@@ -10,8 +10,7 @@
 
 typedef struct DRIVE
 {
-        uint8_t BufferA[4096];
-        uint8_t BufferB[4096];
+        uint8_t BufferA[2048];
         uint32_t DriveInfo[64];
         void *(*ReadData)(struct DRIVE *Drive);
         void *(*WriteData)(struct DRIVE *Drive);

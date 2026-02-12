@@ -10,7 +10,7 @@ schedProcess_t *current_process;
 // gdtTssEntry_t *current_tss;
 schedPid_t current_pid;
 uint32_t tick_counter;
-static uint32_t kStack[4096];
+static uint32_t kStack[1024];
 
 int schedFindInvalidProcess(void)
 {

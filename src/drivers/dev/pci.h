@@ -10,7 +10,7 @@
 
 #define PCI_CONFIG_ADDRESS 0xCF8
 #define PCI_CONFIG_DATA 0xCFC
-#define MAX_DEVICES 4096
+#define MAX_DEVICES 128
 
 typedef struct
 {
