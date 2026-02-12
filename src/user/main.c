@@ -110,9 +110,11 @@ USERID UserLogin(void)
         {
                 printf("\n--- DekOS Login ---\n");
                 printf("Username: ");
+                display();
                 gets(name, USER_NAME_LENGTH);
 
                 printf("Password: ");
+                display();
                 gets(pass, 31);
 
                 USERID id = UserFind(name);

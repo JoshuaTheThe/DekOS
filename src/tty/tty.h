@@ -25,7 +25,7 @@ typedef struct
 
 extern FILE _iob[STDFILECNT];
 
-int ttyMain(USERID UserID, PID ParentProc, size_t argc, char **argv);
+int ttyMain(uint32_t argc, char **argv, USERID UserID, PID ParentProc);
 void *ttyWrite(DRIVE *tty);
 void *ttyRead(DRIVE *tty);
 void *read(char *buf, size_t len);

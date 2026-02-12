@@ -62,7 +62,7 @@ static size_t shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
         return N;
 }
 
-int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
+int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
         char name[32];
         username(name, 31);
@@ -75,6 +75,19 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
         snprintf(prompt, sizeof(prompt), "users/%s/user.ini", name);
         Ini config = IniRead(prompt);
         memset(prompt, 0, sizeof(prompt));
+
+        for (size_t i = 0; i < argc; ++i)
+        {
+                char buf[1024];
+                snprintf(buf, sizeof(buf), " [INFO] launched with argument: %s\n", argv[i]);
+                print(buf);
+        }
+
+        char buf[1024];
+        snprintf(buf, sizeof(buf), " [INFO] launched from: %d\n", ParentProc);
+        print(buf);
+        snprintf(buf, sizeof(buf), " [INFO] launched by: %d\n", UserID);
+        print(buf);
 
         bool running = true;
 
@@ -151,9 +164,10 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
 
                         PID pid = createproc(command_buffer[0], largc, arg_v);
                         if (pid == -1)
-                                continue;
+                                goto exi;
                         while (checkproc(pid))
                                 ;
+exi:
                         for (size_t i = 0; i < largc; ++i)
                                 free(arg_v[i]);
                         free(arg_v);

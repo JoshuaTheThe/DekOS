@@ -129,55 +129,6 @@ void deleteTask(size_t i)
 //         // }
 // }
 
-/**
- * Nuh Uh */
-
-/*
-Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
-{
-        (void)len;
-        Response resp;
-        Response *msg = (Response *)buf;
-        switch (msg->Code)
-        {
-        case RESPONSE_OK:
-                resp.Code = RESPONSE_OK;
-                break;
-        case RESPONSE_READ_FILE:
-                resp.Code = RESPONSE_OK;
-                resp.as.P = SMGetDrive()->ReadFile(SMGetDrive(), (char *)msg->as.bytes);
-                break;
-        case RESPONSE_CREATE_PROC:
-        {
-                bool iself;
-                void *data = SMGetDrive()->ReadFile(SMGetDrive(), ((char **)&msg->as.bytes[4])[0]);
-                size_t size = SMGetDrive()->FileSize(SMGetDrive(), ((char **)&msg->as.bytes[4])[0]);
-                size_t pid = -1;
-
-                if (data && size)
-                        pid = elfLoadProgram(data, size, &iself, User, *(int *)msg->as.bytes, (char **)&msg->as.bytes[4]).num;
-                if (data && size && iself)
-                {
-                        resp.Code = RESPONSE_OK;
-                        *((uint32_t *)&resp.as.bytes[0]) = pid;
-                }
-                else
-                {
-                        resp.Code = RESPONSE_WTF;
-                }
-                break;
-        }
-        default:
-                printf(" [CONFUSED] Incoming Message of unknown type from %d: %s\n", pidn, msg->as.bytes);
-                strncpy((char *)resp.as.bytes, "wtf are you doing\n\0", 20);
-                resp.Code = RESPONSE_WTF;
-                break;
-        }
-
-        return resp;
-}
-*/
-
 /* Initialize the System */
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
@@ -276,7 +227,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 size_t size = SMGetDrive()->FileSize(SMGetDrive(), shell);
 
                 if (data && size)
-                        pid = elfLoadProgram(data, size, &iself, User, 0, NULL);
+                        pid = elfLoadProgram(data, size, &iself, User, 0, (char **)&shell);
                 if (data && size && iself)
                 {
                         printf(" [INFO] Shell started\n");

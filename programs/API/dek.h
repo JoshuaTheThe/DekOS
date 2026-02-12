@@ -11,8 +11,8 @@
 #define FILE_WRITABLE (0x04)
 #define FILE_EXECUTABLE (0x08)
 
-typedef size_t USERID;
-typedef size_t PID;
+typedef uint32_t USERID;
+typedef uint32_t PID;
 
 typedef enum InterruptFunction
 {

@@ -126,7 +126,25 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 processes[id].regs.gs = 0x10;
                 processes[id].parent = parent;
                 processes[id].argc = Argc;
-                processes[id].argv = Args;
+
+                /* Copy Args */
+                if (Argc > 0 && Args != NULL)
+                {
+                        processes[id].argv = malloc(sizeof(char *) * (Argc + 1));
+                        for (size_t i = 0; i < Argc; i++)
+                        {
+                                size_t len = strnlen(Args[i], 256) + 1;
+                                processes[id].argv[i] = malloc(len);
+                                memcpy(processes[id].argv[i], Args[i], len);
+                        }
+                        processes[id].argv[Argc] = NULL;
+                        processes[id].argc = Argc;
+                }
+                else
+                {
+                        processes[id].argv = NULL;
+                        processes[id].argc = 0;
+                }
 
                 processes[id].regs.eip = (uint32_t)Program + EntryPOffset;
                 processes[id].regs.esp = (uint32_t)(Stack + StackLength);
@@ -134,7 +152,7 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 processes[id].regs.eax = User;
                 processes[id].regs.ebx = parent.num;
                 processes[id].regs.ecx = Argc;
-                processes[id].regs.edx = (uintptr_t)Args;
+                processes[id].regs.edx = (uintptr_t)processes[id].argv;
                 processes[id].regs.esi = 0;
                 processes[id].regs.edi = 0;
                 processes[id].regs.ebp = processes[id].regs.esp; // Match ESP
@@ -156,6 +174,17 @@ bool schedKillProcess(schedPid_t Pid)
 {
         if (Pid.num == 0 || Pid.num > MAX_PROCS)
                 return true;
+
+        if (processes[Pid.num].argv != NULL)
+        {
+                for (size_t i = 0; i < processes[Pid.num].argc; i++)
+                {
+                        if (processes[Pid.num].argv[i] != NULL)
+                                free(processes[Pid.num].argv[i]);
+                }
+                free(processes[Pid.num].argv);
+                processes[Pid.num].argv = NULL;
+        }
 
         processes[Pid.num].active = false;
         processes[Pid.num].valid = false;

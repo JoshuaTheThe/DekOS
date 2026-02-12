@@ -8,7 +8,7 @@ void print(const char *s)
                 putch(s[i]);
 }
 
-int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
+int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
         for (size_t i = 0; i < 10; ++i)
         {

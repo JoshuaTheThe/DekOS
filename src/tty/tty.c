@@ -39,7 +39,7 @@ void *ttyWrite(DRIVE *tty)
         return tty->BufferA;
 }
 
-int ttyMain(USERID UserID, PID ParentProc, size_t argc, char **argv)
+int ttyMain(size_t argc, char **argv, USERID UserID, PID ParentProc)
 {
         printf("Hello, World!\n");
         while (true)

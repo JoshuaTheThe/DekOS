@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define __VER__ "a1.2.0"
+#define __VER__ "a1.2.2"
 
 #define cli() __asm("cli")
 #define sti() __asm("sti")

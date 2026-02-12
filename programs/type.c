@@ -10,7 +10,7 @@ void puts(char *str, size_t len)
         }
 }
 
-int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
+int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
         char Message_1[] = " [ERROR] Incorrect usage, please provide path\n";
         char Message_2[] = " [ERROR] File does not exist or could not read from ";

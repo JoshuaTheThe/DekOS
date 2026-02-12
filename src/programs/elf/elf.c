@@ -312,7 +312,6 @@ schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID U
         uint8_t *program_mem = malloc(file_size);
         if (!program_mem)
         {
-                //printf("FAILED TO ALLOCATE PROGRAM\n");
                 return (schedPid_t){.valid=0};
         }
 
@@ -321,7 +320,6 @@ schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID U
         if (entry_point == (void*)-1)
         {
                 free(program_mem);
-                //printf("FAILED TO GET ENTRY POINT\n");
                 return (schedPid_t){.valid=0};
         }
 
@@ -330,26 +328,23 @@ schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID U
         if (!stack_mem)
         {
                 free(program_mem);
-                //printf("FAILED TO ALLOCATE STACK\n");
                 return (schedPid_t){.valid=0};
         }
 
-        //printf("ENTRY POINT: %x\n", entry_point);
         schedPid_t pid = schedCreateProcess(
-                "elf_program",    // Process name
-                argv,             // No arguments
-                argc,                // No argument count
-                program_mem,      // Program memory
-                (uint32_t)entry_point, // Entry offset
-                stack_mem,        // Stack memory
-                stack_size,       // Stack size
-                schedGetCurrentPid(), // Parent process
+                argv[0],
+                argv,
+                argc,
+                program_mem,
+                (uint32_t)entry_point,
+                stack_mem,
+                stack_size,
+                schedGetCurrentPid(),
                 User
         );
 
         if (!pid.valid)
         {
-                printf("FAILED TO CREATE PROC\n");
                 return (schedPid_t){.valid=0};
         }
 

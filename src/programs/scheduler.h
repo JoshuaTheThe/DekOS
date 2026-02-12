@@ -76,7 +76,7 @@ typedef struct
         bool debugger_is_present;
 
         char **argv;
-        int argc;
+        size_t argc;
 
         USERID enactor;
 } schedProcess_t;
