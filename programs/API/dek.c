@@ -71,6 +71,21 @@ int unread(PID sen)
         return syscall(UNREAD, sen, 0, 0, 0, 0);
 }
 
+int mousex(void)
+{
+        return syscall(MOUSEX, 0, 0, 0, 0, 0);
+}
+
+int mousey(void)
+{
+        return syscall(MOUSEY, 0, 0, 0, 0, 0);
+}
+
+int mousebtn(void)
+{
+        return syscall(MOUSEBTN, 0, 0, 0, 0, 0);
+}
+
 void *malloc(int siz)
 {
         return (void*)syscall(MALLOC, siz, 0, 0, 0, 0);

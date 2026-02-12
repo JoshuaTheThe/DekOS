@@ -9,6 +9,8 @@ extern schedProcess_t processes[];
 extern int tick_counter;
 
 extern void jumpToProc();
+extern volatile DWORD mx, my, pmx, pmy, mbuttons;
+
 
 void sysHang(void)
 {
@@ -278,6 +280,13 @@ uint32_t sysReply(void)
 
                 return 0; // No unread messages from this sender
         }
+
+        case MOUSEX:
+                return mx;
+        case MOUSEY:
+                return my;
+        case MOUSEBTN:
+                return mbuttons;
 
         case MALLOC:
                 if (arg1 > 0 && arg1 < 1024 * 1024)

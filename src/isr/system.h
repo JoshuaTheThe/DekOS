@@ -33,6 +33,9 @@ typedef enum InterruptFunction
 	SEND = 0x20,
 	FETCH,
 	UNREAD,
+	MOUSEX,
+	MOUSEY,
+	MOUSEBTN,
 
 	/** .. */
 

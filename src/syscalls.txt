@@ -24,6 +24,9 @@
 	SEND
 	FETCH
 	UNREAD
+        MOUSEX              @returns mouseX
+        MOUSEY              @returns mouseY
+        MOUSEBTN            @returns mouse button mask
 
 0x30-0x3F: # Memory Management #
 	MALLOC              @returns heap allocated ptr

@@ -44,6 +44,9 @@ typedef enum InterruptFunction
         SEND = 0x20,
         FETCH,
         UNREAD,
+        MOUSEX,
+	MOUSEY,
+	MOUSEBTN,
 
         /** .. */
 
@@ -83,6 +86,10 @@ int ticks(void);
 void send(PID,void *,int);
 void fetch(PID,void *,int);
 int unread(PID);
+
+int mousex(void);
+int mousey(void);
+int mousebtn(void);
 
 char getch(void);
 void putch(char);
