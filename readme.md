@@ -2,10 +2,7 @@
 tis going to be a merger of all my OSes, just getting drivers and stuff like that first.<br>
 
 <h1>Usage</h1>
-when booting, you will notice that it is not drawing to the Display buffer, this is simply because<br>
-that routine has not launched yet.<br>
-
-once you boot, the screen will be black, (check serial output to verify)<br>
+once you boot<br>
 simply input your username // password<br>
 e.g.<br>
 username: root<br>
