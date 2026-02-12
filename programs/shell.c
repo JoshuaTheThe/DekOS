@@ -152,7 +152,7 @@ int main(USERID UserID, PID ParentProc, size_t argc, char **argv)
                         PID pid = createproc(command_buffer[0], largc, arg_v);
                         if (pid == -1)
                                 continue;
-                        while (!checkproc(pid))
+                        while (checkproc(pid))
                                 ;
                         for (size_t i = 0; i < largc; ++i)
                                 free(arg_v[i]);
