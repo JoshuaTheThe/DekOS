@@ -21,6 +21,14 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         }
 
         FILE *File = open(argv[1], FILE_PRESENT | FILE_READABLE);
+        if (!File)
+        {
+                puts(Message_2, sizeof(Message_2));
+                puts(argv[1], strnlen(argv[1], 256));
+                putch('\n');
+                return 69;       
+        }
+        
         char *FileData = File->base;
         
         if (!FileData)

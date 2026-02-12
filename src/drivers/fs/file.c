@@ -3,7 +3,7 @@
 #include <memory/string.h>
 #include <memory/alloc.h>
 
-struct _iobuf _iofiles[MAX_FILES];
+struct _iobuf _iofiles[MAX_FILES] = {0};
 
 SYSFILE *FAllocate(void)
 {
