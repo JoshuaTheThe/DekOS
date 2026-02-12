@@ -202,8 +202,8 @@ void *FatRead(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDir
         const size_t bytes = bt->bpb.BytesPerSector;
         FATFileLocation Location = FatLocateInDir(Name, Ext, bt, Drive, Parent);
 
-        BYTE *Data = malloc(Location.Dir.Size), *p = Data;
-        memset(Data, 0, Location.Dir.Size);
+        BYTE *Data = malloc(Location.Dir.Size + 1), *p = Data;
+        memset(Data, 0, Location.Dir.Size + 1);
         DWORD cluster = Location.Dir.EntryFirstClusterHigh << 16 | Location.Dir.EntryFirstClusterLow;
         DWORD remaining = Location.Dir.Size;
         BYTE Sector[bytes];

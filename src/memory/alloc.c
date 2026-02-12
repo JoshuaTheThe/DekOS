@@ -11,18 +11,18 @@ static memory_information_t minfo;
 
 uintptr_t _heap_end = 0, _heap_start = 0;
 uintptr_t _heap_map_end = 0, _heap_map_start = 0;
-region_t *_allocations_end = 0, *_allocations = 0;
+// region_t *_allocations_end = 0, *_allocations = 0;
 
 void memInit(size_t memory_size)
 {
-        size_t heap_size = memory_size / 4;
+        size_t heap_size = memory_size / 2;
 
         _heap_start = _kernel_end;
         _heap_end = _heap_start + heap_size;
         _heap_map_start = _heap_end;
         _heap_map_end = _heap_map_start + heap_size / 8;
-        _allocations = (region_t *)_heap_map_end;
-        _allocations_end = (region_t *)((uintptr_t)_allocations + heap_size);
+        // _allocations = (region_t *)_heap_map_end;
+        // _allocations_end = (region_t *)((uintptr_t)_allocations + heap_size);
 
         uint32_t total_bits = heap_size / ALLOC_ALIGNMENT;
         uint32_t map_bytes_needed = (total_bits + 7) / 8;
@@ -35,8 +35,8 @@ void memInit(size_t memory_size)
 
                 _heap_end = _heap_start + heap_size;
                 _heap_map_end = _heap_map_start + heap_size / 8;
-                _allocations = (region_t *)_heap_map_end;
-                _allocations_end = (region_t *)((uintptr_t)_allocations + heap_size);
+                // _allocations = (region_t *)_heap_map_end;
+                // _allocations_end = (region_t *)((uintptr_t)_allocations + heap_size);
 
                 map_bytes_needed = map_bytes_available;
         }
@@ -48,8 +48,8 @@ void memInit(size_t memory_size)
 
         memset(minfo.map, 0, map_bytes_needed);
 
-        size_t allocations_size = (uintptr_t)_allocations_end - (uintptr_t)_allocations;
-        memset(_allocations, 0, allocations_size);
+        // size_t allocations_size = (uintptr_t)_allocations_end - (uintptr_t)_allocations;
+        // memset(_allocations, 0, allocations_size);
 }
 
 region_t m_map(size_t size)
@@ -128,61 +128,58 @@ void u_map(region_t region)
         }
 }
 
-region_t *find_empty_allocation(void)
-{
-        region_t *alloc = &_allocations[0];
-        size_t max = (size_t)((uintptr_t)_allocations_end - (uintptr_t)_allocations) / sizeof(region_t);
-
-        for (size_t i = 0; i < max; i++, alloc++)
-        {
-                if (alloc->ptr == NULL && alloc->size == 0)
-                {
-                        return alloc;
-                }
-        }
-        return NULL;
-}
-
-region_t *find_allocation_from_address(void *p)
-{
-        if (p == NULL)
-        {
-                return NULL;
-        }
-
-        region_t *alloc = &_allocations[0];
-        size_t max = (size_t)((uintptr_t)_allocations_end - (uintptr_t)_allocations) / sizeof(region_t);
-
-        for (size_t i = 0; i < max; i++, alloc++)
-        {
-                if (alloc->ptr == p)
-                {
-                        return alloc;
-                }
-        }
-        return NULL;
-}
+// region_t *find_empty_allocation(void)
+// {
+//         region_t *alloc = &_allocations[0];
+//         size_t max = (size_t)((uintptr_t)_allocations_end - (uintptr_t)_allocations) / sizeof(region_t);
+//
+//         for (size_t i = 0; i < max; i++, alloc++)
+//         {
+//                 if (alloc->ptr == NULL && alloc->size == 0)
+//                 {
+//                         return alloc;
+//                 }
+//         }
+//         return NULL;
+// }
+//
+// region_t *find_allocation_from_address(void *p)
+// {
+//         if (p == NULL)
+//         {
+//                 return NULL;
+//         }
+//
+//         region_t *alloc = &_allocations[0];
+//         size_t max = (size_t)((uintptr_t)_allocations_end - (uintptr_t)_allocations) / sizeof(region_t);
+//
+//         for (size_t i = 0; i < max; i++, alloc++)
+//         {
+//                 if (alloc->ptr == p)
+//                 {
+//                         return alloc;
+//                 }
+//         }
+//         return NULL;
+// }
 
 void *malloc(size_t size)
 {
-        region_t region = m_map(size);
-        region_t *dest;
+        size_t header_size = sizeof(size_t);
+        if (header_size < ALLOC_ALIGNMENT)
+        {
+                header_size = ALLOC_ALIGNMENT;
+        }
+
+        region_t region = m_map(size + header_size);
 
         if (region.size == 0)
         {
                 return NULL;
         }
 
-        dest = find_empty_allocation();
-        if (dest == NULL)
-        {
-                printf("Could not allocate %d bytes\n", size);
-                u_map(region);
-                return NULL;
-        }
-
-        *dest = region;
-        return region.ptr;
+        *(size_t *)region.ptr = size;
+        return (void *)((uint8_t *)region.ptr + header_size);
 }
 
 void free(void *p)
@@ -192,16 +189,13 @@ void free(void *p)
                 return;
         }
 
-        region_t *src = find_allocation_from_address(p);
-        if (src == NULL)
-        {
-                return;
-        }
+        uint8_t *header = (uint8_t *)p - ALLOC_ALIGNMENT;
 
-        u_map(*src);
-
-        src->ptr = NULL;
-        src->size = 0;
+        region_t region = {
+            .ptr = header,
+            .size = *(size_t *)header + ALLOC_ALIGNMENT,
+        };
+        u_map(region);
 }
 
 void *calloc(size_t num, size_t size)
@@ -233,19 +227,13 @@ void *realloc(void *ptr, size_t new_size)
                 return NULL;
         }
 
-        region_t *old_alloc = find_allocation_from_address(ptr);
-        if (old_alloc == NULL)
-        {
-                return NULL;
-        }
-
         void *new_ptr = malloc(new_size);
         if (new_ptr == NULL)
         {
                 return NULL;
         }
 
-        size_t copy_size = (new_size < old_alloc->size) ? new_size : old_alloc->size;
+        size_t copy_size = (new_size < *(size_t *)(ptr - sizeof(size_t))) ? new_size : *(size_t *)(ptr - sizeof(size_t));
         memcpy(new_ptr, ptr, copy_size);
 
         free(ptr);
