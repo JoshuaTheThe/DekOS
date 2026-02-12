@@ -28,13 +28,12 @@ typedef struct
 
 typedef region_t HREGION;
 
-// Heap boundaries (set by linker script)
-extern uint8_t _heap_start[];
-extern uint8_t _heap_end[];
-extern uint8_t _heap_map_start[];
-extern uint8_t _heap_map_end[];
-extern region_t _allocations[];
-extern uint8_t _allocations_end[];
+extern uintptr_t _heap_start;
+extern uintptr_t _heap_end;
+extern uintptr_t _heap_map_start;
+extern uintptr_t _heap_map_end;
+extern region_t *_allocations;
+extern region_t *_allocations_end;
 
 void *malloc(size_t);
 void free(void*);

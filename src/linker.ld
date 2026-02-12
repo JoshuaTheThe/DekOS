@@ -46,16 +46,7 @@ SECTIONS
                 bss_end = .;
         }
 
-        . = . + 0x1000;
-        _heap_start = .;
-        . = . + 0x2000000; /* 32Mb heap */
-        _heap_end = .;
-        _heap_map_start = .;
-        . = . + 0x500000;
-        _heap_map_end = .;
-        _allocations = .;
-        . = . + 0x2000000;
-        _allocations_end = .;
+        _kernel_end = .;
 
 	/* The compiler may produce other sections, by default it will put them in
 	   a segment with the same name. Simply add stuff here as needed. */

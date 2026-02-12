@@ -72,7 +72,6 @@ extern bool tty_needs_flushing;
 extern RID rdFrameRID;
 extern KRNLRES *fbRes;
 extern char system_output[TTY_H][TTY_W];
-
 uint8_t stdinstack[1024] __attribute__((aligned(16)));
 
 // WINDOW *KernelWindow = NULL;
@@ -182,8 +181,9 @@ Response KHandleRequest(size_t pidn, char *buf, size_t len, USERID User)
 /* Initialize the System */
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
-        multiboot_info_t *mbi;
+        multiboot_info_t *mbi = (multiboot_info_t *)mbinfo_ptr;
         PDEInit();
+        memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
 
         cli();
         while (magic != 0x2BADB002)
@@ -191,14 +191,12 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 hlt();
         }
 
-        mbi = (multiboot_info_t *)mbinfo_ptr;
         // setframebuffer(framebuffer);
         // setfont(&cascadia); /* bitmap */
         RenderSetFont(&cascadia);
         FeaturesInit();
         gdtInit();
         idtInit();
-        memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
         pitInit(250);
         schedInit();
         SerialInit();
@@ -213,6 +211,9 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         int nDim[3] = {mbi->framebuffer_width, mbi->framebuffer_height, 1};
         BOOL aDim[3] = {TRUE, TRUE, TRUE};
         RenderSetDim(nDim, aDim);
+
+        printf(" [INFO] %dMB of memory\n", (mbi->mem_upper + mbi->mem_lower) / 1024);
+        printf(" [INFO] %dMB of heap space\n", (_heap_end - _heap_start) / (1024*1024));
 
         if (!iso9660Init())
         {

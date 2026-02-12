@@ -5,11 +5,24 @@
 #include <stddef.h>
 #include <tty/output.h>
 
+extern uint32_t _kernel_end;
+
 static memory_information_t minfo;
+
+uintptr_t _heap_end = 0, _heap_start = 0;
+uintptr_t _heap_map_end = 0, _heap_map_start = 0;
+region_t *_allocations_end = 0, *_allocations = 0;
 
 void memInit(size_t memory_size)
 {
-        size_t heap_size = (size_t)(_heap_end - _heap_start);
+        size_t heap_size = memory_size / 4;
+
+        _heap_start = _kernel_end;
+        _heap_end = _heap_start + heap_size;
+        _heap_map_start = _heap_end;
+        _heap_map_end = _heap_map_start + heap_size / 8;
+        _allocations = (region_t *)_heap_map_end;
+        _allocations_end = (region_t *)((uintptr_t)_allocations + heap_size);
 
         uint32_t total_bits = heap_size / ALLOC_ALIGNMENT;
         uint32_t map_bytes_needed = (total_bits + 7) / 8;
@@ -19,16 +32,23 @@ void memInit(size_t memory_size)
         {
                 total_bits = map_bytes_available * 8;
                 heap_size = total_bits * ALLOC_ALIGNMENT;
+
+                _heap_end = _heap_start + heap_size;
+                _heap_map_end = _heap_map_start + heap_size / 8;
+                _allocations = (region_t *)_heap_map_end;
+                _allocations_end = (region_t *)((uintptr_t)_allocations + heap_size);
+
+                map_bytes_needed = map_bytes_available;
         }
 
         minfo.heap_size = heap_size;
-        minfo.map = _heap_map_start;
-        minfo.raw = _heap_start;
+        minfo.map = (uint8_t *)_heap_map_start;
+        minfo.raw = (uint8_t *)_heap_start;
         minfo.mem_size = memory_size;
 
         memset(minfo.map, 0, map_bytes_needed);
 
-        size_t allocations_size = (size_t)(_allocations_end - (uint8_t *)_allocations);
+        size_t allocations_size = (uintptr_t)_allocations_end - (uintptr_t)_allocations;
         memset(_allocations, 0, allocations_size);
 }
 
@@ -111,7 +131,7 @@ void u_map(region_t region)
 region_t *find_empty_allocation(void)
 {
         region_t *alloc = &_allocations[0];
-        size_t max = (size_t)(_allocations_end - (uint8_t *)_allocations) / sizeof(region_t);
+        size_t max = (size_t)((uintptr_t)_allocations_end - (uintptr_t)_allocations) / sizeof(region_t);
 
         for (size_t i = 0; i < max; i++, alloc++)
         {
@@ -131,7 +151,7 @@ region_t *find_allocation_from_address(void *p)
         }
 
         region_t *alloc = &_allocations[0];
-        size_t max = (size_t)(_allocations_end - (uint8_t *)_allocations) / sizeof(region_t);
+        size_t max = (size_t)((uintptr_t)_allocations_end - (uintptr_t)_allocations) / sizeof(region_t);
 
         for (size_t i = 0; i < max; i++, alloc++)
         {
