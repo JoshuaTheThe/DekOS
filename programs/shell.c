@@ -11,6 +11,8 @@ void print(const char *s)
 #define SHELL_KBD_BUFF_SIZE 64
 #define SHELL_MAX_ARGS 8
 
+static char buf[MAX_PATH + 32];
+static char current_dir[MAX_PATH + 32];
 static char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
 static char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
 
@@ -62,19 +64,23 @@ static size_t shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
         return N;
 }
 
+int create(int arg_c, char **arg_v, char *path)
+{
+        PID pid = createproc(path, arg_c, arg_v);
+        if (pid == -1)
+                return 0;
+        return pid;
+}
+
 int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
         char name[32];
         username(name, 31);
-        char prompt[256];
-        char current_dir[256] = "";
-
         print("Hello, World!\n");
 
-        snprintf(current_dir, sizeof(prompt), "users/%s/", name);
-        snprintf(prompt, sizeof(prompt), "users/%s/user.ini", name);
-        Ini config = IniRead(prompt);
-        memset(prompt, 0, sizeof(prompt));
+        snprintf(current_dir, sizeof(buf), "users/%s/", name);
+        snprintf(buf, sizeof(buf), "users/%s/user.ini", name);
+        memset(buf, 0, sizeof(buf));
 
         for (size_t i = 0; i < argc; ++i)
         {
@@ -83,7 +89,6 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
                 print(buf);
         }
 
-        char buf[1024];
         snprintf(buf, sizeof(buf), " [INFO] launched from: %d\n", ParentProc);
         print(buf);
         snprintf(buf, sizeof(buf), " [INFO] launched by: %d\n", UserID);
@@ -93,8 +98,8 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 
         while (running)
         {
-                snprintf(prompt, sizeof(prompt), "%s:%s$ ", name, current_dir);
-                print(prompt);
+                snprintf(buf, sizeof(buf), "%s:%s$ ", name, current_dir);
+                print(buf);
                 memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
                 memset(command_buffer, 0, sizeof(command_buffer));
                 size_t len = (size_t)gets(keyboard_buffer, SHELL_KBD_BUFF_SIZE - 1);
@@ -162,16 +167,41 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
                                 memcpy(arg_v[i], command_buffer[i], len);
                         }
 
-                        PID pid = createproc(command_buffer[0], largc, arg_v);
-                        if (pid == -1)
-                                goto exi;
-                        while (checkproc(pid))
+                        int pid = 0;
+
+                        /* Absolute */
+                        if (command_buffer[0][0] == '/')
+                        {
+                                pid = create(largc, arg_v, &command_buffer[0][1]);
+                        }
+
+                        /* Local */
+                        else if (command_buffer[0][0] == '.' && command_buffer[0][1] == '/')
+                        {
+                                snprintf(buf, sizeof(buf), "%s/%s", current_dir, &command_buffer[0][2]);
+                                pid = create(largc, arg_v, buf);
+                        }
+
+                        /* User/Bin */
+                        else
+                        {
+                                snprintf(buf, sizeof(buf), "users/%s/%s", name, command_buffer[0]);
+                                pid = create(largc, arg_v, buf);
+                        }
+
+                        if (!pid)
+                        {
+                                snprintf(buf, sizeof(buf), " [ERROR] could not launch: %s", command_buffer[0]);
+                                print(buf);
+                                putch('\n');
+                        }
+
+                        while (pid && checkproc(pid))
                                 ;
-exi:
                         for (size_t i = 0; i < largc; ++i)
                                 free(arg_v[i]);
                         free(arg_v);
                 }
         }
-        return 69;
+        return 0;
 }

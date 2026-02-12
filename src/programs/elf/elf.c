@@ -323,7 +323,7 @@ schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID U
                 return (schedPid_t){.valid=0};
         }
 
-        uint32_t stack_size = 0x4000;
+        uint32_t stack_size = 0x8000;
         uint8_t *stack_mem = malloc(stack_size);
         if (!stack_mem)
         {

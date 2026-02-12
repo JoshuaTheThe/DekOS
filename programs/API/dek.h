@@ -11,6 +11,8 @@
 #define FILE_WRITABLE (0x04)
 #define FILE_EXECUTABLE (0x08)
 
+#define MAX_PATH 256
+
 typedef uint32_t USERID;
 typedef uint32_t PID;
 

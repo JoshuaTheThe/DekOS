@@ -17,7 +17,8 @@ SRCS    := $(wildcard *.c)
 OBJS    := $(SRCS:.c=.o)
 ELFS    := $(SRCS:.c=.elf)
 
-OUTDIR  := ../fat32dir
+USER_DIR := ../fat32dir/users/root
+SYSTEM_DIR := ../fat32dir/system
 
 all: $(ELFS) copy
 
@@ -27,8 +28,13 @@ all: $(ELFS) copy
 %.elf: %.o
 	$(LD) $(LDFLAGS) -o $@ $(LIBOBJS) $<
 
-copy:
-	cp $(ELFS) $(OUTDIR) -rf
+copy: 
+	# Copy shell.elf to root
+	cp shell.elf $(SYSTEM_DIR) -f
+	# Copy all other ELFs to user directory
+	for elf in $(filter-out shell.elf, $(ELFS)); do \
+		cp $$elf $(USER_DIR) -f; \
+	done
 
 clean:
 	rm -f *.o *.elf
