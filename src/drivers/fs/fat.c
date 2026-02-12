@@ -1,4 +1,5 @@
 #include <drivers/fs/fat.h>
+#include <drivers/sys/rtc.h>
 #include <memory/alloc.h>
 
 FATBootSector FatReadBootSector(DRIVE *Drive)
@@ -174,7 +175,7 @@ FATFileLocation FatLocateInDir(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRI
                                         continue;
                                 }
 
-                                if (!ncsstrncmp((char*)Directory[i].Name, (char*)Name, 8) && !ncsstrncmp((char*)Directory[i].Ext, (char*)Ext, 3))
+                                if (!ncsstrncmp((char *)Directory[i].Name, (char *)Name, 8) && !ncsstrncmp((char *)Directory[i].Ext, (char *)Ext, 3))
                                 {
                                         Result.Cluster = cluster;
                                         Result.Found = 1;
@@ -190,6 +191,190 @@ FATFileLocation FatLocateInDir(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRI
         }
 
         return Result;
+}
+
+DWORD FatFindFreeCluster(FATBootSector *bt, DRIVE *Drive)
+{
+        DWORD totalClusters = FatClusterCount(bt);
+        DWORD fatStart = FatFirstFat(bt);
+        DWORD entriesPerSector = bt->bpb.BytesPerSector / 4;
+
+        for (DWORD i = 2; i < totalClusters + 2; i++)
+        {
+                DWORD fatOffset = i * 4;
+                DWORD fatSector = fatStart + (fatOffset / bt->bpb.BytesPerSector);
+                DWORD entOffset = fatOffset % bt->bpb.BytesPerSector;
+
+                BYTE *sector = SMReadFrom(fatSector, Drive);
+                DWORD entry = *(DWORD *)&sector[entOffset];
+                entry &= 0x0FFFFFFF;
+
+                if (entry == 0)
+                {
+                        return i;
+                }
+        }
+        return 0;
+}
+
+void FatSetCluster(FATBootSector *bt, DWORD cluster, DWORD value, DRIVE *Drive)
+{
+        DWORD fatOffset = cluster * 4;
+        DWORD fatSector = FatFirstFat(bt) + (fatOffset / bt->bpb.BytesPerSector);
+        DWORD entOffset = fatOffset % bt->bpb.BytesPerSector;
+        BYTE *sector = SMReadFrom(fatSector, Drive);
+        DWORD *entry = (DWORD *)&sector[entOffset];
+        *entry = (*entry & 0xF0000000) | (value & 0x0FFFFFFF);
+        SMWriteTo(fatSector, sector, sizeof(Drive->BufferA), Drive);
+        DWORD fat2Sector = fatSector + FatSize(bt);
+        SMWriteTo(fat2Sector, sector, sizeof(Drive->BufferA), Drive);
+}
+
+DWORD FatAllocateCluster(FATBootSector *bt, DRIVE *Drive)
+{
+        DWORD freeCluster = FatFindFreeCluster(bt, Drive);
+        if (freeCluster == 0)
+        {
+                return 0;
+        }
+
+        FatSetCluster(bt, freeCluster, 0x0FFFFFF8, Drive);
+        return freeCluster;
+}
+
+DWORD FatWriteData(FATBootSector *bt, BYTE *data, DWORD size, DRIVE *Drive)
+{
+        DWORD firstCluster = 0;
+        DWORD prevCluster = 0;
+        DWORD remaining = size;
+        BYTE *ptr = data;
+
+        DWORD sectorsPerCluster = bt->bpb.SectorsPerCluster;
+        DWORD bytesPerCluster = sectorsPerCluster * bt->bpb.BytesPerSector;
+
+        while (remaining > 0)
+        {
+                DWORD cluster = FatAllocateCluster(bt, Drive);
+                if (cluster == 0)
+                {
+                        return 0;
+                }
+
+                if (firstCluster == 0)
+                {
+                        firstCluster = cluster;
+                }
+
+                if (prevCluster != 0)
+                {
+                        FatSetCluster(bt, prevCluster, cluster, Drive);
+                }
+
+                DWORD firstSector = FatFirstSectorForCluster(bt, cluster);
+                DWORD writeSize = remaining < bytesPerCluster ? remaining : bytesPerCluster;
+
+                for (DWORD i = 0; i < sectorsPerCluster && writeSize > 0; i++)
+                {
+                        DWORD sectorSize = writeSize < bt->bpb.BytesPerSector ? writeSize : bt->bpb.BytesPerSector;
+                        SMWriteTo(firstSector + i, ptr, bt->bpb.BytesPerSector, Drive);
+                        ptr += sectorSize;
+                        writeSize -= sectorSize;
+                        remaining -= sectorSize;
+                }
+
+                prevCluster = cluster;
+        }
+
+        return firstCluster;
+}
+
+DWORD FatFindFreeEntry(FATBootSector *bt, DWORD dirCluster, DRIVE *Drive)
+{
+        DWORD cluster = dirCluster;
+        size_t entriesPerSector = bt->bpb.BytesPerSector / sizeof(FATDirectory);
+
+        while (cluster < 0x0FFFFFF8)
+        {
+                DWORD firstSector = FatFirstSectorForCluster(bt, cluster);
+
+                for (DWORD s = 0; s < bt->bpb.SectorsPerCluster; s++)
+                {
+                        BYTE *sectorData = SMReadFrom(firstSector + s, Drive);
+                        FATDirectory *dir = (FATDirectory *)sectorData;
+
+                        for (size_t i = 0; i < entriesPerSector; i++)
+                        {
+                                if (dir[i].Name[0] == 0x00 || dir[i].Name[0] == 0xE5)
+                                {
+                                        return (cluster << 16) | (s << 8) | i;
+                                }
+                        }
+                }
+
+                cluster = FatNextCluster(bt, cluster, Drive);
+        }
+
+        // No free entries - need to expand directory
+        // For now, fail
+        return 0;
+}
+
+void FatWriteDirectoryEntry(FATBootSector *bt, DWORD dirCluster, DWORD location,
+                            FATDirectory *entry, DRIVE *Drive)
+{
+        DWORD cluster = location >> 16;
+        DWORD sector = (location >> 8) & 0xFF;
+        DWORD index = location & 0xFF;
+
+        DWORD firstSector = FatFirstSectorForCluster(bt, cluster);
+        BYTE *sectorData = SMReadFrom(firstSector + sector, Drive);
+
+        FATDirectory *dir = (FATDirectory *)sectorData;
+        memcpy(&dir[index], entry, sizeof(FATDirectory));
+
+        SMWriteTo(firstSector + sector, sectorData, bt->bpb.BytesPerSector, Drive);
+}
+
+FATDirectory FatCreateEntry(const char *name, DWORD firstCluster, DWORD size, BYTE attributes)
+{
+        FATDirectory entry = {0};
+        memset(&entry, 0, sizeof(entry));
+
+        char name83[8], ext[3];
+        FatConvert83(name, name83, ext);
+        memcpy(entry.Name, name83, 8);
+        memcpy(entry.Ext, ext, 3);
+
+        entry.Flags = attributes;
+        entry.Reserved = 0;
+
+        entry.EntryFirstClusterLow = firstCluster & 0xFFFF;
+        entry.EntryFirstClusterHigh = (firstCluster >> 16) & 0xFFFF;
+        entry.Size = size;
+        return entry;
+}
+
+int FatWrite(const char *path, BYTE *data, DWORD size,
+             FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent)
+{
+        char name[8], ext[3];
+        FatConvert83(path, name, ext);
+        DWORD parentCluster = Parent ? (Parent->EntryFirstClusterHigh << 16 | Parent->EntryFirstClusterLow) : FatRootCluster(bt);
+        DWORD firstCluster = FatWriteData(bt, data, size, Drive);
+        if (firstCluster == 0)
+        {
+                return -1;
+        }
+
+        FATDirectory entry = FatCreateEntry(path, firstCluster, size, FAT_ARCHIVE);
+        DWORD location = FatFindFreeEntry(bt, parentCluster, Drive);
+        if (location == 0)
+        {
+                return -2;
+        }
+
+        FatWriteDirectoryEntry(bt, parentCluster, location, &entry, Drive);
+        return 0;
 }
 
 void *FatRead(BYTE Name[8], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent)
@@ -261,4 +446,34 @@ void FatTest(DRIVE *Drive)
         printf("        fat.first-root          %d\n", FatFirstRoot(&bt));
         printf("        fat.root-clust          %d\n", FatRootCluster(&bt));
         printf("        fat.first-root-cluster  %d\n", FatFirstSectorForCluster(&bt, FatRootCluster(&bt)));
+
+        DWORD cluster = FatFindFreeCluster(&bt, Drive);
+        if (!cluster)
+                return;
+        FatSetCluster(&bt, cluster, 0x0FFFFFF8, Drive);
+        char *data = "Hello, World!\n";
+        DWORD size = strlen(data);
+        DWORD sector = FatFirstSectorForCluster(&bt, cluster);
+        SMWriteTo(sector, (BYTE *)data, bt.bpb.BytesPerSector, Drive);
+        FATDirectory entry = {0};
+        memcpy(entry.Name, "TEST    ", 8);
+        memcpy(entry.Ext, "TXT", 3);
+        entry.Flags = FAT_ARCHIVE;
+        entry.EntryFirstClusterLow = cluster & 0xFFFF;
+        entry.EntryFirstClusterHigh = (cluster >> 16) & 0xFFFF;
+        entry.Size = size;
+        DWORD rootCluster = FatRootCluster(&bt);
+        DWORD rootSector = FatFirstSectorForCluster(&bt, rootCluster);
+        BYTE *rootData = SMReadFrom(rootSector, Drive);
+        FATDirectory *rootDir = (FATDirectory *)rootData;
+        for (int i = 0; i < 16; i++)
+        {
+                if (rootDir[i].Name[0] == 0x00 || rootDir[i].Name[0] == 0xE5)
+                {
+                        memcpy(&rootDir[i], &entry, sizeof(entry));
+                        SMWriteTo(rootSector, rootData, bt.bpb.BytesPerSector, Drive);
+                        printf(" [OK] Created test.txt\n");
+                        return;
+                }
+        }
 }

@@ -166,7 +166,16 @@ void *FatRead(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDi
 void FatConvert83(const char *path, char *NameOut, char *ExtOut);
 FATFileLocation FatLocateInDir(BYTE Name[11], BYTE Ext[3], FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent);
 void FatConvertPaddedToNull(char *X, size_t L);
-
 void FatTest(DRIVE *Drive);
 
+DWORD FatFindFreeCluster(FATBootSector *bt, DRIVE *Drive);
+void FatSetCluster(FATBootSector *bt, DWORD cluster, DWORD value, DRIVE *Drive);
+DWORD FatAllocateCluster(FATBootSector *bt, DRIVE *Drive);
+DWORD FatWriteData(FATBootSector *bt, BYTE *data, DWORD size, DRIVE *Drive);
+DWORD FatFindFreeEntry(FATBootSector *bt, DWORD dirCluster, DRIVE *Drive);
+void FatWriteDirectoryEntry(FATBootSector *bt, DWORD dirCluster, DWORD location,
+                            FATDirectory *entry, DRIVE *Drive);
+int FatWrite(const char *path, BYTE *data, DWORD size,
+             FATBootSector *bt, DRIVE *Drive, FATDirectory *Parent);
+FATDirectory FatCreateEntry(const char *name, DWORD firstCluster, DWORD size, BYTE attributes);
 #endif
