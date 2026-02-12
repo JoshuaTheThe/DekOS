@@ -9,9 +9,9 @@
 extern KRNLRES *fbRes;
 
 uint8_t system_output[TTY_H][TTY_W];
-static uint32_t tty_y = 0, tty_x = 0;
-static uint32_t tty_bg = rgb(30, 30, 30);
-static uint32_t tty_fg = rgb(230, 230, 230);
+uint32_t tty_y = 0, tty_x = 0;
+uint32_t tty_bg = rgb(30, 30, 30);
+uint32_t tty_fg = rgb(230, 230, 230);
 bool redraw = false;
 
 void display(void)

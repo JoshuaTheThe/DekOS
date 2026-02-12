@@ -24,6 +24,7 @@ int tolower(int c);
 void memset(void *d, uint8_t v, size_t len);
 void memsetdw(void *d, uint32_t v, size_t len);
 size_t strnlen(const char *x, size_t max);
+uint32_t strthex(const char *const c_str);
 
 int atoi(const char *const str, size_t *len);
 bool isdigit(char chr);

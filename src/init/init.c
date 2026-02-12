@@ -207,9 +207,18 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         Ini Cfg = IniRead("system/system.ini");
         Ini *Saved = malloc(sizeof(*Saved));
         *Saved = Cfg;
-
-        printf("%s\n", Saved->vars[0].value);
         const char *shell = IniGet(Saved, "shell_path");
+
+        {
+                const char *_tty_bg = IniGet(Saved, "tty_bg");
+                const char *_tty_fg = IniGet(Saved, "tty_fg");
+                extern uint32_t tty_bg;
+                extern uint32_t tty_fg; 
+                if (_tty_bg)
+                        tty_bg = strthex(_tty_bg);
+                if (_tty_fg)
+                        tty_fg = strthex(_tty_fg);
+        }
         UsersLoad();
         USERID User = UserLogin();
 

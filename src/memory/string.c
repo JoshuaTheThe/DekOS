@@ -270,3 +270,26 @@ int atoi(const char *const str, size_t *len)
 
         return k;
 }
+
+uint32_t strthex(const char *const c_str)
+{
+        uint32_t h = 0;
+        for (size_t i = 0; c_str[i]; ++i)
+        {
+                h <<= 4;
+                if (c_str[i] >= 'A' && c_str[i] <= 'F')
+                {
+                        h |= c_str[i] - ('A' - 10);
+                }
+                else if (c_str[i] >= '0' && c_str[i] <= '9')
+                {
+                        h |= c_str[i] - '0';
+                }
+                else
+                {
+                        break;
+                }
+        }
+
+        return h;
+}
