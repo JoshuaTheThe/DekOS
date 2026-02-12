@@ -13,9 +13,9 @@
 	...
 	# Rest Reserved
 0x10-0x1F: # This segment is I/O related #
-UNIMPL	OPEN                @ebx=path,ecx=sizeof(path), returns struct<*_FILE_>
-UNIMPL	CLOSE               @ebx=struct<*_FILE_>
-UNIMPL	READ                @ebx=struct<*_FILE_>, ecx=buf, edx=len
+	OPEN                @ebx=path,ecx=sizeof(path), returns struct<*_FILE_>
+	CLOSE               @ebx=struct<*_FILE_>
+	READ                @ebx=struct<*_FILE_>, ecx=buf, edx=len
 UNIMPL	WRITE               @ebx=struct<*_FILE_>, ecx=buf, edx=len
         GETCH               @returns from stdin
         PUTCH               @ebx=chr

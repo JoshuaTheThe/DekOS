@@ -3,7 +3,7 @@ LD      := ld
 
 CFLAGS  := -m32 -march=i386 -I. -I./API \
            -ffreestanding -msoft-float -fno-builtin \
-           -Wall -Wextra
+           -Wall -Wextra -Os
 
 LDFLAGS := -m elf_i386 -nostdlib
 
