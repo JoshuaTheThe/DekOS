@@ -147,7 +147,7 @@ schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                 }
 
                 processes[id].regs.eip = (uint32_t)Program + EntryPOffset;
-                processes[id].regs.esp = (uint32_t)(Stack + StackLength);
+                processes[id].regs.esp = (uint32_t)(Stack + StackLength) & -16;
 
                 processes[id].regs.eax = User;
                 processes[id].regs.ebx = parent.num;

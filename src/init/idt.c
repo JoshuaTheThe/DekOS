@@ -80,7 +80,7 @@ void idtDefault(int code, int eip, int cs)
         nDim[2] = 1;
         RenderSetDim(nDim, nDimM);
         char debug_info[1024];
-        snprintf(debug_info, sizeof(debug_info), "Error: %02x : %08x : %08x", code, cs, eip);
+        snprintf(debug_info, sizeof(debug_info), "Error: %02x : %08x : %08x during %d", code, cs, eip, schedGetCurrentPid().num);
         RenderAlign(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font->char_height, ALIGN_LEFT, ALIGN_TOP);
         RenderPrint((unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
 
