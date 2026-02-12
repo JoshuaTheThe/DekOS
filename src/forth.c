@@ -34,7 +34,7 @@ void executeToken(char **buf)
         else if (*tok == 'l')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Grabbing\r\n");
+                SerialPrint(" [INFO] Grabbing\r\n");
 #endif
                 uint32_t index = pop();
                 push(stack[index % FORTH_STACK_SIZE]);
@@ -48,7 +48,7 @@ void executeToken(char **buf)
         else if (*tok == '+')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Adding\r\n");
+                SerialPrint(" [INFO] Adding\r\n");
 #endif
                 int32_t b = pop();
                 int32_t a = pop();
@@ -57,14 +57,14 @@ void executeToken(char **buf)
         else if (*tok == '@')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Grabbing PC\r\n");
+                SerialPrint(" [INFO] Grabbing PC\r\n");
 #endif
                 push((int32_t)tok + 1);
         }
         else if (*tok == '!')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Jumping\r\n");
+                SerialPrint(" [INFO] Jumping\r\n");
 #endif
                 *buf = (char *)pop();
                 return;
@@ -72,7 +72,7 @@ void executeToken(char **buf)
         else if (*tok == '?')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Jumping?\r\n");
+                SerialPrint(" [INFO] Jumping?\r\n");
 #endif
                 if ((int32_t)pop() > 0)
                         *buf = (char *)pop();
@@ -81,7 +81,7 @@ void executeToken(char **buf)
         else if (*tok == '-')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Subtracting\r\n");
+                SerialPrint(" [INFO] Subtracting\r\n");
 #endif
                 int32_t b = pop();
                 int32_t a = pop();
@@ -90,7 +90,7 @@ void executeToken(char **buf)
         else if (*tok == '*')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Multiplying\r\n");
+                SerialPrint(" [INFO] Multiplying\r\n");
 #endif
                 int32_t b = pop();
                 int32_t a = pop();
@@ -99,7 +99,7 @@ void executeToken(char **buf)
         else if (*tok == '/')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Dividing\r\n");
+                SerialPrint(" [INFO] Dividing\r\n");
 #endif
                 int32_t b = pop();
                 int32_t a = pop();
@@ -108,7 +108,7 @@ void executeToken(char **buf)
         else if (*tok == '.')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Printing\r\n");
+                SerialPrint(" [INFO] Printing\r\n");
 #endif
                 char str[16];
                 itos(pop(), str, 10);
@@ -118,21 +118,21 @@ void executeToken(char **buf)
         else if (*tok == ',')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Reading Char\r\n");
+                SerialPrint(" [INFO] Reading Char\r\n");
 #endif
                 push(SerialRead());
         }
         else if (*tok == '$')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Printing Char\r\n");
+                SerialPrint(" [INFO] Printing Char\r\n");
 #endif
                 SerialPut(pop());
         }
         else if (*tok == 'd')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Duplicating\r\n");
+                SerialPrint(" [INFO] Duplicating\r\n");
 #endif
                 int32_t val = pop();
                 push(val);
@@ -141,7 +141,7 @@ void executeToken(char **buf)
         else if (*tok == '^')
         {
 #ifdef FORTH_DEBUG
-                SerialPrint("INFO: Swapping\r\n");
+                SerialPrint(" [INFO] Swapping\r\n");
 #endif
                 int32_t a = pop();
                 int32_t b = pop();

@@ -92,7 +92,7 @@ char *FeatureName(size_t Index)
 
 void FeaturesInit(void)
 {
-        printf("INFO: Finding Features\n");
+        printf(" [INFO] Finding Features\n");
         for (size_t i = 0; i < 64; ++i)
         {
                 size_t index = i & 31;
@@ -100,7 +100,7 @@ void FeaturesInit(void)
                 if (Features[i])
                 {
                         const char *const name = FeatureName(i);
-                        printf("INFO: Feature %s\n", name);
+                        printf(" [INFO] Feature %s\n", name);
                 }
         }
 
@@ -108,10 +108,10 @@ void FeaturesInit(void)
         bool SSEPresent = SSEIsAvailable();
         if (SSEPresent) /* if SSE(2) && FPU */
         {
-                printf("INFO: SSE Is available, attempting to enable\n");
+                printf(" [INFO] SSE Is available, attempting to enable\n");
                 SSEEnable();
                 asm volatile(" fxsave %0 " ::"m"(fxsave_region));
-                printf("INFO: SSE Is enabled\n");
+                printf(" [INFO] SSE Is enabled\n");
         }
         else
         {
@@ -121,13 +121,13 @@ void FeaturesInit(void)
 
         if (Features[2])
         {
-                printf("INFO: DE Is available\n");
+                printf(" [INFO] DE Is available\n");
                 FeatureCR4Enable(3);
         }
 
         if (Features[5])
         {
-                printf("INFO: MSR Is available\n");
+                printf(" [INFO] MSR Is available\n");
         }
         else
         {

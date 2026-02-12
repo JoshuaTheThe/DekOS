@@ -174,10 +174,10 @@ void IDEInitialise(void)
         IDEState.Channels[ATA_SECONDARY].ctrl = (IDEState.Dev->bar[3] & 0xFFFFFFFC) + 0x376 * (!IDEState.Dev->bar[3]);
         IDEState.Channels[ATA_PRIMARY].bmide = (IDEState.Dev->bar[4] & 0xFFFFFFFC) + 0;   // Bus Master IDE
         IDEState.Channels[ATA_SECONDARY].bmide = (IDEState.Dev->bar[4] & 0xFFFFFFFC) + 8; // Bus Master IDE
-        SerialPrint("INFO: IDE Channels Set\r\n");
+        SerialPrint(" [INFO] IDE Channels Set\r\n");
         IDEWrite(ATA_PRIMARY, ATA_REG_CONTROL, 0x02);
         IDEWrite(ATA_SECONDARY, ATA_REG_CONTROL, 0x02);
-        SerialPrint("INFO: IDE IRQs Disabled\r\n");
+        SerialPrint(" [INFO] IDE IRQs Disabled\r\n");
         for (i = 0; i < 2; i++)
                 for (j = 0; j < 2; j++)
                 {
@@ -482,6 +482,6 @@ void IDEFind(size_t Index)
                 return;
         }
 
-        SerialPrint("INFO: IDE Device found\r\n");
+        SerialPrint(" [INFO] IDE Device found\r\n");
         IDEInitialise();
 }
