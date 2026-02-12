@@ -283,7 +283,9 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
                 else
                 {
-                        printf(" [ERROR] The Shell @\"%s\" is invalid\n", shell);
+                        printf(" [ERROR] The Shell @\"%s\" is invalid, press enter to reboot\n", shell);
+                        while (ps2_getchar() != '\n')
+                                ;
                 }
         }
 
@@ -313,9 +315,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 display();
                 hlt();
         }
-
-        while (SerialRead() != '=')
-        {}
 
         outw(0xB004, 0x2000);
         outw(0x604, 0x2000);

@@ -12,39 +12,27 @@ uintptr_t _heap_map_end = 0, _heap_map_start = 0;
 
 void memInit(size_t memory_size)
 {
-        if (memory_size >= (1 << 29))
+        if (memory_size > (512 * 1024 * 1024))
         {
-                memory_size = (1 << 29);
+                memory_size = 512 * 1024 * 1024;
         }
 
-        extern uint8_t _kernel_start[];
         extern uint8_t _kernel_end[];
 
-        uintptr_t kernel_start_addr = (uintptr_t)&_kernel_start;
-        uintptr_t kernel_end_addr = (uintptr_t)&_kernel_end;
+        _heap_start = (uintptr_t)&_kernel_end;
 
-        const size_t sizeof_kernel = kernel_end_addr - kernel_start_addr;
-        const size_t reserved = 0;//1 * 1024 * 1024;
-        size_t available = memory_size - sizeof_kernel - reserved;
-        size_t heap_size = (available * 7) / 10;
+        size_t heap_size = memory_size - _heap_start;
 
         heap_size = (heap_size / ALLOC_ALIGNMENT) * ALLOC_ALIGNMENT;
 
         uint32_t total_bits = heap_size / ALLOC_ALIGNMENT;
         uint32_t map_bytes_needed = (total_bits + 7) / 8;
 
-        if (map_bytes_needed > available - heap_size)
-        {
-                heap_size = available - map_bytes_needed;
-                heap_size = (heap_size / ALLOC_ALIGNMENT) * ALLOC_ALIGNMENT;
-                total_bits = heap_size / ALLOC_ALIGNMENT;
-                map_bytes_needed = (total_bits + 7) / 8;
-        }
-
-        _heap_start = (uintptr_t)&_kernel_end;
-        _heap_end = _heap_start + heap_size;
+        _heap_end = _heap_start + heap_size - map_bytes_needed;
         _heap_map_start = _heap_end;
         _heap_map_end = _heap_map_start + map_bytes_needed;
+
+        heap_size = _heap_end - _heap_start;
 
         minfo.heap_size = heap_size;
         minfo.map = (uint8_t *)_heap_map_start;
@@ -53,9 +41,12 @@ void memInit(size_t memory_size)
 
         memset(minfo.map, 0, map_bytes_needed);
 
-        printf(" [INFO] %dMB of memory\n", memory_size / (1024*1024));
-        printf(" [INFO] kernel is %dKB\n", sizeof_kernel / 1024);
-        printf(" [INFO] %dMB of heap space\n", (_heap_end - _heap_start) / (1024*1024));
+        printf(" [INFO] %dMB total memory\n", memory_size / (1024 * 1024));
+        printf(" [INFO] Kernel ends at 0x%x\n", _heap_start);
+        printf(" [INFO] Heap: %dMB at 0x%x-0x%x\n",
+               heap_size / (1024 * 1024), _heap_start, _heap_end);
+        printf(" [INFO] Bitmap: %dKB at 0x%x\n",
+               map_bytes_needed / 1024, _heap_map_start);
 }
 
 region_t m_map(size_t size)
