@@ -37,13 +37,13 @@ parallel_port_t *parallel_init(uint16_t base, parallel_mode_t mode)
 
         if (!port)
         {
-                printf("Parallel: Port 0x%X not in known list\n", base);
+                printf(" [INFO] Parallel Port 0x%X not in known list\n", base);
                 return NULL;
         }
 
         if (!parallel_detect(base))
         {
-                printf("Parallel: Port 0x%X not detected\n", base);
+                printf(" [INFO] Parallel Port 0x%X not detected\n", base);
                 port->present = false;
                 return NULL;
         }
@@ -57,15 +57,15 @@ parallel_port_t *parallel_init(uint16_t base, parallel_mode_t mode)
         if (parallel_detect_epp(port))
         {
                 port->mode = PAR_MODE_EPP;
-                printf("Parallel: Port 0x%X is EPP capable\n", base);
+                printf(" [INFO] Parallel Port 0x%X is EPP capable\n", base);
         }
         else if (parallel_detect_ecp(port))
         {
                 port->mode = PAR_MODE_ECP;
-                printf("Parallel: Port 0x%X is ECP capable\n", base);
+                printf(" [INFO] Parallel Port 0x%X is ECP capable\n", base);
         }
 
-        printf("Parallel: %s initialized at 0x%X (mode: %d)\n",
+        printf(" [INFO] Parallel %s initialized at 0x%X (mode: %d)\n",
                 port->name, base, port->mode);
 
         return port;
@@ -92,7 +92,7 @@ uint8_t parallel_read_byte(parallel_port_t *port)
                 return 0xFF;
         if (port->mode == PAR_MODE_SPP)
         {
-                printf("Parallel: Port not bidirectional\n");
+                printf(" [INFO] Parallel Port not bidirectional\n");
                 return 0xFF;
         }
         if (port->mode == PAR_MODE_PS2)
@@ -120,7 +120,7 @@ bool parallel_wait_busy(parallel_port_t *port, uint32_t timeout_ms)
                 }
         }
 
-        printf("Parallel: Timeout waiting for BUSY\n");
+        printf(" [INFO] Parallel Timeout waiting for BUSY\n");
         return false;
 }
 
@@ -176,7 +176,7 @@ void parallel_enable_irq(parallel_port_t *port, bool enable)
         if (enable)
         {
                 ctrl |= PAR_CTRL_IRQEN;
-                printf("Parallel: IRQ enabled on %s\n", port->name);
+                printf(" [INFO] Parallel IRQ enabled on %s\n", port->name);
         }
         else
         {
@@ -191,12 +191,12 @@ void parallel_irq_handler(parallel_port_t *port)
         if (!port || !port->present || !port->irq_enabled)
                 return;
         uint8_t status = inb(port->base_addr + PAR_STATUS_REG);
-        printf("Parallel: IRQ on %s, status=0x%02X\n", port->name, status);
+        printf(" [INFO] Parallel IRQ on %s, status=0x%02X\n", port->name, status);
 }
 
 void parallel_scan_ports(void)
 {
-        printf("Parallel: Scanning for ports...\n");
+        printf(" [INFO] Parallel Scanning for ports...\n");
 
         int found = 0;
         for (int i = 0; i < 3; i++)
@@ -208,7 +208,7 @@ void parallel_scan_ports(void)
                 }
         }
 
-        printf("Parallel: Found %d ports\n", found);
+        printf(" [INFO] Parallel Found %d ports\n", found);
 }
 
 void init_parallel_ports()
