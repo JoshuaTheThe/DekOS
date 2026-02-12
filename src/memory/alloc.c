@@ -12,6 +12,11 @@ uintptr_t _heap_map_end = 0, _heap_map_start = 0;
 
 void memInit(size_t memory_size)
 {
+        if (memory_size >= (1 << 29))
+        {
+                memory_size = (1 << 29);
+        }
+
         extern uint8_t _kernel_start[];
         extern uint8_t _kernel_end[];
 
