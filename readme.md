@@ -1,4 +1,4 @@
-<h1>The ultimate operating system (trust)</h1>
+0<h1>The ultimate operating system (trust)</h1>
 tis going to be a merger of all my OSes, just getting drivers and stuff like that first.<br>
 
 <h1>Usage</h1>
@@ -12,3 +12,13 @@ after the login as completed, it will start drawing<br>
 
 <h1>Minimum Requirements</h1>
 A CPU Capable of SSE2 and with more than (or equal to) 5MB of ram.
+
+EnneaOS:                         DekOS:
+┌─────────────────────┐          ┌─────────────────────┐
+│ Donut command       │          │ TODO                │
+│ Basic shell         │          │ Resource system     │
+│ One user            │          │ Multi-user (ish)    │
+│ No userprocs/fs     │          │ Framebuffer + GDI   │
+│ 5K lines            │          │ 13-15K lines        │
+│ Cute cat fetch      │          │ Cute cat fetch      │
+└─────────────────────┘          └─────────────────────┘
