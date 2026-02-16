@@ -295,7 +295,7 @@ uint32_t sysReply(void)
                 return mbuttons;
 
         case MALLOC:
-                if (arg1 > 0 && arg1 < 1024 * 1024)
+                if (arg1 > 0)
                 {
                         return (uint32_t)malloc(arg1);
                 }
