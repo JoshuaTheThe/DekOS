@@ -161,3 +161,9 @@ int rprot(int Handle, bool Protected)
 {
 	return syscall(RPROT, Protected, 0, 0, 0, 0);
 }
+
+void print(const char *s)
+{
+        for (unsigned int i = 0; s[i]; ++i)
+                putch(s[i]);
+}

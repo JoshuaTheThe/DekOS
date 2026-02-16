@@ -2,12 +2,6 @@
 #include <string.h>
 #include <ini.h>
 
-void print(const char *s)
-{
-        for (unsigned int i = 0; s[i]; ++i)
-                putch(s[i]);
-}
-
 #define SHELL_KBD_BUFF_SIZE 64
 #define SHELL_MAX_ARGS 8
 
