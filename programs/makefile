@@ -6,7 +6,7 @@ CFLAGS  := -m32 -march=i386 -I. -I./API \
            -ffreestanding -msoft-float -fno-builtin \
            -Wall -Wextra -fPIC
 
-LDFLAGS := -m elf_i386 -nostdlib
+LDFLAGS := -m elf_i386 -nostdlib --whole-archive
 
 LIBOBJS := API/start.o \
            API/stdio.o \

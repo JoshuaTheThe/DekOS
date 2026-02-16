@@ -2,7 +2,7 @@
 #include <string.h>
 #include <ini.h>
 
-#define SHELL_KBD_BUFF_SIZE 64
+#define SHELL_KBD_BUFF_SIZE 16
 #define SHELL_MAX_ARGS 8
 
 static char buf[MAX_PATH + 32];
@@ -74,7 +74,6 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 
         snprintf(current_dir, sizeof(buf), "users/%s/", name);
         snprintf(buf, sizeof(buf), "users/%s/user.ini", name);
-        memset(buf, 0, sizeof(buf));
 
         for (size_t i = 0; i < argc; ++i)
         {
@@ -89,20 +88,20 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         print(buf);
 
         /**
-         * Removing this causes a crash (literally, what)
+         * Removing this causes a crash (literally, what), yes, this currently causes crash, for no reason
          */
-        int rid = dlload("users/root/video");
-        if (rid == -1)
-        {
-                print("could not load video\n");
-        }
-        else
-        {
-                void (*_video_start)(int,char **,USERID,PID) = dlfind(rid, "main");
-                snprintf(buf, sizeof(buf), " [DEBUG] VIDEO main found at 0x%x\n", _video_start);
-                print(buf);
-                dlunload(rid);
-        }
+        // int rid = dlload("users/root/video");
+        // if (rid == -1)
+        // {
+        //         print("could not load video\n");
+        // }
+        // else
+        // {
+        //         void (*_video_start)(int,char **,USERID,PID) = dlfind(rid, "main");
+        //         snprintf(buf, sizeof(buf), " [DEBUG] VIDEO main found at 0x%x\n", _video_start);
+        //         print(buf);
+        //         dlunload(rid);
+        // }
 
         bool running = true;
 

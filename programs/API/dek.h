@@ -14,7 +14,7 @@
 #define DIR_WRITE (0x00)
 #define DIR_READ (0x01)
 
-#define MAX_PATH 256
+#define MAX_PATH 128
 
 typedef uint32_t USERID;
 typedef uint32_t PID;
