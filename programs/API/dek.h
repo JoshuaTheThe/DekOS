@@ -130,7 +130,7 @@ int rprot(int Handle, bool Protected);
 void print(const char *s);
 
 int dlload(const char *path);
-int dlfind(int RID, const char *sym);
+void *dlfind(int RID, const char *sym);
 int dlunload(int RID);
 
 static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)

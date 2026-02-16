@@ -81,8 +81,13 @@ typedef enum
         SHT_SYMTAB = 2,
         SHT_STRTAB = 3,
         SHT_RELA = 4,
+        SHT_HASH = 5,
+        SHT_DYNAMIC = 6,
+        SHT_NOTE = 7,
         SHT_NOBITS = 8,
         SHT_REL = 9,
+        SHT_SHLIB = 10,
+        SHT_DYNSYM = 11,
 } elf32SectionHeaderTable_t;
 
 typedef enum

@@ -173,9 +173,9 @@ int dlload(const char *path)
 	return syscall(DLOAD, (uintptr_t)path, 0, 0, 0, 0);
 }
 
-int dlfind(int RID, const char *sym)
+void *dlfind(int RID, const char *sym)
 {
-	return syscall(DFIND, RID, (uintptr_t)sym, 0, 0, 0);
+	return (void *)syscall(DFIND, RID, (uintptr_t)sym, 0, 0, 0);
 }
 
 int dlunload(int RID)

@@ -424,13 +424,8 @@ uint32_t sysReply(void)
                 SYSFILE *file = FOpen(path, strnlen(path, MAX_PATH), FILE_READABLE | FILE_PRESENT | FILE_EXECUTABLE);
                 if (!file)
                         return -1;
-
-                void *elf_data = malloc(file->size);
-                FRead(elf_data, 1, file->size, file);
+                void *loaded_module = elfLoadNoRun((uint8_t*)file->base, file->size);
                 FClose(file);
-
-                void *loaded_module = elfLoadNoRun(elf_data, file->size);
-                free(elf_data);
                 if (!loaded_module)
                         return -1;
                 KRNLRES *res = ResourceCreateK(NULL, RESOURCE_TYPE_MODULE, file->size, pid, NULL);

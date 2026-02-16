@@ -370,60 +370,120 @@ void *elfLoadNoRun(uint8_t *file, size_t file_size)
         return program_mem;
 }
 
-/**
- * elfSymbol - find a symbol in a loaded ELF module
- * @module: pointer to loaded ELF (from elfLoadNoRun)
- * @name: symbol name to find
- * @returns pointer to symbol, or NULL if not found
- */
+void elfDumpSymbols(void *module)
+{
+        if (!module)
+                return;
+
+        elf32EHeader_t *hdr = (elf32EHeader_t *)module;
+        elf32SectionHeader_t *sections = elfSectionHeader(hdr);
+
+        printf("ELF Dump for module at %p:\n", module);
+        printf("  Type: %s\n", hdr->type == ET_REL ? "REL" : hdr->type == ET_EXEC ? "EXEC"
+                                                                                  : "OTHER");
+        printf("  Sections: %d\n", hdr->shnum);
+
+        for (int i = 0; i < hdr->shnum; i++)
+        {
+                elf32SectionHeader_t *sh = &sections[i];
+                char *sec_name = elfLookupString(hdr, sh->sh_name);
+
+                if (sh->sh_type == SHT_SYMTAB || sh->sh_type == SHT_DYNSYM)
+                {
+                        printf("\n  Symbol Table [%d]: %s (type=%d)\n", i, sec_name ? sec_name : "?", sh->sh_type);
+
+                        // Get string table for this symbol table
+                        if (sh->sh_link >= hdr->shnum)
+                                continue;
+                        elf32SectionHeader_t *strtab = &sections[sh->sh_link];
+                        char *strings = (char *)module + strtab->sh_offset;
+
+                        // Get symbols
+                        elf32Symbol_t *syms = (elf32Symbol_t *)((uintptr_t)module + sh->sh_offset);
+                        int sym_count = sh->sh_size / sh->sh_entsize;
+
+                        for (int j = 0; j < sym_count; j++)
+                        {
+                                elf32Symbol_t *sym = &syms[j];
+                                const char *sym_name = strings + sym->st_name;
+
+                                // Skip empty names
+                                if (sym->st_name == 0)
+                                        continue;
+
+                                const char *type_str = "?";
+                                switch (ELF32_ST_TYPE(sym->st_info))
+                                {
+                                case STT_NOTYPE:
+                                        type_str = "NOTYPE";
+                                        break;
+                                case STT_OBJECT:
+                                        type_str = "OBJECT";
+                                        break;
+                                case STT_FUNC:
+                                        type_str = "FUNC";
+                                        break;
+                                }
+
+                                const char *bind_str = (ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) ? "GLOBAL" : (ELF32_ST_BIND(sym->st_info) == STB_LOCAL) ? "LOCAL"
+                                                                                                                                                           : "WEAK";
+
+                                printf("    [%d] %s: %s %s value=0x%x size=%d\n",
+                                       j, sym_name, bind_str, type_str, sym->st_value, sym->st_size);
+
+                                // Highlight if it's main
+                                if (strcmp(sym_name, "main") == 0)
+                                {
+                                        printf("      >>> FOUND MAIN! <<<\n");
+                                }
+                        }
+                }
+        }
+}
+
 void *elfSymbol(void *module, const char *name)
 {
         if (!module || !name)
                 return NULL;
-
         elf32EHeader_t *hdr = (elf32EHeader_t *)module;
-
-        elf32SectionHeader_t *symtab = NULL;
-        elf32SectionHeader_t *strtab = NULL;
+        elf32SectionHeader_t *sections = elfSectionHeader(hdr);
 
         for (int i = 0; i < hdr->shnum; i++)
         {
-                elf32SectionHeader_t *sh = elfSection(hdr, i);
-                if (sh->sh_type == SHT_SYMTAB)
-                {
-                        symtab = sh;
-                        if (sh->sh_link < hdr->shnum)
-                        {
-                                strtab = elfSection(hdr, sh->sh_link);
-                        }
-                        break;
-                }
-        }
-
-        if (!symtab || !strtab)
-                return NULL;
-
-        int symbol_count = symtab->sh_size / symtab->sh_entsize;
-        elf32Symbol_t *symbols = (elf32Symbol_t *)((uintptr_t)module + symtab->sh_offset);
-        char *strings = (char *)((uintptr_t)module + strtab->sh_offset);
-
-        for (int i = 0; i < symbol_count; i++)
-        {
-                elf32Symbol_t *sym = &symbols[i];
-                if (sym->st_shndx == SHN_UNDEF || sym->st_shndx == SHN_ABS)
+                elf32SectionHeader_t *sh = &sections[i];
+                if (sh->sh_type != SHT_SYMTAB && sh->sh_type != SHT_DYNSYM)
+                        continue;
+                if (sh->sh_link >= hdr->shnum)
                         continue;
 
-                const char *sym_name = strings + sym->st_name;
-
-                if (strcmp(sym_name, name) == 0)
+                elf32SectionHeader_t *strtab = &sections[sh->sh_link];
+                char *strings = (char *)module + strtab->sh_offset;
+                elf32Symbol_t *syms = (elf32Symbol_t *)((uintptr_t)module + sh->sh_offset);
+                int sym_count = sh->sh_size / sh->sh_entsize;
+                for (int j = 0; j < sym_count; j++)
                 {
-                        elf32SectionHeader_t *target_section = elfSection(hdr, sym->st_shndx);
-                        if (!target_section)
+                        elf32Symbol_t *sym = &syms[j];
+                        if (sym->st_name == 0)
                                 continue;
 
-                        return (void *)((uintptr_t)module +
-                                        target_section->sh_offset +
-                                        sym->st_value);
+                        const char *sym_name = strings + sym->st_name;
+
+                        if (strcmp(sym_name, name) == 0)
+                        {
+                                if (sym->st_shndx == SHN_ABS)
+                                {
+                                        return (void *)sym->st_value;
+                                }
+                                else if (sym->st_shndx < hdr->shnum)
+                                {
+                                        elf32SectionHeader_t *target = &sections[sym->st_shndx];
+                                        return (void *)((uintptr_t)module + target->sh_offset + sym->st_value);
+                                }
+                                else
+                                {
+                                        return (void *)sym->st_value;
+                                }
+                        }
                 }
         }
 
