@@ -32,6 +32,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         }
 
         print(FileData);
+        putch('\n');
         close(File);
         return 0;
 }
