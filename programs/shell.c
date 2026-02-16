@@ -136,24 +136,23 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
                         }
                         else
                         {
-                                char new_dir[512];
                                 if (command_buffer[1][0] == '/')
                                 {
-                                        strncpy(new_dir, command_buffer[1], 512);
+                                        strncpy(buf, command_buffer[1], sizeof(buf)-1);
                                 }
                                 else
                                 {
-                                        snprintf(new_dir, sizeof(new_dir)-1, "%s/%s", current_dir, command_buffer[1]);
+                                        snprintf(buf, sizeof(buf)-1, "%s/%s", current_dir, command_buffer[1]);
                                 }
 
-                                len = strlen(new_dir);
-                                while (len > 1 && new_dir[len - 1] == '/')
+                                len = strlen(buf);
+                                while (len > 1 && buf[len - 1] == '/')
                                 {
-                                        new_dir[len - 1] = '\0';
+                                        buf[len - 1] = '\0';
                                         len--;
                                 }
 
-                                strncpy(current_dir, new_dir, 512);
+                                strncpy(current_dir, buf, MAX_PATH);
                         }
                 }
                 else if (!strcmp(command_buffer[0], "pwd"))
