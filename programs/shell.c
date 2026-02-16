@@ -95,7 +95,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         }
         else
         {
-                void *_video_start = dlfind(rid, "main");
+                void (*_video_start)(int,char **,USERID,PID) = dlfind(rid, "main");
                 snprintf(buf, sizeof(buf), " [DEBUG] VIDEO main found at 0x%x\n", _video_start);
                 print(buf);
                 dlunload(rid);

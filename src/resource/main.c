@@ -14,46 +14,33 @@ static KRNLRES *ResourceRecursiveSearch(KRNLRES *rpBase, RID targetRid, int dept
         PROCID procIdSelf = schedGetCurrentPid();
         BOOL temp = FALSE;
 
-        printf(" [DEBUG] Searching for RID %d at depth %d, base=%p\n", targetRid, depth, rpBase);
-
         if (depth > MAX_RESOURCE_DEPTH)
         {
-                printf(" [DEBUG] Max depth reached\n");
                 return NULL;
         }
 
         if (!rpBase)
         {
-                printf(" [DEBUG] NULL base\n");
                 return NULL;
         }
 
         KRNLRES *rp = rpBase->FirstChild, *rp2;
-        printf(" [DEBUG] First child = %p\n", rp);
 
         while (rp)
         {
-                printf(" [DEBUG] Checking resource at %p with RID %d\n", rp, rp->rid);
-
                 if (rp == rpBase)
                 {
-                        printf(" [DEBUG] rp == rpBase, skipping\n");
                         return NULL;
                 }
 
                 if (rp->rid == targetRid)
                 {
-                        printf(" [DEBUG] Found matching RID!\n");
-
                         if (found)
                                 *found = TRUE;
                         if (rp->Owner.num == procIdSelf.num || Override)
                         {
-                                printf(" [DEBUG] Ownership check passed (owner=%d, self=%d, override=%d)\n",
-                                       rp->Owner.num, procIdSelf.num, Override);
                                 return rp;
                         }
-                        printf(" [DEBUG] Ownership check failed\n");
                         return NULL;
                 }
 
@@ -64,7 +51,6 @@ static KRNLRES *ResourceRecursiveSearch(KRNLRES *rpBase, RID targetRid, int dept
                 rp = rp->NextSibling;
         }
 
-        printf(" [DEBUG] No resource found with RID %d\n", targetRid);
         return NULL;
 }
 
@@ -599,8 +585,6 @@ AfterAllocation:
         if (rpSibling)
                 rpSibling->PreviousSibling = rpResource;
         *result = RESULT_OK;
-        printf(" [DEBUG] ResourceCreateK: Assigned RID %d (counter was %d, now %d)\n",
-               rpResource->rid, counter - 1, counter);
         return rpResource;
 }
 
