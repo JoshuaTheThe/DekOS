@@ -87,6 +87,10 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         print(buf);
         snprintf(buf, sizeof(buf)-1, " [INFO] launched by: %d\n", UserID);
         print(buf);
+        snprintf(buf, sizeof(buf)-1, " [INFO] argc: %d\n", argc);
+        print(buf);
+        snprintf(buf, sizeof(buf)-1, " [INFO] argv: %d\n", argv);
+        print(buf);
 
         bool running = true;
 
