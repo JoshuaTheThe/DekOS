@@ -72,19 +72,18 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         username(name, 31);
         print("Hello, World!\n");
 
-        snprintf(current_dir, sizeof(current_dir), "users/%s/", name);
-        snprintf(buf, sizeof(buf), "users/%s/user.ini", name);
+        snprintf(current_dir, sizeof(current_dir)-1, "users/%s/", name);
+        snprintf(buf, sizeof(buf)-1, "users/%s/user.ini", name);
 
         for (size_t i = 0; i < argc; ++i)
         {
-                char buf[1024];
-                snprintf(buf, sizeof(buf), " [INFO] launched with argument: %s\n", argv[i]);
+                snprintf(buf, sizeof(buf)-1, " [INFO] launched with argument: %s\n", argv[i]);
                 print(buf);
         }
 
-        snprintf(buf, sizeof(buf), " [INFO] launched from: %d\n", ParentProc);
+        snprintf(buf, sizeof(buf)-1, " [INFO] launched from: %d\n", ParentProc);
         print(buf);
-        snprintf(buf, sizeof(buf), " [INFO] launched by: %d\n", UserID);
+        snprintf(buf, sizeof(buf)-1, " [INFO] launched by: %d\n", UserID);
         print(buf);
 
         /**
@@ -107,7 +106,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 
         while (running)
         {
-                snprintf(buf, sizeof(buf), "%s:%s$ ", name, current_dir);
+                snprintf(buf, sizeof(buf)-1, "%s:%s$ ", name, current_dir);
                 print(buf);
                 memset(keyboard_buffer, 0, SHELL_KBD_BUFF_SIZE);
                 memset(command_buffer, 0, sizeof(command_buffer));
@@ -144,7 +143,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
                                 }
                                 else
                                 {
-                                        snprintf(new_dir, sizeof(new_dir), "%s/%s", current_dir, command_buffer[1]);
+                                        snprintf(new_dir, sizeof(new_dir)-1, "%s/%s", current_dir, command_buffer[1]);
                                 }
 
                                 len = strlen(new_dir);
@@ -187,20 +186,20 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
                         /* Local */
                         else if (command_buffer[0][0] == '.' && command_buffer[0][1] == '/')
                         {
-                                snprintf(buf, sizeof(buf), "%s/%s", current_dir, &command_buffer[0][2]);
+                                snprintf(buf, sizeof(buf)-1, "%s/%s", current_dir, &command_buffer[0][2]);
                                 pid = create(largc, arg_v, buf);
                         }
 
                         /* User/Bin */
                         else
                         {
-                                snprintf(buf, sizeof(buf), "users/%s/%s", name, command_buffer[0]);
+                                snprintf(buf, sizeof(buf)-1, "users/%s/%s", name, command_buffer[0]);
                                 pid = create(largc, arg_v, buf);
                         }
 
                         if (!pid)
                         {
-                                snprintf(buf, sizeof(buf), " [ERROR] could not launch: %s", command_buffer[0]);
+                                snprintf(buf, sizeof(buf)-1, " [ERROR] could not launch: %s", command_buffer[0]);
                                 print(buf);
                                 putch('\n');
                         }

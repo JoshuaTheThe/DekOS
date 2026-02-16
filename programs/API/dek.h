@@ -90,48 +90,8 @@ typedef struct _iobuf
         char *path;
 } FILE;
 
-FILE *open(char *path, int flags);
-void close(FILE *fil);
-
-void read(char *buf, size_t n, size_t size, FILE *fil);
-void write(char *buf, size_t n, size_t size, FILE *fil);
-
 void exit(int);
-PID getmypid(void);
-PID getparentspid(void);
-void yield(PID);
-PID createproc(char *,int,char **);
-void killproc(PID);
-int checkproc(PID);
-void resumeproc(PID);
-void suspendproc(PID);
-void username(char *,int);
-int ticks(void);
-void send(PID,void *,int);
-void fetch(PID,void *,int);
-int unread(PID);
-
-int mousex(void);
-int mousey(void);
-int mousebtn(void);
-
-char getch(void);
-void putch(char);
-
-void *malloc(int);
-void free(void *);
-
-int rreq(int);
-int blit(int,char*,size_t,size_t,size_t,bool);
-int rnew(int);
-int rdel(int);
-int rgive(int,PID);
-int rprot(int Handle, bool Protected);
 void print(const char *s);
-
-int dlload(const char *path);
-void *dlfind(int RID, const char *sym);
-int dlunload(int RID);
 
 static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {
@@ -177,5 +137,177 @@ static inline PID rowner(int rID)
 {
         return syscall(ROWNER, rID, 0, 0, 0, 0);
 }
+
+static inline PID getmypid(void)
+{
+        return syscall(GET_MY_PID, 0, 0, 0, 0, 0);
+}
+
+static inline PID getparentspid(void)
+{
+        return syscall(GET_PARENTS_PID, 0, 0, 0, 0, 0);
+}
+
+static inline void yield(PID pid)
+{
+        syscall(YIELD, pid, 0, 0, 0, 0);
+}
+
+static inline PID createproc(char *path, int arg_c, char **arg_v)
+{
+        return syscall(CREATE_PROCESS, (uintptr_t)path, arg_c, (uintptr_t)arg_v, 0, 0);
+}
+
+static inline void killproc(PID pid)
+{
+        syscall(KILL_PROCESS, pid, 0, 0, 0, 0);
+}
+
+static inline int checkproc(PID pid)
+{
+        return syscall(CHECK_PROCESS, pid, 0, 0, 0, 0);
+}
+
+static inline void resumeproc(PID pid)
+{
+        syscall(RESUME_PROCESS, pid, 0, 0, 0, 0);
+}
+
+static inline void suspendproc(PID pid)
+{
+        syscall(SUSPEND_PROCESS, pid, 0, 0, 0, 0);
+}
+
+static inline void username(char *buf, int max)
+{
+        syscall(USERNAME, (uintptr_t)buf, max, 0, 0, 0);
+}
+
+static inline int ticks(void)
+{
+        return syscall(TICKS, 0, 0, 0, 0, 0);
+}
+
+static inline void send(PID rec, void *buf, int siz)
+{
+        syscall(SEND, rec, (uintptr_t)buf, siz, 0, 0);
+}
+
+static inline void fetch(PID sen, void *buf, int siz)
+{
+        syscall(FETCH, sen, (uintptr_t)buf, siz, 0, 0);
+}
+
+static inline int unread(PID sen)
+{
+        return syscall(UNREAD, sen, 0, 0, 0, 0);
+}
+
+static inline int mousex(void)
+{
+        return syscall(MOUSEX, 0, 0, 0, 0, 0);
+}
+
+static inline int mousey(void)
+{
+        return syscall(MOUSEY, 0, 0, 0, 0, 0);
+}
+
+static inline int mousebtn(void)
+{
+        return syscall(MOUSEBTN, 0, 0, 0, 0, 0);
+}
+
+static inline void *malloc(int siz)
+{
+        return (void*)syscall(MALLOC, siz, 0, 0, 0, 0);
+}
+
+static inline void free(void *p)
+{
+        syscall(FREE, (uintptr_t)p, 0, 0, 0, 0);
+}
+
+static inline FILE *open(char *path, int flags)
+{
+        return (FILE *)syscall(OPEN, (uintptr_t)path, flags, 0, 0, 0);
+}
+
+static inline void close(FILE *fil)
+{
+        syscall(CLOSE, (uintptr_t)fil, 0, 0, 0, 0);
+}
+
+static inline void read(char *buf, size_t n, size_t size, FILE *fil)
+{
+        syscall(READ, (uintptr_t)buf, n, size, (uintptr_t)fil, 0);
+}
+
+static inline void write(char *buf, size_t n, size_t size, FILE *fil)
+{
+        syscall(WRITE, (uintptr_t)buf, n, size, (uintptr_t)fil, 0);
+}
+
+static inline char getch(void)
+{
+        return syscall(GETCH, 0, 0, 0, 0, 0);
+}
+
+static inline void putch(char chr)
+{
+        syscall(PUTCH, chr, 0, 0, 0, 0);
+}
+
+static inline int rreq(int Handle)
+{
+
+        return syscall(RREQ, Handle, 0, 0, 0, 0);
+}
+
+static inline int blit(int Handle,
+	 char *buf,
+	 size_t szbuf,
+	 size_t bytes_to_copy,
+	 size_t off, bool Direction)
+{
+	return syscall(BLIT + Direction,
+		Handle, (size_t)buf, szbuf, bytes_to_copy, off);
+}
+
+static inline int rnew(int Type)
+{
+	return syscall(RNEW, Type, 0, 0, 0, 0);
+}
+
+static inline int rdel(int Handle)
+{
+	return syscall(RDEL, Handle, 0, 0, 0, 0);
+}
+
+static inline int rgive(int Handle, PID dest)
+{
+	return syscall(RGIVE, Handle, dest, 0, 0, 0);
+}
+
+static inline int rprot(int Handle, bool Protected)
+{
+	return syscall(RPROT, Protected, 0, 0, 0, 0);
+}
+
+static inline int dlload(const char *path)
+{
+	return syscall(DLOAD, (uintptr_t)path, 0, 0, 0, 0);
+}
+
+static inline void *dlfind(int RID, const char *sym)
+{
+	return (void *)syscall(DFIND, RID, (uintptr_t)sym, 0, 0, 0);
+}
+
+static inline int dlunload(int RID)
+{
+	return syscall(DUNLOAD, RID, 0, 0, 0, 0);
+}
+
 
 #endif
