@@ -156,7 +156,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         schedInit();
         SerialInit();
         init_parallel_ports();
-        SerialPrint("--DekOS--\r\nHello, World!\r\n");
 
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
         printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",
@@ -218,6 +217,15 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         //        }
 
         SMGetDrive()->WriteFile(SMGetDrive(), "balls.txt", "balls", 5);
+
+        /** Brought back the ancient EnneaOS fetch cause its cool */
+        printf("\n        /\\_/\\\n");
+        printf("       | o o |\n");
+        printf("/-----/-------\\------\\  EnneaOS uh i mean DekOS\n");
+        printf("|    This Is The,    |  Version %s\n", __VER__);
+        printf("| The The The The :3 |  %dMiB of Ram\n", (mbi.mem_upper * 1024 + mbi.mem_lower * 1024) / (1024 * 1024));
+        printf("|              -josh |  %dMiB of Heap\n", (_heap_end-_heap_start) / (1024*1024));
+        printf("\\--------------------/\n\n");
 
         Ini Cfg = IniRead("system/system.ini");
         Ini *Saved = malloc(sizeof(*Saved));
