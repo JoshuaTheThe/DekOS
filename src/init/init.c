@@ -159,8 +159,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 
         cli();
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
-        printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n", 
-        sizeof(KRNLRES), offsetof(KRNLRES, rid));
+        printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",
+               sizeof(KRNLRES), offsetof(KRNLRES, rid));
 
         if (!fbRes)
         {
@@ -278,18 +278,17 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 {
                         if (processes[i].delete)
                         {
-                                cli();
                                 deleteTask(i);
-                                sti();
                         }
                 }
 
                 if (fbRes->Owner.num == 0)
+                {
                         mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
-                sti();
-
-                if (fbRes->Owner.num == 0)
+                        sti();
                         display();
+                }
+                sti();
                 hlt();
         }
 
