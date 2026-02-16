@@ -79,8 +79,10 @@ typedef struct _iobuf
 {
 	char *ptr;
 	size_t remaining;
+	size_t size;
 	char *base;
 	int flags;
+        char *path;
 } FILE;
 
 FILE *open(char *path, int flags);

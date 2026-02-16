@@ -11,6 +11,7 @@ SYSFILE *FAllocate(void)
         {
                 if (_iofiles[i].flags & FILE_PRESENT)
                         continue;
+                memset(&_iofiles[i], 0, sizeof(SYSFILE));
                 return &_iofiles[i];
         }
 
@@ -74,7 +75,7 @@ size_t FRead(char *Buf, size_t N,
         if (!File || !File->base ||
             !File->remaining || !N ||
             !Size || !Buf ||
-            ~File->flags & FILE_READABLE)
+            (!(File->flags & FILE_READABLE)))
                 return -1;
         const size_t bytes_requested = N * Size;
         const size_t bytes_to_read = minu(bytes_requested, File->remaining);
@@ -89,7 +90,7 @@ size_t FWrite(char *Buf, size_t N,
               size_t Size, SYSFILE *File)
 {
         if (!N || !Size || !Buf || !File ||
-            ~File->flags & FILE_WRITABLE)
+            (!(File->flags & FILE_WRITABLE)))
                 return -1;
 
         const size_t bytes_to_write = N * Size;
