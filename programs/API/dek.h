@@ -122,11 +122,13 @@ int rgive(int,PID);
 static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {
         uint32_t result;
+        __asm("cli;");
         asm volatile(
             "int $0x80"
             : "=a"(result)
             : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "D"(arg5)
             : "memory");
+        __asm("sti;");
         return result;
 }
 
