@@ -46,11 +46,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         snprintf(msg, 128, " [INFO] result=%d\n", r);
         print(msg);
         while (true)
-        {
-                gets(buf, 8);
-                if (buf[0] == 'q')
-                        break;
-        }
+        {}
         free(buf);
         rgive(handle, 0); /* kernel pid == 0 always */
         return 0;
