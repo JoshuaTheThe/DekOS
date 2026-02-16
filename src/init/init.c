@@ -47,6 +47,8 @@
 
 #include <init/pde.h>
 
+void sysHang(void);
+
 typedef enum
 {
         RESPONSE_WTF = 0,
@@ -72,7 +74,6 @@ extern bool tty_needs_flushing;
 extern RID rdFrameRID;
 extern KRNLRES *fbRes;
 extern char system_output[TTY_H][TTY_W];
-uint8_t stdinstack[1024] __attribute__((aligned(16)));
 
 // WINDOW *KernelWindow = NULL;
 // KRNLRES *KernelWindowResource = NULL;
@@ -129,10 +130,12 @@ void deleteTask(size_t i)
 //         // }
 // }
 
+multiboot_info_t mbi;
+
 /* Initialize the System */
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
-        multiboot_info_t *mbi = (multiboot_info_t *)mbinfo_ptr;
+        mbi = *(multiboot_info_t *)mbinfo_ptr;
         PDEInit();
 
         cli();
@@ -148,18 +151,28 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         gdtInit();
         idtInit();
         pitInit(250);
-        memInit(mbi->mem_upper * 1024 + mbi->mem_lower * 1024);
+        memInit(mbi.mem_upper * 1024 + mbi.mem_lower * 1024);
         schedInit();
         SerialInit();
         init_parallel_ports();
         SerialPrint("--DekOS--\r\nHello, World!\r\n");
 
         cli();
-        fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_RAW_FAR, 0, schedGetKernelPid(), NULL);
-        fbRes->Region.ptr = (uint32_t *)mbi->framebuffer_addr;
-        fbRes->Region.size = mbi->framebuffer_width * mbi->framebuffer_height * (mbi->framebuffer_bpp / 8);
+        fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
+        printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n", 
+        sizeof(KRNLRES), offsetof(KRNLRES, rid));
 
-        int nDim[3] = {mbi->framebuffer_width, mbi->framebuffer_height, 1};
+        if (!fbRes)
+        {
+                printf(" [ERROR] Could not create framebuffer resource\n");
+                sysHang();
+        }
+        fbRes->Region.ptr = (uint32_t *)mbi.framebuffer_addr;
+        fbRes->Region.size = mbi.framebuffer_width * mbi.framebuffer_height * (mbi.framebuffer_bpp / 8);
+        fbRes->OnHeap = FALSE;
+
+        printf(" [INFO] created frame buffer of Rid %d\n", fbRes->rid);
+        int nDim[3] = {mbi.framebuffer_width, mbi.framebuffer_height, 1};
         BOOL aDim[3] = {TRUE, TRUE, TRUE};
         RenderSetDim(nDim, aDim);
 
@@ -215,7 +228,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 const char *_tty_bg = IniGet(Saved, "tty_bg");
                 const char *_tty_fg = IniGet(Saved, "tty_fg");
                 extern uint32_t tty_bg;
-                extern uint32_t tty_fg; 
+                extern uint32_t tty_fg;
                 if (_tty_bg)
                         tty_bg = strthex(_tty_bg);
                 if (_tty_fg)
@@ -274,7 +287,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
                 sti();
 
-                display();
+                if (fbRes->Owner.num == 0)
+                        display();
                 hlt();
         }
 

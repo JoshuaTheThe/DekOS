@@ -198,6 +198,7 @@ DWORD FatFindFreeCluster(FATBootSector *bt, DRIVE *Drive)
         DWORD totalClusters = FatClusterCount(bt);
         DWORD fatStart = FatFirstFat(bt);
         DWORD entriesPerSector = bt->bpb.BytesPerSector / 4;
+        (void)entriesPerSector;
 
         for (DWORD i = 2; i < totalClusters + 2; i++)
         {
@@ -322,6 +323,7 @@ DWORD FatFindFreeEntry(FATBootSector *bt, DWORD dirCluster, DRIVE *Drive)
 void FatWriteDirectoryEntry(FATBootSector *bt, DWORD dirCluster, DWORD location,
                             FATDirectory *entry, DRIVE *Drive)
 {
+        (void)dirCluster;
         DWORD cluster = location >> 16;
         DWORD sector = (location >> 8) & 0xFF;
         DWORD index = location & 0xFF;

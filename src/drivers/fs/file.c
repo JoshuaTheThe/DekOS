@@ -51,7 +51,7 @@ SYSFILE *FOpen(const char *const Path,
 
 void FClose(SYSFILE *File)
 {
-        const DRIVE *Drive = SMGetDrive();
+        DRIVE *Drive = SMGetDrive();
         if (!Drive)
                 return;
         if (!File->ptr || !File->base)

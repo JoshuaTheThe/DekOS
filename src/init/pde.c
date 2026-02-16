@@ -5,6 +5,7 @@
 pde_t *page_directory = (pde_t *)PAGE_DIRECTORY_ADDRESS;
 page_table_t *page_tables = (page_table_t *)PAGE_TABLES_ADDRESS;
 
+__attribute__((unused))
 static void identity_map_4mb(uint32_t virt_start, uint32_t phys_start)
 {
         for (uint32_t i = 0; i < 1024; i++)
@@ -15,6 +16,7 @@ static void identity_map_4mb(uint32_t virt_start, uint32_t phys_start)
         }
 }
 
+__attribute__((unused))
 static void map_pages(uint32_t virt_start, uint32_t phys_start, uint32_t count, uint32_t flags)
 {
         PDEPages(virt_start, phys_start, count, flags);

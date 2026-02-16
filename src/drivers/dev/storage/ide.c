@@ -10,11 +10,12 @@ void IDEWaitIRQ(void)
         IDEState.Invoked = 0;
 }
 
-void __attribute__((interrupt)) IDEIrq(void *x)
+__attribute__((interrupt)) void IDEIrq(void *x)
 {
+        (void)x;
         IDEState.Invoked = 1;
-        outb(0xA0, 0x20);
-        outb(0x20, 0x20);
+        irqoutb(0xA0,0x20);
+        irqoutb(0x20,0x20);
 }
 
 void IDEWrite(uint8_t channel, uint8_t reg, uint8_t data)

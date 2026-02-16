@@ -105,17 +105,6 @@ SECTIONS
                 *(.stabstr.*)
         }
         
-        /* ARM specific */
-        .ARM.exidx : {
-                *(.ARM.exidx*)
-                *(.gnu.linkonce.armexidx.*)
-        }
-        
-        .ARM.extab : {
-                *(.ARM.extab*)
-                *(.gnu.linkonce.armextab.*)
-        }
-
         /* Ensure we catch everything else that might have slipped through */
         . = ALIGN(4);
         _kernel_end = .;

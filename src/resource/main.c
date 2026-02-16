@@ -4,46 +4,67 @@
 KRNLRES grResources = {0};
 RESULT resLast = RESULT_OK;
 int gInvalidCount = 0;
-static RID counter = 0;
+RID counter = 0;
 
 /**
  * ResourceRecursiveSearch - basically seach by rid
  */
-static KRNLRES *ResourceRecursiveSearch(KRNLRES *rpBase, RID targetRid, int depth, BOOL *found)
+static KRNLRES *ResourceRecursiveSearch(KRNLRES *rpBase, RID targetRid, int depth, BOOL *found, BOOL Override)
 {
         PROCID procIdSelf = schedGetCurrentPid();
         BOOL temp = FALSE;
+
+        printf(" [DEBUG] Searching for RID %d at depth %d, base=%p\n", targetRid, depth, rpBase);
+
         if (depth > MAX_RESOURCE_DEPTH)
+        {
+                printf(" [DEBUG] Max depth reached\n");
                 return NULL;
+        }
 
         if (!rpBase)
+        {
+                printf(" [DEBUG] NULL base\n");
                 return NULL;
+        }
 
         KRNLRES *rp = rpBase->FirstChild, *rp2;
+        printf(" [DEBUG] First child = %p\n", rp);
+
         while (rp)
         {
+                printf(" [DEBUG] Checking resource at %p with RID %d\n", rp, rp->rid);
+
                 if (rp == rpBase)
-                        return NULL;
-
-                if (rp->rid == targetRid)
                 {
-
-                        if (found)
-                                *found = TRUE;
-                        if (rp->Owner.num == procIdSelf.num)
-                        {
-                                return rp;
-                        }
+                        printf(" [DEBUG] rp == rpBase, skipping\n");
                         return NULL;
                 }
 
-                rp2 = ResourceRecursiveSearch(rp, targetRid, depth + 1, &temp);
+                if (rp->rid == targetRid)
+                {
+                        printf(" [DEBUG] Found matching RID!\n");
+
+                        if (found)
+                                *found = TRUE;
+                        if (rp->Owner.num == procIdSelf.num || Override)
+                        {
+                                printf(" [DEBUG] Ownership check passed (owner=%d, self=%d, override=%d)\n",
+                                       rp->Owner.num, procIdSelf.num, Override);
+                                return rp;
+                        }
+                        printf(" [DEBUG] Ownership check failed\n");
+                        return NULL;
+                }
+
+                rp2 = ResourceRecursiveSearch(rp, targetRid, depth + 1, &temp, Override);
                 if (rp2 || temp)
                         return rp2;
 
                 rp = rp->NextSibling;
         }
 
+        printf(" [DEBUG] No resource found with RID %d\n", targetRid);
         return NULL;
 }
 
@@ -51,20 +72,29 @@ static KRNLRES *ResourceRecursiveSearch(KRNLRES *rpBase, RID targetRid, int dept
  * ResourceGetFromRID - return the pointer
  * to a resource, find by its id.
  */
-KRNLRES *ResourceGetFromRID(RID rdResourceId)
+KRNLRES *ResourceGetFromRID(RID rdResourceId, BOOL Override)
 {
         KRNLRES *rp;
         PROCID current = schedGetCurrentPid();
 
         if (rdResourceId == INVALID_RID)
+        {
+                printf(" [ERROR] Invalid R-ID\n");
                 return NULL;
+        }
 
-        rp = ResourceRecursiveSearch(&grResources, rdResourceId, 0, NULL);
+        rp = ResourceRecursiveSearch(&grResources, rdResourceId, 0, NULL, Override);
         if (!rp)
+        {
+                printf(" [ERROR] rp not found\n");
                 return NULL;
+        }
 
-        if (rp->Owner.num != current.num)
+        if ((rp->Owner.num != current.num) && !Override)
+        {
+                printf(" [ERROR] non owner\n");
                 return NULL;
+        }
 
         return rp;
 }
@@ -220,7 +250,7 @@ RESULT ResourceHandoverK(KRNLRES *rpResource, PROCID dest)
         /**
          * Integrity Check.
          */
-        if (((uintptr_t)rpResource->Region.ptr > _heap_end) && rpResource->Type != RESOURCE_TYPE_RAW_FAR)
+        if (((uintptr_t)rpResource->Region.ptr > _heap_end) && rpResource->OnHeap)
         {
                 return RESULT_CORRUPTED;
         }
@@ -522,6 +552,8 @@ AfterAllocation:
         if (rpSibling)
                 rpSibling->PreviousSibling = rpResource;
         *result = RESULT_OK;
+        printf(" [DEBUG] ResourceCreateK: Assigned RID %d (counter was %d, now %d)\n",
+               rpResource->rid, counter - 1, counter);
         return rpResource;
 }
 
@@ -534,7 +566,7 @@ RID ResourceCreate(RID rdParentResource,
                    PROCID idOwner,
                    RESULT *result)
 {
-        KRNLRES *parent = ResourceGetFromRID(rdParentResource);
+        KRNLRES *parent = ResourceGetFromRID(rdParentResource, FALSE);
         KRNLRES *new = ResourceCreateK(parent, rtType, szBytes, idOwner, result);
         if (!new || *result != RESULT_OK)
                 return INVALID_RID;
@@ -543,13 +575,13 @@ RID ResourceCreate(RID rdParentResource,
 
 RESULT ResourceHandover(RID rdResource, PROCID dest)
 {
-        KRNLRES *rp = ResourceGetFromRID(rdResource);
+        KRNLRES *rp = ResourceGetFromRID(rdResource, FALSE);
         return ResourceHandoverK(rp, dest);
 }
 
 RESULT ResourceRelease(RID rdResource)
 {
-        KRNLRES *rp = ResourceGetFromRID(rdResource);
+        KRNLRES *rp = ResourceGetFromRID(rdResource, FALSE);
         return ResourceReleaseK(rp);
 }
 
@@ -558,7 +590,7 @@ RESULT ResourceRelease(RID rdResource)
  */
 RAWPTR ResourceData(RID rdResource)
 {
-        KRNLRES *rp = ResourceGetFromRID(rdResource);
+        KRNLRES *rp = ResourceGetFromRID(rdResource, FALSE);
         if (!rp)
                 return NULL;
         return rp->Region.ptr;
@@ -569,7 +601,7 @@ RAWPTR ResourceData(RID rdResource)
  */
 SIZE ResourceSize(RID rdResource)
 {
-        KRNLRES *rp = ResourceGetFromRID(rdResource);
+        KRNLRES *rp = ResourceGetFromRID(rdResource, FALSE);
         return rp->Region.size;
 }
 
@@ -579,13 +611,12 @@ SIZE ResourceSize(RID rdResource)
  */
 KRNLRES *ResourceNextOfType(KRNLRES **P, RESTYPE Type)
 {
-        if(!P||!*P||Type>=RESOURCE_TYPE_COUNT)        
-                return(NULL);
+        if (!P || !*P || Type >= RESOURCE_TYPE_COUNT)
+                return (NULL);
         do
         {
-                (*P)=(*P)->NextSibling;
-        }
-        while ((*P)&&(*P)->Type!=Type);
+                (*P) = (*P)->NextSibling;
+        } while ((*P) && (*P)->Type != Type);
 
-        return(*P);
+        return (*P);
 }

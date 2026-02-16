@@ -11,6 +11,8 @@
 #define PASSWORD_SALT 0x8095634 /* keyboard smash */
 #define MAX_LOGIN_ATTEMPTS 4
 
+void gets(char *,int);
+
 static USER users[MAX_USERS];
 static size_t user_count;
 

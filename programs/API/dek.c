@@ -126,3 +126,34 @@ void putch(char chr)
         syscall(PUTCH, chr, 0, 0, 0, 0);
 }
 
+int rreq(int Handle)
+{
+
+        return syscall(RREQ, Handle, 0, 0, 0, 0);
+}
+
+int blit(int Handle,
+	 char *buf,
+	 size_t szbuf,
+	 size_t bytes_to_copy,
+	 size_t off)
+{
+	return syscall(BLIT,
+		Handle, (size_t)buf, szbuf, bytes_to_copy, off);
+}
+
+int rnew(int Type)
+{
+	return syscall(RNEW, Type, 0, 0, 0, 0);
+}
+
+int rdel(int Handle)
+{
+	return syscall(RDEL, Handle, 0, 0, 0, 0);
+}
+
+int rgive(int Handle, PID dest)
+{
+	return syscall(RGIVE, Handle, dest, 0, 0, 0);
+}
+

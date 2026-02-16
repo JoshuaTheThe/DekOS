@@ -39,22 +39,6 @@ void *ttyWrite(DRIVE *tty)
         return tty->BufferA;
 }
 
-int ttyMain(size_t argc, char **argv, USERID UserID, PID ParentProc)
-{
-        printf("Hello, World!\n");
-        while (true)
-        {
-                // char c = ps2_getchar();
-                // size_t next = (head + 1) % TTY_SIZE;
-                // if (next != tail)
-                // {
-                //         TTYBuff[head] = c;
-                //         head = next;
-                // }
-                // yield(0);
-        }
-}
-
 void *read(char *buf, size_t len)
 {
         void *BufferA = SMReadFrom(0, _iob[STDIN_FILENO].Drive);

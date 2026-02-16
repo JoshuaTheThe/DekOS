@@ -31,3 +31,10 @@
 0x30-0x3F: # Memory Management #
 	MALLOC              @returns heap allocated ptr
 	FREE                @ebx = p
+
+0x40-0x4F:	# Resource
+	RREQ		    @ebx = rid, returns the handle of a resource
+	BLIT		    @ebx = handle, ecx = buf, edx = sizeof(buf), edi = bytes_to_copy, esi = off
+	RNEW		    @ebx = type, returns the handle
+	RDEL		    @ebx = handle
+	RGIVE		    @ebx = handle, ecx = pid

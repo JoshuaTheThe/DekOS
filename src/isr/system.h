@@ -41,6 +41,13 @@ typedef enum InterruptFunction
 
 	MALLOC = 0x30,
 	FREE,
+
+	/** .. */
+
+	RREQ = 0x40,
+	BLIT,
+	RNEW,RDEL,
+	RGIVE
 } InterruptFunction_t;
 
 /* System Call Function Prototypes */

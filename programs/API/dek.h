@@ -52,6 +52,14 @@ typedef enum InterruptFunction
 
         MALLOC = 0x30,
         FREE,
+
+	/** .. */
+
+	RREQ = 0x40,
+	BLIT,
+	RNEW,
+	RDEL,
+	RGIVE
 } InterruptFunction_t;
 
 /**
@@ -96,6 +104,12 @@ void putch(char);
 
 void *malloc(int);
 void free(void *);
+
+int rreq(int);
+int blit(int,char*,size_t,size_t,size_t);
+int rnew(int);
+int rdel(int);
+int rgive(int,PID);
 
 static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {

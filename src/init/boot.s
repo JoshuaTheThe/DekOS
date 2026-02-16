@@ -1,32 +1,31 @@
         .section .multiboot
-        .equ MULTIBOOT_HEADER_MAGIC          , 0x1BADB002
-        .equ MULTIBOOT_HEADER_FLAGS          , 0x00000007   # VIDEO_MODE (4) + MEMORY_INFO (2) + PAGE_ALIGN (1)
-        .equ MULTIBOOT_HEADER_CHECKSUM       , -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS) & 0xFFFFFFFF
-        .align 16, 0
+        .align 16
 multiboot_header:
-        .long   MULTIBOOT_HEADER_MAGIC
-        .long   MULTIBOOT_HEADER_FLAGS
-        .long   MULTIBOOT_HEADER_CHECKSUM
-        .long   0, 0, 0, 0, 0
-        .long   0
-        .long   1024
-        .long   768
-        .long   32
+        .long   0x1BADB002              /* Magic */
+        .long   0x00000007              /* Flags: PAGE_ALIGN + MEMORY_INFO + VIDEO_MODE */
+        .long   -(0x1BADB002 + 0x07)    /* Checksum */
+        .long   0, 0, 0, 0, 0           /* Unused fields */
+        .long   0                        /* Mode type: linear graphics */
+        .long   1024                     /* Width */
+        .long   768                      /* Height */
+        .long   32                       /* Depth */
+
         .section .text
         .global _start
         .type _start, @function
 _start:
-	mov $stack_top, %esp
-        cli
+        mov $stack_top, %esp
+        xor %ebp, %ebp
         push %ebx
         push %eax
-	call kmain
-	cli
-1:	hlt
-	jmp 1b
+        call __stack_protector_init
+        call kmain
+        cli
+        1:  hlt
+        jmp 1b
         .size _start, . - _start
         .section .bss
         .align 16
 stack_bottom:
-        .skip 65536*2
+        .skip 65536*4
 stack_top:

@@ -3,6 +3,7 @@
 #include <drivers/math.h>
 #include <drivers/fs/file.h>
 #include <drivers/dev/ps2/ps2.h>
+#include <resource/main.h>
 
 bool tty_needs_flushing = false;
 extern schedProcess_t processes[];
@@ -11,6 +12,7 @@ extern int tick_counter;
 extern void jumpToProc();
 extern volatile DWORD mx, my, pmx, pmy, mbuttons;
 
+extern KRNLRES grResources;
 
 void sysHang(void)
 {
@@ -73,6 +75,10 @@ void sysBreakpoint(void)
         }
         proc->active = false;
 }
+
+/*
+ * TODO - Factor into functions
+ * */
 
 uint32_t sysReply(void)
 {
@@ -187,7 +193,7 @@ uint32_t sysReply(void)
          * Life without UB and with safety is boring
          */
         case OPEN:
-                return FOpen((const char*const)arg1, strnlen((const char*)arg1, MAX_PATH), arg2);
+                return (uintptr_t)FOpen((const char*const)arg1, strnlen((const char*)arg1, MAX_PATH), arg2);
         case CLOSE:
                 FClose((SYSFILE *)arg1);
                 return 0;
@@ -308,6 +314,47 @@ uint32_t sysReply(void)
                 break;
 	case TICKS:
 		return tick_counter;
+
+
+	case RREQ:
+		{
+			KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
+			if (Res){
+				/**
+				 * ResourceHandoverK only works from owner's end.
+				 * */
+				Res->Owner = pid;
+				return Res->rid;
+			}
+
+			return -1;
+		}
+		return -1;
+	case BLIT:
+		/* blit(rid,buf,bufsz,off,cpysz) */
+		{
+			KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+			return ResourceBlitK(Res,
+					(RAWPTR)arg2,
+					(SIZE)arg3,
+					(SIZE)arg4,
+					(SIZE)arg5);
+		}
+		return -1;
+	case RNEW:
+		return -1;
+	case RDEL:
+		return -1;
+	case RGIVE:
+		{
+			KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+			if (!Res)
+				return -1;
+			PROCID Id = {.valid = 1, .num = arg2};
+			Id.valid = schedValidatePid(Id);
+			ResourceHandoverK(Res, Id);
+			return 0;
+		}
 
         default:
                 return -1;

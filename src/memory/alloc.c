@@ -12,9 +12,9 @@ uintptr_t _heap_map_end = 0, _heap_map_start = 0;
 
 void memInit(size_t memory_size)
 {
-        if (memory_size > (2048 * 1024 * 1024))
+        if (memory_size > (2048U * 1024U * 1024U))
         {
-                memory_size = 2048 * 1024 * 1024;
+                memory_size = 2048U * 1024U * 1024U;
         }
 
         extern uint8_t _kernel_end[];

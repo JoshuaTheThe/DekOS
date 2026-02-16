@@ -17,7 +17,7 @@ $(eval $(call DEFAULT_VAR,KCC,$(DEFAULT_KCC)))
 override DEFAULT_KLD := ld
 $(eval $(call DEFAULT_VAR,KLD,$(DEFAULT_KLD)))
 
-override DEFAULT_KCFLAGS := -pipe -Wall -Wextra -c
+override DEFAULT_KCFLAGS := -pipe -Wall -Wextra -c -O0 -fno-omit-frame-pointer
 $(eval $(call DEFAULT_VAR,KCFLAGS,$(DEFAULT_KCFLAGS)))
 
 override DEFAULT_KCPPFLAGS :=
@@ -34,11 +34,19 @@ override KCFLAGS += \
     -std=gnu11 \
     -ffreestanding \
     -fno-builtin \
-    -fno-stack-protector \
     -m32 \
     -mno-mmx \
-    -mno-red-zone \
-    -mcmodel=kernel
+    -Werror \
+    -mcmodel=kernel \
+    -O0 \
+    -fno-omit-frame-pointer \
+    -fstack-protector-strong \
+    -fstack-check \
+    -mstack-protector-guard=global
+
+override ASFLAGS += \
+    -c \
+    -m32
 
 override KCPPFLAGS := \
     -I src \
@@ -79,7 +87,7 @@ obj/%.c.o: src/%.c
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 obj/%.s.o: src/%.s
 	mkdir -p "$$(dirname $@)"
-	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
+	$(KCC) $(ASFLAGS) -c $< -o $@
 obj/%.asm.o: src/%.asm
 	mkdir -p "$$(dirname $@)"
 	nasm $(KNASMFLAGS) $< -o $@

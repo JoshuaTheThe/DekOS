@@ -5,6 +5,20 @@
 #include <stdarg.h>
 #include <utils.h>
 
+__attribute__((no_caller_saved_registers))
+static inline uint8_t irqinb(uint16_t port)
+{
+        uint8_t value;
+        __asm("inb %1, %0" : "=a"(value) : "Nd"(port));
+        return value;
+}
+
+__attribute__((no_caller_saved_registers))
+static inline void irqoutb(uint16_t port, uint8_t value)
+{
+        __asm("outb %0, %1" : : "a"(value), "Nd"(port));
+}
+
 static inline uint8_t inb(uint16_t port)
 {
         uint8_t value;

@@ -25,7 +25,6 @@ typedef enum
         RESOURCE_TYPE_BITMAP_IMAGE,
         RESOURCE_TYPE_WINDOW,
         RESOURCE_TYPE_ELEMENT,
-        RESOURCE_TYPE_RAW_FAR,
         RESOURCE_TYPE_COUNT,
 } RESTYPE;
 
@@ -39,7 +38,7 @@ typedef struct KRNLRES
         RESTYPE Type;
         PROCID Owner;
         BOOL Used;
-        BOOL OnHeap;
+        BOOL OnHeap; /* why did we even have a non heap type anyway */
         RID rid;
 } KRNLRES;
 
@@ -98,7 +97,7 @@ RESULT ResourceReleaseK(KRNLRES *rpResource);
 RESULT ResourceRelease(RID rdResource);
 
 BOOL ResourceIsValidType(RESTYPE rtType);
-KRNLRES *ResourceGetFromRID(RID rdResourceId);
+KRNLRES *ResourceGetFromRID(RID rdResourceId, BOOL Override);
 
 /**
  * ResourceData - return the pointer to the data in the resource.
@@ -115,5 +114,13 @@ SIZE ResourceSize(RID rdResource);
  * Does not check child resources.
  */
 KRNLRES *ResourceNextOfType(KRNLRES **P, RESTYPE Type);
+
+RESULT ResourceBlitK(KRNLRES *rpResource,
+                     RAWPTR rBuffer,
+                     SIZE szBufferSize,
+                     SIZE szCopy,
+                     SIZE szOffset);
+
+extern RID counter;
 
 #endif
