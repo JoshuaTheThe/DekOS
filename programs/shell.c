@@ -75,6 +75,8 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         print("Hello, World!\n");
 
         snprintf(current_dir, sizeof(current_dir)-1, "users/%s/", name);
+
+        // KStack is fucked, removing this causes crash // early exit
         snprintf(buf, sizeof(buf)-1, "users/%s/user.ini", name);
 
         // for (size_t i = 0; i < argc; ++i)
