@@ -445,8 +445,18 @@ void *elfSymbol(void *module, const char *name)
 {
         if (!module || !name)
                 return NULL;
+
         elf32EHeader_t *hdr = (elf32EHeader_t *)module;
         elf32SectionHeader_t *sections = elfSectionHeader(hdr);
+
+        uint32_t module_base = (uint32_t)module;
+        uint32_t link_address = 0x08000000; /* TODO - find actual link_addr */
+        // Try to find a better link address from program headers
+        // For now, use the entry point as a hint
+        if (hdr->entry < 0x1000000)
+        {
+                link_address = hdr->entry & 0xF0000000;
+        }
 
         for (int i = 0; i < hdr->shnum; i++)
         {
@@ -460,6 +470,7 @@ void *elfSymbol(void *module, const char *name)
                 char *strings = (char *)module + strtab->sh_offset;
                 elf32Symbol_t *syms = (elf32Symbol_t *)((uintptr_t)module + sh->sh_offset);
                 int sym_count = sh->sh_size / sh->sh_entsize;
+
                 for (int j = 0; j < sym_count; j++)
                 {
                         elf32Symbol_t *sym = &syms[j];
@@ -470,19 +481,19 @@ void *elfSymbol(void *module, const char *name)
 
                         if (strcmp(sym_name, name) == 0)
                         {
+                                uint32_t symbol_value = sym->st_value;
+                                uint32_t actual_addr;
+
                                 if (sym->st_shndx == SHN_ABS)
                                 {
-                                        return (void *)sym->st_value;
-                                }
-                                else if (sym->st_shndx < hdr->shnum)
-                                {
-                                        elf32SectionHeader_t *target = &sections[sym->st_shndx];
-                                        return (void *)((uintptr_t)module + target->sh_offset + sym->st_value);
+                                        actual_addr = symbol_value;
                                 }
                                 else
                                 {
-                                        return (void *)sym->st_value;
+                                        actual_addr = symbol_value - link_address + module_base;
                                 }
+
+                                return (void *)actual_addr;
                         }
                 }
         }
