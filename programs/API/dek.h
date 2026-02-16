@@ -68,6 +68,7 @@ typedef enum InterruptFunction
         RONHEAP,
         RTYPE,
         ROWNER,
+        RPROT,
 } InterruptFunction_t;
 
 /**
@@ -118,6 +119,7 @@ int blit(int,char*,size_t,size_t,size_t,bool);
 int rnew(int);
 int rdel(int);
 int rgive(int,PID);
+int rprot(int Handle, bool Protected);
 
 static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {

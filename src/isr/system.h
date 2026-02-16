@@ -54,6 +54,7 @@ typedef enum InterruptFunction
         RONHEAP,
         RTYPE,
         ROWNER,
+        RPROT,
 } InterruptFunction_t;
 
 /* System Call Function Prototypes */

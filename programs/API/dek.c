@@ -156,3 +156,8 @@ int rgive(int Handle, PID dest)
 {
 	return syscall(RGIVE, Handle, dest, 0, 0, 0);
 }
+
+int rprot(int Handle, bool Protected)
+{
+	return syscall(RPROT, Protected, 0, 0, 0, 0);
+}

@@ -39,6 +39,7 @@ typedef struct KRNLRES
         PROCID Owner;
         BOOL Used;
         BOOL OnHeap; /* why did we even have a non heap type anyway */
+        BOOL Protected;
         RID rid;
 } KRNLRES;
 

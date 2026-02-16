@@ -318,7 +318,7 @@ uint32_t sysReply(void)
         case RREQ:
         {
                 KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
-                if (Res)
+                if (Res && !Res->Protected)
                 {
                         /**
                          * ResourceHandoverK only works from owner's end.
@@ -359,7 +359,7 @@ uint32_t sysReply(void)
         case RGIVE:
         {
                 KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
-                if (!Res)
+                if (!Res || (Res && Res->Protected))
                         return -1;
                 PROCID Id = {.valid = 1, .num = arg2};
                 Id.valid = schedValidatePid(Id);
@@ -368,31 +368,39 @@ uint32_t sysReply(void)
         }
         case RSIZE:
         {
-                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
                 if (!Res)
                         return -1;
                 return Res->Region.size;
         }
         case RONHEAP:
         {
-                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
                 if (!Res)
                         return -1;
                 return Res->OnHeap;
         }
         case RTYPE:
         {
-                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
                 if (!Res)
                         return -1;
                 return Res->Type;
         }
         case ROWNER:
         {
-                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
                 if (!Res)
                         return -1;
                 return Res->Owner.num;
+        }
+        case RPROT:
+        {
+                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                if (!Res)
+                        return -1;
+                Res->Protected = arg2;
+                return 0;
         }
 
         default:

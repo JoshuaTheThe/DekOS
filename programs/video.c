@@ -45,8 +45,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         r = blit(handle, buf, 1024 * 768 * 4, 1024 * 768 * 4, 0, DIR_WRITE);
         snprintf(msg, 128, " [INFO] result=%d\n", r);
         print(msg);
-        while (true)
-        {}
+        while (getch() != '\n');
         free(buf);
         rgive(handle, 0); /* kernel pid == 0 always */
         return 0;
