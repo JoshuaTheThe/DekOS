@@ -285,7 +285,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 if (fbRes->Owner.num == 0)
                 {
                         mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
-                        sti();
                         display();
                 }
                 sti();
