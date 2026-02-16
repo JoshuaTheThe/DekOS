@@ -439,11 +439,10 @@ uint32_t sysReply(void)
         {
                 int module_handle = arg1;
                 const char *sym_name = (const char *)arg2;
-
                 KRNLRES *res = ResourceGetFromRID(module_handle, FALSE);
                 if (!res || res->Type != RESOURCE_TYPE_MODULE)
                         return -1;
-
+                
                 void *module = res->Region.ptr;
                 void *sym = elfSymbol(module, sym_name);
                 return (uint32_t)sym;
@@ -452,7 +451,7 @@ uint32_t sysReply(void)
         case DUNLOAD:
         {
                 int module_handle = arg1;
-
+                
                 KRNLRES *res = ResourceGetFromRID(module_handle, FALSE);
                 if (!res || res->Type != RESOURCE_TYPE_MODULE)
                         return -1;

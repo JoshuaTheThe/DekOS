@@ -2,13 +2,14 @@
 #include <string.h>
 #include <ini.h>
 
-#define SHELL_KBD_BUFF_SIZE 16
+#define SHELL_KBD_BUFF_SIZE 64
 #define SHELL_MAX_ARGS 8
 
-static char buf[MAX_PATH + 32];
-static char current_dir[MAX_PATH + 32];
-static char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
-static char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
+char buf[MAX_PATH + 32];
+char current_dir[MAX_PATH + 32];
+char keyboard_buffer[SHELL_KBD_BUFF_SIZE];
+char command_buffer[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE];
+char name[32];
 
 static size_t shellParse(char *b, char cmd[SHELL_MAX_ARGS][SHELL_KBD_BUFF_SIZE])
 {
@@ -70,7 +71,6 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
         (void)argc;
         (void)argv;
-        char name[32];
         username(name, 31);
         print("Hello, World!\n");
 
