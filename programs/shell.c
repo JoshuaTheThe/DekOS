@@ -68,6 +68,8 @@ int create(int arg_c, char **arg_v, char *path)
 
 int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
+        (void)argc;
+        (void)argv;
         char name[32];
         username(name, 31);
         print("Hello, World!\n");
@@ -75,32 +77,16 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         snprintf(current_dir, sizeof(current_dir)-1, "users/%s/", name);
         snprintf(buf, sizeof(buf)-1, "users/%s/user.ini", name);
 
-        for (size_t i = 0; i < argc; ++i)
-        {
-                snprintf(buf, sizeof(buf)-1, " [INFO] launched with argument: %s\n", argv[i]);
-                print(buf);
-        }
+        // for (size_t i = 0; i < argc; ++i)
+        // {
+        //         snprintf(buf, sizeof(buf)-1, " [INFO] launched with argument: %s\n", argv[i]);
+        //         print(buf);
+        // }
 
         snprintf(buf, sizeof(buf)-1, " [INFO] launched from: %d\n", ParentProc);
         print(buf);
         snprintf(buf, sizeof(buf)-1, " [INFO] launched by: %d\n", UserID);
         print(buf);
-
-        /**
-         * Removing this causes an issue (literally, what), yes, this currently causes stack corruption, for no reason
-         */
-        // int rid = dlload("users/root/video");
-        // if (rid == -1)
-        // {
-        //         print("could not load video\n");
-        // }
-        // else
-        // {
-        //         void (*_video_start)(int,char **,USERID,PID) = dlfind(rid, "main");
-        //         snprintf(buf, sizeof(buf), " [DEBUG] VIDEO main found at 0x%x\n", _video_start);
-        //         print(buf);
-        //         dlunload(rid);
-        // }
 
         bool running = true;
 
