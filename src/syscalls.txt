@@ -38,3 +38,7 @@
 	RNEW		    @ebx = type, returns the handle
 	RDEL		    @ebx = handle
 	RGIVE		    @ebx = handle, ecx = pid
+        RSIZE               @ebx = handle, returns sizeof data
+        RONHEAP             @ebx = handle, returns whether it is on the heap or not
+        RTYPE               @ebx = handle, returns the type of the resource
+        ROWNER              @ebx = handle, returns the owner of the resource

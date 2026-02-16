@@ -156,4 +156,3 @@ int rgive(int Handle, PID dest)
 {
 	return syscall(RGIVE, Handle, dest, 0, 0, 0);
 }
-

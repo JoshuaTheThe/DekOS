@@ -59,7 +59,11 @@ typedef enum InterruptFunction
 	BLIT,
 	RNEW,
 	RDEL,
-	RGIVE
+	RGIVE,
+        RSIZE,
+        RONHEAP,
+        RTYPE,
+        ROWNER,
 } InterruptFunction_t;
 
 /**
@@ -120,6 +124,26 @@ static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint3
             : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "D"(arg5)
             : "memory");
         return result;
+}
+
+static inline int rsize(int rID)
+{
+        return syscall(RSIZE, rID, 0, 0, 0, 0);
+}
+
+static inline int ronheap(int rID)
+{
+        return syscall(RONHEAP, rID, 0, 0, 0, 0);
+}
+
+static inline int rtype(int rID)
+{
+        return syscall(RTYPE, rID, 0, 0, 0, 0);
+}
+
+static inline PID rowner(int rID)
+{
+        return syscall(ROWNER, rID, 0, 0, 0, 0);
 }
 
 #endif

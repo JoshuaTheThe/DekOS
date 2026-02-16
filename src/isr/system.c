@@ -71,7 +71,7 @@ void sysBreakpoint(void)
         printf("-- Stack Trace --\n");
         for (size_t i = 0; i < 32; ++i)
         {
-                printf(" %x\n", ((uint32_t *)proc->regs.esp)[-i*4]);
+                printf(" %x\n", ((uint32_t *)proc->regs.esp)[-i * 4]);
         }
         proc->active = false;
 }
@@ -143,67 +143,67 @@ uint32_t sysReply(void)
                 return processes[arg1].valid;
         }
 
-	case KILL_PROCESS:
-	{
-		if (arg1 < MAX_PROCS)
-		{
-			schedPid_t p = {1,1};
-			p.num = arg1;
-			schedKillProcess(p);
-		}
-		return 0;
-	}
+        case KILL_PROCESS:
+        {
+                if (arg1 < MAX_PROCS)
+                {
+                        schedPid_t p = {1, 1};
+                        p.num = arg1;
+                        schedKillProcess(p);
+                }
+                return 0;
+        }
 
-	case CREATE_PROCESS:
-	{
-		/* TODO - Allow drive switching by proc */
-		DRIVE *Drive = SMGetDrive();
-		const size_t sz = Drive->FileSize(Drive, (char*)arg1);
-		bool iself = false;
-		void *data = Drive->ReadFile(Drive, (char*)arg1);
-		schedPid_t pid = elfLoadProgram(data, sz, &iself, proc->enactor, arg2, (char**)arg3);
+        case CREATE_PROCESS:
+        {
+                /* TODO - Allow drive switching by proc */
+                DRIVE *Drive = SMGetDrive();
+                const size_t sz = Drive->FileSize(Drive, (char *)arg1);
+                bool iself = false;
+                void *data = Drive->ReadFile(Drive, (char *)arg1);
+                schedPid_t pid = elfLoadProgram(data, sz, &iself, proc->enactor, arg2, (char **)arg3);
                 if (!iself)
                         return -1;
-		return pid.num;
-	}
+                return pid.num;
+        }
 
-	case RESUME_PROCESS:
-	{
-		if (arg1 < MAX_PROCS)
-		{
-			schedPid_t p = {1,1};
-			p.num = arg1;
-			schedResumeProcess(p);
-		}
-		return 0;
-	}
+        case RESUME_PROCESS:
+        {
+                if (arg1 < MAX_PROCS)
+                {
+                        schedPid_t p = {1, 1};
+                        p.num = arg1;
+                        schedResumeProcess(p);
+                }
+                return 0;
+        }
 
-	case SUSPEND_PROCESS:
-	{
-		if (arg1 < MAX_PROCS)
-		{
-			schedPid_t p = {1,1};
-			p.num = arg1;
-			schedSuspendProcess(p);
-		}
-		return 0;
-	}
+        case SUSPEND_PROCESS:
+        {
+                if (arg1 < MAX_PROCS)
+                {
+                        schedPid_t p = {1, 1};
+                        p.num = arg1;
+                        schedSuspendProcess(p);
+                }
+                return 0;
+        }
 
         /**
          * Life without UB and with safety is boring
          */
         case OPEN:
-                return (uintptr_t)FOpen((const char*const)arg1, strnlen((const char*)arg1, MAX_PATH), arg2);
+                return (uintptr_t)FOpen((const char *const)arg1, strnlen((const char *)arg1, MAX_PATH), arg2);
         case CLOSE:
                 FClose((SYSFILE *)arg1);
                 return 0;
 
                 /* write a buffer to the process's tty buffer */
         case WRITE:
-                FWrite((char*)arg1, arg2, arg3, (SYSFILE*)arg4);
+                FWrite((char *)arg1, arg2, arg3, (SYSFILE *)arg4);
                 break;
         case READ:
-                FRead((char*)arg1, arg2, arg3, (SYSFILE*)arg4);
+                FRead((char *)arg1, arg2, arg3, (SYSFILE *)arg4);
                 break;
         case GETCH:
                 return ps2_keyboard_fetch(NULL);
@@ -304,57 +304,85 @@ uint32_t sysReply(void)
                 free((void *)arg1);
                 return 0;
         case USERNAME:
+        {
+                char *buf = (char *)arg1;
+                size_t bufl = arg2;
+
+                UserName(buf, bufl, proc->enactor);
+                return (uintptr_t)buf;
+        }
+        break;
+        case TICKS:
+                return tick_counter;
+
+        case RREQ:
+        {
+                KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
+                if (Res)
                 {
-                        char *buf = (char*)arg1;
-                        size_t bufl = arg2;
-
-                        UserName(buf, bufl, proc->enactor);
-                        return (uintptr_t)buf;
+                        /**
+                         * ResourceHandoverK only works from owner's end.
+                         * */
+                        Res->Owner = pid;
+                        return Res->rid;
                 }
-                break;
-	case TICKS:
-		return tick_counter;
 
-
-	case RREQ:
-		{
-			KRNLRES *Res = ResourceGetFromRID(arg1, TRUE);
-			if (Res){
-				/**
-				 * ResourceHandoverK only works from owner's end.
-				 * */
-				Res->Owner = pid;
-				return Res->rid;
-			}
-
-			return -1;
-		}
-		return -1;
-	case BLIT:
-		/* blit(rid,buf,bufsz,off,cpysz) */
-		{
-			KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
-			return ResourceBlitK(Res,
-					(RAWPTR)arg2,
-					(SIZE)arg3,
-					(SIZE)arg4,
-					(SIZE)arg5);
-		}
-		return -1;
-	case RNEW:
-		return -1;
-	case RDEL:
-		return -1;
-	case RGIVE:
-		{
-			KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
-			if (!Res)
-				return -1;
-			PROCID Id = {.valid = 1, .num = arg2};
-			Id.valid = schedValidatePid(Id);
-			ResourceHandoverK(Res, Id);
-			return 0;
-		}
+                return -1;
+        }
+                return -1;
+        case BLIT:
+                /* blit(rid,buf,bufsz,off,cpysz) */
+                {
+                        KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                        return ResourceBlitK(Res,
+                                             (RAWPTR)arg2,
+                                             (SIZE)arg3,
+                                             (SIZE)arg4,
+                                             (SIZE)arg5);
+                }
+                return -1;
+        case RNEW:
+                return -1;
+        case RDEL:
+                return -1;
+        case RGIVE:
+        {
+                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                if (!Res)
+                        return -1;
+                PROCID Id = {.valid = 1, .num = arg2};
+                Id.valid = schedValidatePid(Id);
+                ResourceHandoverK(Res, Id);
+                return 0;
+        }
+        case RSIZE:
+        {
+                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                if (!Res)
+                        return -1;
+                return Res->Region.size;
+        }
+        case RONHEAP:
+        {
+                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                if (!Res)
+                        return -1;
+                return Res->OnHeap;
+        }
+        case RTYPE:
+        {
+                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                if (!Res)
+                        return -1;
+                return Res->Type;
+        }
+        case ROWNER:
+        {
+                KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                if (!Res)
+                        return -1;
+                return Res->Owner.num;
+        }
 
         default:
                 return -1;
@@ -373,4 +401,3 @@ uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint
             : "memory");
         return result;
 }
-
