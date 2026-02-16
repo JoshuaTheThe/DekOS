@@ -17,7 +17,7 @@
 #define MAX_PATH 128
 
 typedef uint32_t USERID;
-typedef uint32_t PID;
+typedef int32_t PID;
 
 typedef enum InterruptFunction
 {
@@ -291,7 +291,7 @@ static inline int rgive(int Handle, PID dest)
 
 static inline int rprot(int Handle, bool Protected)
 {
-	return syscall(RPROT, Protected, 0, 0, 0, 0);
+	return syscall(RPROT, Handle, Protected, 0, 0, 0);
 }
 
 static inline int dlload(const char *path)

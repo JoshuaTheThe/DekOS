@@ -4,6 +4,10 @@
 
 int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
+        (void)UserID;
+        (void)ParentProc;
+        (void)argc;
+        (void)argv;
         int rid = rreq(0); /* ResourceID of the frame buffer */
         if (rid == -1)
         {

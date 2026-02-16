@@ -4,7 +4,7 @@ BA      := ba
 
 CFLAGS  := -m32 -march=i386 -I. -I./API \
            -ffreestanding -msoft-float -fno-builtin \
-           -Wall -Wextra -Os
+           -Wall -Wextra -Os -Wall -Wextra -Werror
 
 LDFLAGS := -m elf_i386 -nostdlib --whole-archive
 

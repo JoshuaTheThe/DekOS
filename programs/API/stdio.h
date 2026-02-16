@@ -12,5 +12,6 @@
 
 int vsnprintf(char *str, size_t size, const char *fmt, va_list args);
 int snprintf(char *str, size_t size, const char *fmt, ...);
+int gets(char *b, int max);
 
 #endif
