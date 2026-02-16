@@ -137,12 +137,24 @@ static inline uint32_t syscall(uint32_t num, uint32_t arg1, uint32_t arg2, uint3
 {
         uint32_t result;
         __asm("cli;");
+        __asm("pushl %ebx");
+        __asm("pushl %ecx");
+        __asm("pushl %edx");
+        __asm("pushl %esi");
+        __asm("pushl %edi");
+        __asm("pushl %ebp");
         asm volatile(
             "int $0x80"
             : "=a"(result)
             : "a"(num), "b"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "D"(arg5)
             : "memory");
         __asm("sti;");
+        __asm("popl %ebp");
+        __asm("popl %edi");
+        __asm("popl %esi");
+        __asm("popl %edx");
+        __asm("popl %ecx");
+        __asm("popl %ebx");
         return result;
 }
 

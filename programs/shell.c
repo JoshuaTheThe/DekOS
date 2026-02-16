@@ -72,7 +72,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         username(name, 31);
         print("Hello, World!\n");
 
-        snprintf(current_dir, sizeof(buf), "users/%s/", name);
+        snprintf(current_dir, sizeof(current_dir), "users/%s/", name);
         snprintf(buf, sizeof(buf), "users/%s/user.ini", name);
 
         for (size_t i = 0; i < argc; ++i)
@@ -88,7 +88,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         print(buf);
 
         /**
-         * Removing this causes a crash (literally, what), yes, this currently causes crash, for no reason
+         * Removing this causes an issue (literally, what), yes, this currently causes stack corruption, for no reason
          */
         // int rid = dlload("users/root/video");
         // if (rid == -1)
