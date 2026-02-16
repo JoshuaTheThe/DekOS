@@ -146,7 +146,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 
         // setframebuffer(framebuffer);
         // setfont(&cascadia); /* bitmap */
-        RenderSetFont(&cascadia);
+        cascadia = &font_8x8;
+        RenderSetFont(&font_8x8);
         FeaturesInit();
         gdtInit();
         idtInit();
@@ -157,7 +158,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         init_parallel_ports();
         SerialPrint("--DekOS--\r\nHello, World!\r\n");
 
-        cli();
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
         printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",
                sizeof(KRNLRES), offsetof(KRNLRES, rid));
@@ -227,12 +227,18 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         {
                 const char *_tty_bg = IniGet(Saved, "tty_bg");
                 const char *_tty_fg = IniGet(Saved, "tty_fg");
+                const char *font = IniGet(Saved, "font");
                 extern uint32_t tty_bg;
                 extern uint32_t tty_fg;
                 if (_tty_bg)
                         tty_bg = strthex(_tty_bg);
                 if (_tty_fg)
                         tty_fg = strthex(_tty_fg);
+                if (font)
+                {
+                        cascadia = FontLoad(font);
+                        RenderSetFont(cascadia);
+                }
         }
         UsersLoad();
         USERID User = UserLogin();

@@ -44,7 +44,7 @@ void idtDefault(int code, int eip, int cs)
         }
 
         RenderGetDim(iDim);
-        RenderSetFont(&cascadia);
+        RenderSetFont(cascadia);
 
         memsetdw(fbRes->Region.ptr, rgb(0, 0, 128), iDim[0] * iDim[1]);
         uint32_t px, py;

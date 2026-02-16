@@ -15,6 +15,7 @@ def convert_bitmap_to_font(image_path, char_width, char_height, bpp, first_char=
         # Open image with transparency (RGBA)
         img = Image.open(image_path).convert('RGBA')
         pixels = np.array(img)
+        img.show()
         
         print(f"Image size: {img.width}x{img.height}")
         print(f"Character size: {char_width}x{char_height}")
@@ -53,6 +54,7 @@ def convert_bitmap_to_font(image_path, char_width, char_height, bpp, first_char=
                         # Get RGBA pixel
                         r, g, b, a = pixels[y_start + y, x_start + x]
                         # Use alpha channel to determine visibility
+                        # Typically: high alpha = visible (1), low alpha = background (0)
                         bit_value = 1 if a > 128 else 0
                         # Pack into byte (MSB first)
                         packed_value |= (bit_value << (7 - (x % 8)))
@@ -71,6 +73,7 @@ def convert_bitmap_to_font(image_path, char_width, char_height, bpp, first_char=
                         # Get RGBA pixel
                         r, g, b, a = pixels[y_start + y, x_start + x]
                         # Convert alpha to 2-bit value (0-3)
+                        # Map alpha range (0-255) to 2-bit range (0-3)
                         bit_value = min(3, a // 64)  # 0-63=0, 64-127=1, 128-191=2, 192-255=3
                         
                         # Pack into byte (2 bits per pixel, MSB first)
@@ -116,64 +119,70 @@ def convert_bitmap_to_font(image_path, char_width, char_height, bpp, first_char=
                 'bytes_per_row': len(char_bytes) // char_height
             })
         
-        return output_data, total_chars, last_char, char_metadata, img.width, img.height, chars_per_row, chars_per_col
+        return output_data, total_chars, last_char, char_metadata
         
     except Exception as e:
         print(f"Error converting font: {e}")
         import traceback
         traceback.print_exc()
-        return None, 0, 0, [], 0, 0, 0, 0
+        return None, 0, 0, []
 
-def generate_ft_code(bitmap_data, font_name, char_width, char_height, first_char, last_char, bpp, 
-                     image_width, image_height, chars_per_row, chars_per_col, metadata):
-    """Generate font compiler (.ft) source code from the converted font data"""
+def generate_c_code(bitmap_data, font_name, char_width, char_height, first_char, last_char, bpp, metadata):
+    """Generate C source code from the converted font data"""
     
     # Calculate bytes per character and bytes per row
     pixels_per_byte = 8 // bpp
     bytes_per_row = (char_width + pixels_per_byte - 1) // pixels_per_byte
     bytes_per_char = bytes_per_row * char_height
     
-    ft_code = f"""# {font_name} font definition
-# Generated from bitmap: {image_width}x{image_height}
-# Layout: {chars_per_row}x{chars_per_col} characters
-# Format: {char_width}x{char_height}, {bpp}bpp
-# Character range: {first_char} ('{chr(first_char) if first_char >= 32 else ' '}') to {last_char} ('{chr(last_char) if last_char >= 32 else ' '}')
-# Total data: {len(bitmap_data)} bytes, {bytes_per_char} bytes per character
+    c_code = f"""#include "fonts.h"
+#include <stdint.h>
 
-FONTNAME "{font_name}"
-CHARW {char_width}
-CHARH {char_height}
-FIRST {first_char}
-LAST {last_char}
-BPP {bpp}
+/* Converted {font_name} font - {char_width}x{char_height}, {bpp}bpp */
+/* Characters: {first_char} ('{chr(first_char) if first_char >= 32 else ' '}') to {last_char} ('{chr(last_char) if last_char >= 32 else ' '}') */
+/* Total data: {len(bitmap_data)} bytes, {bytes_per_char} bytes per character */
+/* Packing: {pixels_per_byte} pixels per byte */
+/* Source: Transparency-based font bitmap */
 
-FONTDATA = [
+static uint8_t {font_name.lower()}Bitmap[] = {{
 """
     
     # Format the data with 16 values per line for readability
     for i in range(0, len(bitmap_data), 16):
-        hex_values = [f"0x{val:02X}" for val in bitmap_data[i:i+16]]
-        line = "    " + ",".join(hex_values)
-        if i + 16 < len(bitmap_data):
-            line += ","
-        ft_code += line + "\n"
+        line = "    " + ", ".join(f"0x{val:02X}" for val in bitmap_data[i:i+16])
+        c_code += line + ",\n"
     
-    ft_code += "]\n\n"
+    # Remove trailing comma if present
+    if c_code.endswith(",\n"):
+        c_code = c_code[:-2] + "\n"
     
-    # Add comments with character map for reference
-    ft_code += "# Character map:\n"
+    c_code += """};
+
+font_t timesNewRoman = {
+    .font_name = \"""" + font_name + """\",
+    .font_bitmap = """ + font_name.lower() + """Bitmap,
+    .char_width = """ + str(char_width) + """,
+    .char_height = """ + str(char_height) + """,
+    .first_char = """ + str(first_char) + """,
+    .last_char = """ + str(last_char) + """,
+    .bpp = """ + str(bpp) + """
+};
+
+"""
+
+    # Add character map for reference
+    c_code += "/* Character map:\n"
     chars_per_line = 16
     for i in range(0, len(metadata), chars_per_line):
         line_chars = metadata[i:i+chars_per_line]
-        line = "# "
+        line = "   "
         for meta in line_chars:
             if meta['ascii'] >= 32 and meta['ascii'] <= 126:
                 line += f" {meta['ascii']:3d}('{meta['char']}')"
-        ft_code += line + "\n"
+        c_code += line + "\n"
+    c_code += "*/\n"
     
-    ft_code += "\nEND\n"
-    
-    return ft_code
+    return c_code
 
 def print_character_preview(metadata, char_width, char_height, bpp, first_char, sample_chars="ABC123"):
     """Print a visual preview of sample characters"""
@@ -230,12 +239,10 @@ def print_character_preview(metadata, char_width, char_height, bpp, first_char, 
             print(f"  {pixel_row}")
 
 def main():
-    if len(sys.argv) not in [5, 6, 7]:
-        print("Usage: python convert_font.py <image_file> <char_width> <char_height> <bpp> [first_char] [font_name]")
+    if len(sys.argv) not in [5, 6]:
+        print("Usage: python convert_font.py <image_file> <char_width> <char_height> <bpp> [first_char]")
         print("  bpp: 1 (monochrome), 2 (4 levels), or 4 (16 levels)")
-        print("  first_char: ASCII code of first character (default: 32)")
-        print("  font_name: Name of the font (default: based on image filename)")
-        print("Example: python convert_font.py cascadia.png 8 16 4 32 CascadiaMono")
+        print("Example: python convert_font.py times_new_roman.bmp 8 12 2 32")
         return
     
     image_file = sys.argv[1]
@@ -243,7 +250,6 @@ def main():
     char_height = int(sys.argv[3])
     bpp = int(sys.argv[4])
     first_char = int(sys.argv[5]) if len(sys.argv) > 5 else 32
-    font_name = sys.argv[6] if len(sys.argv) > 6 else os.path.splitext(os.path.basename(image_file))[0]
     
     if bpp not in [1, 2, 4]:
         print("Error: bpp must be 1, 2, or 4")
@@ -254,29 +260,23 @@ def main():
         return
     
     print(f"Converting {image_file} to {bpp}bpp font (using transparency)...")
-    result = convert_bitmap_to_font(
+    bitmap_data, total_chars, last_char, metadata = convert_bitmap_to_font(
         image_file, char_width, char_height, bpp, first_char
     )
     
-    if result[0] is None:
+    if bitmap_data is None:
         return
-    
-    bitmap_data, total_chars, last_char, metadata, img_width, img_height, chars_per_row, chars_per_col = result
     
     print(f"Generated {len(bitmap_data)} uint8_t bytes ({total_chars} characters)")
     
-    # Generate font compiler (.ft) code
-    ft_code = generate_ft_code(
-        bitmap_data, font_name, char_width, char_height, 
-        first_char, last_char, bpp,
-        img_width, img_height, chars_per_row, chars_per_col,
-        metadata
-    )
+    # Generate C code
+    c_code = generate_c_code(bitmap_data, "TimesNewRoman", char_width, char_height, 
+                           first_char, last_char, bpp, metadata)
     
-    # Write to .ft file
-    output_file = f"{font_name.lower()}.ft"
+    # Write to file
+    output_file = "converted_font.c"
     with open(output_file, "w") as f:
-        f.write(ft_code)
+        f.write(c_code)
     
     print(f"Conversion complete! Output written to {output_file}")
     
