@@ -17,7 +17,7 @@ $(eval $(call DEFAULT_VAR,KCC,$(DEFAULT_KCC)))
 override DEFAULT_KLD := ld
 $(eval $(call DEFAULT_VAR,KLD,$(DEFAULT_KLD)))
 
-override DEFAULT_KCFLAGS := -pipe -Wall -Wextra -c -O0 -fno-omit-frame-pointer
+override DEFAULT_KCFLAGS := -pipe -Wall -Wextra -c -O0 -g
 $(eval $(call DEFAULT_VAR,KCFLAGS,$(DEFAULT_KCFLAGS)))
 
 override DEFAULT_KCPPFLAGS :=
@@ -39,7 +39,6 @@ override KCFLAGS += \
     -Werror \
     -mcmodel=kernel \
     -O0 \
-    -fno-omit-frame-pointer \
     -fstack-protector-strong \
     -fstack-check \
     -mstack-protector-guard=global
