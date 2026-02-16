@@ -147,6 +147,53 @@ RESULT ResourceBlitK(KRNLRES *rpResource,
 }
 
 /**
+ * ResourceRBlit - read a buffer from the resource.
+ */
+RESULT ResourceRBlitK(KRNLRES *rpResource,
+                     RAWPTR rBuffer,
+                     SIZE szBufferSize,
+                     SIZE szCopy,
+                     SIZE szOffset)
+{
+        PROCID pdSelf = schedGetCurrentPid();
+
+        /**
+         * Null Check.
+         */
+        if (!rpResource || !rBuffer || !szBufferSize)
+        {
+                return RESULT_INVALID_ARGUMENTS;
+        }
+
+        /**
+         * Ownership Check.
+         */
+        if (rpResource->Owner.num != pdSelf.num)
+        {
+                return RESULT_PERMISSIONS_ERROR;
+        }
+
+        /**
+         * Integrity Check.
+         */
+        if ((uintptr_t)rpResource->Region.ptr > _heap_end && rpResource->OnHeap)
+        {
+                return RESULT_CORRUPTED;
+        }
+
+        /**
+         * Bounding Checks
+         */
+        if (szBufferSize < szCopy || (rpResource->Region.size - szOffset) < szCopy)
+        {
+                return RESULT_BOUNDING_OVERFLOW;
+        }
+
+        memcpy(rBuffer, (uint8_t *)rpResource->Region.ptr + szOffset, szCopy);
+        return RESULT_OK;
+}
+
+/**
  * ResourceReleaseK - give a resource to the kernel, and mark as unused.
  */
 RESULT ResourceReleaseK(KRNLRES *rpResource)

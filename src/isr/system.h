@@ -46,6 +46,7 @@ typedef enum InterruptFunction
 
         RREQ = 0x40,
         BLIT,
+        RBLIT,
         RNEW,
         RDEL,
         RGIVE,

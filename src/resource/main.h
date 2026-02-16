@@ -120,6 +120,11 @@ RESULT ResourceBlitK(KRNLRES *rpResource,
                      SIZE szBufferSize,
                      SIZE szCopy,
                      SIZE szOffset);
+RESULT ResourceRBlitK(KRNLRES *rpResource,
+                     RAWPTR rBuffer,
+                     SIZE szBufferSize,
+                     SIZE szCopy,
+                     SIZE szOffset);
 
 extern RID counter;
 

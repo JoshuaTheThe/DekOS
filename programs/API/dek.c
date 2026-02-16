@@ -136,9 +136,9 @@ int blit(int Handle,
 	 char *buf,
 	 size_t szbuf,
 	 size_t bytes_to_copy,
-	 size_t off)
+	 size_t off, bool Direction)
 {
-	return syscall(BLIT,
+	return syscall(BLIT + Direction,
 		Handle, (size_t)buf, szbuf, bytes_to_copy, off);
 }
 

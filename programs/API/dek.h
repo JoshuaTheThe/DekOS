@@ -11,6 +11,9 @@
 #define FILE_WRITABLE (0x04)
 #define FILE_EXECUTABLE (0x08)
 
+#define DIR_WRITE (0x00)
+#define DIR_READ (0x01)
+
 #define MAX_PATH 256
 
 typedef uint32_t USERID;
@@ -57,6 +60,7 @@ typedef enum InterruptFunction
 
 	RREQ = 0x40,
 	BLIT,
+        RBLIT,
 	RNEW,
 	RDEL,
 	RGIVE,
@@ -110,7 +114,7 @@ void *malloc(int);
 void free(void *);
 
 int rreq(int);
-int blit(int,char*,size_t,size_t,size_t);
+int blit(int,char*,size_t,size_t,size_t,bool);
 int rnew(int);
 int rdel(int);
 int rgive(int,PID);

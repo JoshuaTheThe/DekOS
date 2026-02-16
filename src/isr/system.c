@@ -341,6 +341,17 @@ uint32_t sysReply(void)
                                              (SIZE)arg5);
                 }
                 return -1;
+        case RBLIT:
+                /* rblit(rid,buf,bufsz,off,cpysz) */
+                {
+                        KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
+                        return ResourceRBlitK(Res,
+                                             (RAWPTR)arg2,
+                                             (SIZE)arg3,
+                                             (SIZE)arg4,
+                                             (SIZE)arg5);
+                }
+                return -1;
         case RNEW:
                 return -1;
         case RDEL:

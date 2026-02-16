@@ -29,7 +29,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         	 * size_t bytes_to_copy,
         	 * size_t off)
                  */
-                r=blit(handle, buf, 1024*4, 1024*4, 1024*4*y);
+                r=blit(handle, buf, 1024*4, 1024*4, 1024*4*y, DIR_WRITE);
                 snprintf(msg,128," [INFO] result=%d\n", r);
                 print(msg);
         }
