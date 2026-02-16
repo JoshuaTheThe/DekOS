@@ -167,3 +167,19 @@ void print(const char *s)
         for (unsigned int i = 0; s[i]; ++i)
                 putch(s[i]);
 }
+
+int dlload(const char *path)
+{
+	return syscall(DLOAD, (uintptr_t)path, 0, 0, 0, 0);
+}
+
+int dlfind(int RID, const char *sym)
+{
+	return syscall(DFIND, RID, (uintptr_t)sym, 0, 0, 0);
+}
+
+int dlunload(int RID)
+{
+	return syscall(DUNLOAD, RID, 0, 0, 0, 0);
+}
+

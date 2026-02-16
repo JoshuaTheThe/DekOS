@@ -44,3 +44,8 @@
         RTYPE               @ebx = handle, returns the type of the resource
         ROWNER              @ebx = handle, returns the owner of the resource
         RPROTECT            @ebx = handle, ecx = mask
+
+0x50-0x5F: # Dynamic Loading / Modules
+        DLOAD               @ebx = path, ecx = flags, returns module handle (RID)
+        DFIND               @ebx = module_handle, ecx = symbol_name, returns symbol address
+        DUNLOAD             @ebx = module_handle

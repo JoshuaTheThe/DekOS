@@ -161,6 +161,16 @@ typedef struct
         uint32_t p_align;
 } elf32ProgramHeader_t;
 
+/**
+ * elfSymbolExtern - register external symbols for ELF loading
+ * This lets you provide symbols from kernel or other modules
+ */
+typedef struct
+{
+        const char *name;
+        void *addr;
+} elf_extern_symbol_t;
+
 bool elfCheckFile(elf32EHeader_t *hdr);
 bool elfCheckSupported(elf32EHeader_t *hdr);
 void *elfLoadRel(elf32EHeader_t *hdr);
@@ -174,5 +184,9 @@ int elfGetSymbolExternal(elf32EHeader_t *hdr, int table, uint32_t idx, const elf
 int elfLoadStageOne(elf32EHeader_t *hdr);
 int elfLoadStageTwo(elf32EHeader_t *hdr);
 schedPid_t elfLoadProgram(uint8_t *file, size_t file_size, bool *iself, USERID User, int argc, char **argv);
+void *elfLoadNoRun(uint8_t *file, size_t file_size);
+void *elfSymbol(void *module, const char *name);
+void *elfLookupSymbol(const char *const name);
+void elfRegisterExternSymbol(const char *name, void *addr);
 
 #endif

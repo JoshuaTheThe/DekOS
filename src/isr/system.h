@@ -55,6 +55,11 @@ typedef enum InterruptFunction
         RTYPE,
         ROWNER,
         RPROT,
+
+        /** .. */
+        DLOAD = 0x50,
+        DFIND,
+        DUNLOAD,
 } InterruptFunction_t;
 
 /* System Call Function Prototypes */

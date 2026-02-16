@@ -418,6 +418,53 @@ uint32_t sysReply(void)
                 return 0;
         }
 
+        case DLOAD:
+        {
+                char *path = (char *)arg1;
+                SYSFILE *file = FOpen(path, strnlen(path, MAX_PATH), FILE_READABLE | FILE_PRESENT | FILE_EXECUTABLE);
+                if (!file)
+                        return -1;
+
+                void *elf_data = malloc(file->size);
+                FRead(elf_data, 1, file->size, file);
+                FClose(file);
+
+                void *loaded_module = elfLoadNoRun(elf_data, file->size);
+                free(elf_data);
+                if (!loaded_module)
+                        return -1;
+                KRNLRES *res = ResourceCreateK(NULL, RESOURCE_TYPE_MODULE, file->size, pid, NULL);
+                res->Region.ptr = loaded_module;
+                res->Region.size = file->size;
+                res->Protected = TRUE;
+                return res->rid;
+        }
+
+        case DFIND:
+        {
+                int module_handle = arg1;
+                const char *sym_name = (const char *)arg2;
+
+                KRNLRES *res = ResourceGetFromRID(module_handle, FALSE);
+                if (!res || res->Type != RESOURCE_TYPE_MODULE)
+                        return -1;
+
+                void *module = res->Region.ptr;
+                void *sym = elfSymbol(module, sym_name);
+                return (uint32_t)sym;
+        }
+
+        case DUNLOAD:
+        {
+                int module_handle = arg1;
+
+                KRNLRES *res = ResourceGetFromRID(module_handle, FALSE);
+                if (!res || res->Type != RESOURCE_TYPE_MODULE)
+                        return -1;
+                free(res->Region.ptr);
+                return ResourceReleaseK(res);
+        }
+
         default:
                 return -1;
                 break;
