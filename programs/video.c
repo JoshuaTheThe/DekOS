@@ -10,8 +10,9 @@ void print(const char *s)
 
 int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
-        int handle = rreq(0); /* ResourceID of the frame buffer */
-        if (handle == -1)
+        int rid = rreq(0); /* ResourceID of the frame buffer */
+        rprot(rid, true);
+        if (rid == -1)
         {
                 print("could not grab frame buffer\n");
                 return -1;
@@ -20,7 +21,7 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         char *buf = malloc(1024 * 768 * 4), msg[128], r;
         if (!buf)
         {
-                rgive(handle, 0); /* kernel pid == 0 always */
+                rgive(rid, 0); /* kernel pid == 0 always */
                 print("could not allocate buffer\n");
                 return -1;
         }
@@ -35,18 +36,19 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
                 }
         }
         /**
-         * int blit(int Handle,
+         * int blit(int rid,
          * char *buf,
          * size_t szbuf,
          * size_t bytes_to_copy,
          * size_t off)
          * bool Dir
          */
-        r = blit(handle, buf, 1024 * 768 * 4, 1024 * 768 * 4, 0, DIR_WRITE);
+        r = blit(rid, buf, 1024 * 768 * 4, 1024 * 768 * 4, 0, DIR_WRITE);
         snprintf(msg, 128, " [INFO] result=%d\n", r);
         print(msg);
         while (getch() != '\n');
         free(buf);
-        rgive(handle, 0); /* kernel pid == 0 always */
+        rprot(rid, false);
+        rgive(rid, 0); /* kernel pid == 0 always */
         return 0;
 }
