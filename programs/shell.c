@@ -88,19 +88,6 @@ int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
         snprintf(buf, sizeof(buf), " [INFO] launched by: %d\n", UserID);
         print(buf);
 
-        int rid = dlload("users/root/video");
-        if (rid == -1)
-        {
-                print("could not load video\n");
-        }
-        else
-        {
-                void (*_video_start)(int,char **,USERID,PID) = dlfind(rid, "main");
-                snprintf(buf, sizeof(buf), " [DEBUG] VIDEO main found at 0x%x\n", _video_start);
-                print(buf);
-                dlunload(rid);
-        }
-
         bool running = true;
 
         while (running)
