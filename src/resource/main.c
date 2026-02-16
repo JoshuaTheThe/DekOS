@@ -129,7 +129,7 @@ RESULT ResourceBlitK(KRNLRES *rpResource,
         /**
          * Integrity Check.
          */
-        if ((uintptr_t)rpResource->Region.ptr > _heap_end)
+        if ((uintptr_t)rpResource->Region.ptr > _heap_end && rpResource->OnHeap)
         {
                 return RESULT_CORRUPTED;
         }
