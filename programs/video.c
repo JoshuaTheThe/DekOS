@@ -11,13 +11,13 @@ void print(const char *s)
 int main(uint32_t argc, char **argv, USERID UserID, PID ParentProc)
 {
         int rid = rreq(0); /* ResourceID of the frame buffer */
-        rprot(rid, true);
         if (rid == -1)
         {
                 print("could not grab frame buffer\n");
                 return -1;
         }
 
+        rprot(rid, true);
         char *buf = malloc(1024 * 768 * 4), msg[128], r;
         if (!buf)
         {
