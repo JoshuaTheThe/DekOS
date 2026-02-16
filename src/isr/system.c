@@ -346,16 +346,31 @@ uint32_t sysReply(void)
                 {
                         KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
                         return ResourceRBlitK(Res,
-                                             (RAWPTR)arg2,
-                                             (SIZE)arg3,
-                                             (SIZE)arg4,
-                                             (SIZE)arg5);
+                                              (RAWPTR)arg2,
+                                              (SIZE)arg3,
+                                              (SIZE)arg4,
+                                              (SIZE)arg5);
                 }
                 return -1;
         case RNEW:
-                return -1;
+        {
+                RESTYPE type = (RESTYPE)arg1;
+                PROCID self = schedGetCurrentPid();
+
+                KRNLRES *res = ResourceCreateK(NULL, type, arg2, self, NULL);
+                if (!res)
+                        return -1;
+
+                return res->rid;
+        }
         case RDEL:
-                return -1;
+        {
+                RID rid = (RID)arg1;
+                KRNLRES *res = ResourceGetFromRID(rid, FALSE);
+                if (!res)
+                        return -1;
+                return ResourceReleaseK(res);
+        }
         case RGIVE:
         {
                 KRNLRES *Res = ResourceGetFromRID(arg1, FALSE);
