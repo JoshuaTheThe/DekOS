@@ -47,11 +47,12 @@ all: $(ELFS) copy
 	$(LD) $(LDFLAGS) -o $@ $(LIBOBJS) $<
 
 copy: 
-	# Copy shell.elf to system directory
-	cp shell.elf $(SYSTEM_DIR) -f
-	# Copy all other ELFs to user directory
+	# Copy shell.elf to system directory as "shell"
+	cp shell.elf $(SYSTEM_DIR)/shell -f
+	# Copy all other ELFs to user directory without .elf extension
 	for elf in $(filter-out shell.elf, $(ELFS)); do \
-		cp $$elf $(USER_DIR) -f; \
+		target=$(USER_DIR)/$${elf%.elf}; \
+		cp $$elf $$target -f; \
 	done
 
 clean:
