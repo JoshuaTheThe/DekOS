@@ -326,35 +326,45 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 
         while (true)
         {
-                cli();
-                if (!schedValidatePid(pid))
+                static uint64_t last_cleanup = 0;
+                const uint64_t now = tick_counter;
+                const uint64_t cleanup_interval = 1000;
+                if (now - last_cleanup > cleanup_interval)
                 {
-                        break;
-                }
-
-                for (int i = 0; i < MAX_PROCS; ++i)
-                {
-                        if (processes[i].delete)
+                        if (!schedValidatePid(pid))
                         {
-                                deleteTask(i);
+                                cli();
+                                break;
                         }
+
+                        for (int i = 0; i < MAX_PROCS; ++i)
+                        {
+                                if (processes[i].delete)
+                                {
+                                        cli();
+                                        deleteTask(i);
+                                        sti();
+                                }
+                        }
+
+                        last_cleanup = now;
                 }
 
+                cli();
                 mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
+                sti();
                 if (fbRes->Owner.num == 0)
                 {
                         ResourceHandoverK(fbRes, Wm);
                 }
-                ((WINDOW *)(Window->Region.ptr))->RequiresRedraw = TRUE;
-                sti();
+                ((WINDOW *)(Window->Region.ptr))->RequiresRedraw = redraw;
                 hlt();
         }
 
+        cli();
         outw(0xB004, 0x2000);
         outw(0x604, 0x2000);
         outw(0x4004, 0x3400);
-
-        asm volatile("cli");
 
         outb(0x20, 0x11);
         outb(0xA0, 0x11);

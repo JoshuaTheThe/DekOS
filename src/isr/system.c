@@ -7,7 +7,6 @@
 
 bool tty_needs_flushing = false;
 extern schedProcess_t processes[];
-extern int tick_counter;
 
 extern void jumpToProc();
 extern volatile DWORD mx, my, pmx, pmy, mbuttons;

@@ -380,7 +380,8 @@ void WMIterate(void)
                 WMAction(FocusedWindow);
         }
 
-        ResourceBlitK(fbRes, BackBuffer->Region.ptr, BackBuffer->Region.size, BackBuffer->Region.size, 0);
+        if (fbRes->Owner.num == schedGetCurrentPid().num)
+                ResourceBlitK(fbRes, BackBuffer->Region.ptr, BackBuffer->Region.size, BackBuffer->Region.size, 0);
 }
 
 /**

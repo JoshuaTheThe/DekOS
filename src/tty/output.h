@@ -17,4 +17,6 @@ int snprintf(char *str, size_t size, const char *fmt, ...);
 void printf(const char *fmt, ...);
 void clear(void);
 
+extern bool redraw;
+
 #endif

@@ -103,4 +103,6 @@ schedPid_t schedGetKernelPid(void);
 bool schedValidatePid(schedPid_t prId);
 schedProcess_t *schedGetProcessN(schedPid_t Pid);
 
+extern uint32_t tick_counter;
+
 #endif
