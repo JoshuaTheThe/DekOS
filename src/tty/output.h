@@ -2,7 +2,7 @@
 #define TTY_OUT
 
 #define TTY_W (80)
-#define TTY_H (21)
+#define TTY_H (20)
 #define TAB_SIZE 8
 
 #include <utils.h>
