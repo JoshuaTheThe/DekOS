@@ -1,6 +1,6 @@
 #include <wm/gdi.h>
 
-extern KRNLRES *fbRes;
+extern KRNLRES *BackBuffer;
 
 DWORD Colour;
 
@@ -11,6 +11,11 @@ BOOL InColourFunction=FALSE;
 RGBA ColourRGB(BYTE R, BYTE G, BYTE B)
 {
         return (RGBA){.R = R, .G = G, .B = B, .A = 255};
+}
+
+RGBA ColourRGBD(DWORD RGB)
+{
+        return (RGBA){.R = (RGB >> 16) & 255, .G = (RGB >> 8) & 255, .B = (RGB) & 255, .A = (RGB >> 24) & 255};
 }
 
 DWORD ColourDword(RGBA Col)
@@ -37,13 +42,13 @@ void SetPixel(DWORD X, DWORD Y, RGBA Col)
 {
         static DWORD Dim[3] = {(DWORD)-1};
         DWORD Colour = ColourDword(Col);
-        if (fbRes->Owner.num != schedGetCurrentPid().num)
+        if (BackBuffer->Owner.num != schedGetCurrentPid().num)
                 return;
         if (Dim[0] == (DWORD)-1)
                 RenderGetDim((int*)Dim);
         if (X > Dim[0] || Y > Dim[1])
                 return;
-        ((DWORD *)fbRes->Region.ptr)[(Y)*Dim[0] + (X)] = Colour;
+        ((DWORD *)BackBuffer->Region.ptr)[(Y)*Dim[0] + (X)] = Colour;
 }
 
 /**
@@ -51,7 +56,7 @@ void SetPixel(DWORD X, DWORD Y, RGBA Col)
  */
 void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H)
 {
-        if (fbRes->Owner.num != schedGetCurrentPid().num)
+        if (BackBuffer->Owner.num != schedGetCurrentPid().num)
                 return;
         DWORD Dim[3];
         RenderGetDim((int*)Dim);
@@ -72,7 +77,7 @@ void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H)
                                 ColourFunction(Xo, Yo);
                                 InColourFunction = FALSE;
                         }
-                        ((DWORD *)fbRes->Region.ptr)[(Y + Yo) * Dim[0] + (X + Xo)] = Colour;
+                        ((DWORD *)BackBuffer->Region.ptr)[(Y + Yo) * Dim[0] + (X + Xo)] = Colour;
                 }
         }
 }
@@ -105,7 +110,7 @@ void GDIBorderedRect(RGBA Outer, RGBA Inner, RGBA Border, DWORD X, DWORD Y, DWOR
  */
 void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2)
 {
-        if (fbRes->Owner.num != schedGetCurrentPid().num)
+        if (BackBuffer->Owner.num != schedGetCurrentPid().num)
                 return;
 
         DWORD Dim[3];
@@ -130,7 +135,7 @@ void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2)
         DWORD err = (dx > dy ? dx : -dy) / 2;
         DWORD e2;
 
-        DWORD *fb = (DWORD *)fbRes->Region.ptr;
+        DWORD *fb = (DWORD *)BackBuffer->Region.ptr;
         DWORD stride = Dim[0];
 
         while (1)

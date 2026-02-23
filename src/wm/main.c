@@ -7,26 +7,20 @@
 
 extern KRNLRES grResources;
 extern DWORD mx, my, mbuttons;
+extern KRNLRES *fbRes;
 
+KRNLRES *BackBuffer;
 KRNLRES *Windows;
-
 KRNLRES *FocusedWindow = NULL;
-
 SEGMENT Segments[MAX_SEGMENTS];
-
 DWORD MovementX, MovementY;
-
-DWORD Thickness = 1;
-DWORD Padding = 4;
-DWORD InternalPadding = 4 + 1;
-DWORD ElementPadding = 2;
-DWORD TextPaddingY = 2;
+DWORD ElementPadding = 0;
 
 DWORD TitleBarHeight(WINDOW *Window)
 {
         if (!Window)
-                return TextPaddingY * 2 + font_8x8.char_height + Thickness;
-        return TextPaddingY * 2 + font_8x8.char_height + Thickness;
+                return Window->TitleBarHeight * 2 + font_8x8.char_height + Window->Thickness;
+        return Window->TitleBarHeight * 2 + font_8x8.char_height + Window->Thickness;
 }
 
 /**
@@ -50,7 +44,7 @@ SEGMENT *FindSegment(DWORD X, DWORD Y)
 /**
  * WMCreateWindow, just a helper constructor function
  */
-KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H)
+KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H, DWORD Padding, DWORD Thickness, DWORD TitleBarHeight, RGBA Outer, RGBA Inner, RGBA Border)
 {
         RESULT Result;
         KRNLRES *Window = ResourceCreateK(Windows, RESOURCE_TYPE_WINDOW,
@@ -73,6 +67,12 @@ KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H)
         ((WINDOW *)Window->Region.ptr)->START_Y = 0;
         ((WINDOW *)Window->Region.ptr)->InAction = FALSE;
         ((WINDOW *)Window->Region.ptr)->State = WINDOW_NORMAL;
+        ((WINDOW *)Window->Region.ptr)->Padding = Padding;
+        ((WINDOW *)Window->Region.ptr)->Thickness = Thickness;
+        ((WINDOW *)Window->Region.ptr)->Outer = Outer;
+        ((WINDOW *)Window->Region.ptr)->Inner = Inner;
+        ((WINDOW *)Window->Region.ptr)->Border = Border;
+        ((WINDOW *)Window->Region.ptr)->TitleBarHeight = TitleBarHeight;
         return Window;
 }
 
@@ -159,10 +159,10 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
         if (!Window || !Element)
                 return;
 
-        SIZE X = (Thickness + InternalPadding) + Element->X;
-        SIZE Y = (TitleBarHeight(Window) + InternalPadding + Thickness) + Element->Y;
-        SIZE MX = X + (Window->W - (Thickness + InternalPadding) * 2) + 1;
-        SIZE MY = Y + (Window->H - TitleBarHeight(Window) - (Thickness + InternalPadding) * 2);
+        SIZE X = (Window->Thickness + (Window->Padding + 1)) + Element->X;
+        SIZE Y = (TitleBarHeight(Window) + (Window->Padding + 1) + Window->Thickness) + Element->Y;
+        SIZE MX = X + (Window->W - (Window->Thickness + (Window->Padding + 1)) * 2) + 1;
+        SIZE MY = Y + (Window->H - TitleBarHeight(Window) - (Window->Thickness + (Window->Padding + 1)) * 2);
         SIZE BW = MX - X;
         SIZE BH = MY - Y;
         SIZE W = min(Element->W, BW);
@@ -181,10 +181,10 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
                                 ColourRGB(0, 0, 0),
                                 X, Y, W, H,
                                 ElementPadding,
-                                Thickness);
+                                Window->Thickness);
 
-                SIZE TextX = X + ElementPadding + Thickness;
-                SIZE TextY = Y + ElementPadding + Thickness;
+                SIZE TextX = X + ElementPadding + Window->Thickness;
+                SIZE TextY = Y + ElementPadding + Window->Thickness;
 
                 char **TextLines = Element->ElementData.Text.Text;
                 DWORD LineCount = Element->ElementData.Text.Lines;
@@ -196,8 +196,8 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
                 DWORD TextColor = rgb(0x00, 0x00, 0x00);
                 DWORD BackgroundColor = rgb(0xF0, 0xF0, 0xF0);
 
-                DWORD AvailableWidth = W - (ElementPadding + Thickness) * 2;
-                DWORD AvailableHeight = H - (ElementPadding + Thickness) * 2;
+                DWORD AvailableWidth = W - (ElementPadding + Window->Thickness) * 2;
+                DWORD AvailableHeight = H - (ElementPadding + Window->Thickness) * 2;
                 DWORD MaxLines = AvailableHeight / Font->char_height;
                 DWORD MaxCharsPerLine = AvailableWidth / Font->char_width;
 
@@ -215,7 +215,7 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
                                         break;
 
                                 DWORD CurrentX = TextX + (col * Font->char_width);
-                                RenderChar(ch, CurrentX, CurrentY, BackgroundColor, TextColor);
+                                RenderChar(BackBuffer, ch, CurrentX, CurrentY, BackgroundColor, TextColor);
                         }
 
                         if (CurrentY + Font->char_height > TextY + AvailableHeight)
@@ -255,8 +255,6 @@ void WMDraw(KRNLRES *P)
         /**
          * Overwrite Previous
          */
-        if (Window->PX == Window->X && Window->PY == Window->Y)
-                goto OnlyDrawElements;
         for (DWORD Yo = 0; Yo < Window->H; ++Yo)
                 for (DWORD Xo = 0; Xo < Window->W; ++Xo)
                 {
@@ -266,15 +264,15 @@ void WMDraw(KRNLRES *P)
         /**
          * Border
          */
-        GDIBorderedRect(ColourRGB(0xC0, 0xC0, 0xC0),
-                        ColourRGB(0xF0, 0xF0, 0xF0),
-                        ColourRGB(0, 0, 0),
+        GDIBorderedRect(Window->Outer,
+                        Window->Inner,
+                        Window->Border,
                         Window->X,
                         Window->Y,
                         Window->W,
                         Window->H,
-                        Padding,
-                        Thickness);
+                        Window->Padding,
+                        Window->Thickness);
 
         /**
          * TitleBar And Icons (e.g. Close)
@@ -283,14 +281,14 @@ void WMDraw(KRNLRES *P)
          * Title
          */
         RenderSetFont(&font_8x8);
-        DWORD X = (Window->W - strnlen(Window->Title, MAX_TEXT_LENGTH) * font_8x8.char_width - (Thickness + Padding)) / 2;
-        DWORD Y = Thickness + Padding + TextPaddingY;
+        DWORD X = (Window->W - strnlen(Window->Title, MAX_TEXT_LENGTH) * font_8x8.char_width - (Window->Thickness + Window->Padding)) / 2;
+        DWORD Y = Window->Thickness + Window->Padding + Window->TitleBarHeight;
         SetColourFn(WMTitleBar);
-        GDIDrawRect(Window->X + Padding, Window->Y + Thickness + Padding, Window->W - Padding * 2, TitleBarHeight(Window));
+        GDIDrawRect(Window->X + Window->Padding, Window->Y + Window->Thickness + Window->Padding, Window->W - Window->Padding * 2, TitleBarHeight(Window));
         SetColour(ColourRGB(0, 0, 0));
-        RenderPrint((unsigned char *)Window->Title, X + Window->X, Y + Window->Y, rgb(0xf0, 0xf0, 0xf0), rgb(0, 0, 0));
+        RenderPrint(BackBuffer, (unsigned char *)Window->Title, X + Window->X, Y + Window->Y, rgb(0xf0, 0xf0, 0xf0), rgb(0, 0, 0));
         RenderSetFont(font);
-        GDIDrawRect(Window->X + Padding, Window->Y + Thickness + Padding + TextPaddingY * 2 + font_8x8.char_height, Window->W - Padding * 2, Thickness);
+        GDIDrawRect(Window->X + Window->Padding, Window->Y + Window->Thickness + Window->Padding + Window->TitleBarHeight * 2 + font_8x8.char_height, Window->W - Window->Padding * 2, Window->Thickness);
         /**
          * ToolBar
          */
@@ -298,8 +296,6 @@ void WMDraw(KRNLRES *P)
         /**
          * Draw Elements
          */
-OnlyDrawElements:
-        (void)0;
         KRNLRES *Element = P->FirstChild;
         while (Element)
         {
@@ -347,13 +343,13 @@ void WMAction(KRNLRES *P)
         if (Window->InAction && !(mbuttons & MOUSE_LEFT_BUTTON))
         {
                 Window->InAction = FALSE;
-                DWORD TH = TitleBarHeight(Window) + Padding;
+                DWORD TH = TitleBarHeight(Window) + Window->Padding;
                 DWORD PosX = Window->START_X - Window->X;
                 DWORD PosY = Window->START_Y - Window->Y;
                 BOOL InTitleBar = (PosX <= Window->W) && (PosY <= TH);
                 if (InTitleBar)
                 {
-                        WMMove(Window, mx, my);
+                        WMMove(Window, mx - (Window->START_X - Window->X), my - (Window->START_Y - Window->Y));
                         return;
                 }
                 /**
@@ -383,6 +379,8 @@ void WMIterate(void)
                 WMDraw(FocusedWindow);
                 WMAction(FocusedWindow);
         }
+
+        ResourceBlitK(fbRes, BackBuffer->Region.ptr, BackBuffer->Region.size, BackBuffer->Region.size, 0);
 }
 
 /**
@@ -420,9 +418,11 @@ void WMMain(void)
 PROCID WMInit(void)
 {
         uint8_t *stack = malloc(8192);
+        PROCID procid = schedCreateProcess("wm", NULL, 0, (uint8_t *)WMMain, 0, stack, 8192, schedGetCurrentPid(), 0);
+        BackBuffer = ResourceCreateK(&grResources, RESOURCE_TYPE_BITMAP_IMAGE, 1024*768*4 /** TODO - Find display size based on fbRes */, procid, NULL);
         memset(Segments, 0, sizeof(Segments));
-        Windows = ResourceCreateK(&grResources, RESOURCE_TYPE_RAW, 0, schedGetKernelPid(), NULL);
-        return schedCreateProcess("wm", NULL, 0, (uint8_t *)WMMain, 0, stack, 8192, schedGetKernelPid(), 0);
+        Windows = ResourceCreateK(&grResources, RESOURCE_TYPE_RAW, 0, procid, NULL);
+        return procid;
 }
 
 /**
@@ -433,8 +433,8 @@ DWORD WMMiddlePointX(WINDOW *Window)
         if (!Window)
                 return 0;
 
-        SIZE X = Window->X + Thickness + InternalPadding;
-        SIZE MX = X + (Window->W - (Thickness + InternalPadding) * 2) + 1;
+        SIZE X = Window->X + Window->Thickness + (Window->Padding + 1);
+        SIZE MX = X + (Window->W - (Window->Thickness + (Window->Padding + 1)) * 2) + 1;
         SIZE BW = MX - X;
         return BW / 2;
 }
@@ -447,8 +447,8 @@ DWORD WMMiddlePointY(WINDOW *Window)
         if (!Window)
                 return 0;
 
-        SIZE Y = Window->Y + TitleBarHeight(Window) + InternalPadding + Thickness;
-        SIZE MY = Y + (Window->H - TitleBarHeight(Window) - (Thickness + InternalPadding) * 2);
+        SIZE Y = Window->Y + TitleBarHeight(Window) + (Window->Padding + 1) + Window->Thickness;
+        SIZE MY = Y + (Window->H - TitleBarHeight(Window) - (Window->Thickness + (Window->Padding + 1)) * 2);
         SIZE BH = MY - Y;
         return BH / 2;
 }

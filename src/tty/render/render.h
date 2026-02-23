@@ -27,8 +27,8 @@ void RenderSetDim(int iNewDim[3], BOOL bAffected[3]);
 
 /* functions */
 uint32_t RenderBlend(uint32_t bg, uint32_t fg, uint8_t intensity, uint8_t bpp);
-void RenderChar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg);
-void RenderPrint(const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg);
+void RenderChar(KRNLRES *fbRes, unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg);
+void RenderPrint(KRNLRES *fbRes, const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg);
 void RenderAlign(const char *text, uint32_t *px, uint32_t *py, int marginX, int marginY,
            alignType_t alignX, alignType_t alignY);
 void RenderCenter(const char *text, uint32_t *px, uint32_t *py);

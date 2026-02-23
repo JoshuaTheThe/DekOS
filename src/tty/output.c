@@ -18,12 +18,12 @@ void display(void)
 {
         if (redraw)
         {
-                RenderSetFont(cascadia);
+                RenderSetFont(systemfont);
                 for (size_t y = 0; y < TTY_H; ++y)
                 {
                         for (size_t x = 0; x < TTY_W; ++x)
                         {
-                                RenderChar(system_output[y][x], x * cascadia->char_width, y * cascadia->char_height, tty_bg, tty_fg);
+                                RenderChar(fbRes, system_output[y][x], x * systemfont->char_width, y * systemfont->char_height, tty_bg, tty_fg);
                         }
                 }
 

@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <utils.h>
 
-font_t *cascadia = NULL;
+font_t *systemfont = NULL;
 
 static uint8_t console_font_8x8[] = {
 

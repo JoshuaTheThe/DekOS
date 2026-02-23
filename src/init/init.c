@@ -145,8 +145,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         }
 
         // setframebuffer(framebuffer);
-        // setfont(&cascadia); /* bitmap */
-        cascadia = &font_8x8;
+        // setfont(&systemfont); /* bitmap */
+        systemfont = &font_8x8;
         RenderSetFont(&font_8x8);
         FeaturesInit();
         gdtInit();
@@ -244,8 +244,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                         tty_fg = strthex(_tty_fg);
                 if (font)
                 {
-                        cascadia = FontLoad(font);
-                        RenderSetFont(cascadia);
+                        systemfont = FontLoad(font);
+                        RenderSetFont(systemfont);
                 }
         }
         UsersLoad();
@@ -278,6 +278,44 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
         }
 
+        PROCID Wm = WMInit();
+        KRNLRES *Window;
+        if (Wm.num == 0 || !Wm.valid)
+        {
+                printf(" [ERROR] Failed to start window manager\n");\
+        }
+        else
+        {
+                const size_t Padding = IniGet(&Cfg, "wm_padding") ? atoi(IniGet(&Cfg, "wm_padding"), NULL) : WINDOW_PADDING_DEFAULT;
+                const size_t Thickness = IniGet(&Cfg, "wm_thickness") ? atoi(IniGet(&Cfg, "wm_thickness"), NULL) : WINDOW_THICKNESS_DEFAULT;
+                const RGBA Outer = IniGet(&Cfg, "wm_outer") ? ColourRGBD(strthex(IniGet(&Cfg, "wm_outer"))) : WINDOW_OUTER_DEFAULT;
+                const RGBA Inner = IniGet(&Cfg, "wm_inner") ? ColourRGBD(strthex(IniGet(&Cfg, "wm_inner"))) : WINDOW_INNER_DEFAULT;
+                const RGBA Border = IniGet(&Cfg, "wm_border") ? ColourRGBD(strthex(IniGet(&Cfg, "wm_border"))) : WINDOW_BORDER_DEFAULT;
+                const DWORD TitleBarHeight = IniGet(&Cfg, "wm_titlebar_height") ? atoi(IniGet(&Cfg, "wm_titlebar_height"), NULL) : WINDOW_TITLEBAR_HEIGHT_DEFAULT;
+                Window = WMCreateWindow("system",
+                                        WINDOW_POSITION_DEFAULT_X,
+                                        WINDOW_POSITION_DEFAULT_Y,
+                                        Thickness + Padding + TTY_W * systemfont->char_width,
+                                        Thickness * 2 + Padding * 2 + TitleBarHeight + TTY_H * systemfont->char_height + 64,
+                                        Padding,
+                                        Thickness,
+                                        TitleBarHeight,
+                                        Outer,
+                                        Inner,
+                                        Border);
+                KRNLRES *Element = WMCreateElement(Window, 0, 0, TTY_W * systemfont->char_width, TTY_H * systemfont->char_height, WINDOW_ELEMENT_TEXT);
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Font = systemfont;
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Columns = TTY_W;
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Lines = TTY_H;
+
+                char **p = malloc(TTY_H * sizeof(char *));
+                for (size_t i = 0; i < TTY_H; ++i)
+                {
+                        p[i] = system_output[i];
+                }
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Text = p;
+                ResourceHandoverK(fbRes, Wm);
+        }
         sti();
 
         while (true)
@@ -296,11 +334,12 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                         }
                 }
 
+                mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
                 if (fbRes->Owner.num == 0)
                 {
-                        mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
-                        display();
+                        ResourceHandoverK(fbRes, Wm);
                 }
+                ((WINDOW *)(Window->Region.ptr))->RequiresRedraw = TRUE;
                 sti();
                 hlt();
         }

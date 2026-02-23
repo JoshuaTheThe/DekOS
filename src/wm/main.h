@@ -13,6 +13,16 @@
 #define WINDOW_POSITION_DEFAULT_X (64)
 #define WINDOW_POSITION_DEFAULT_Y (64)
 
+#define WINDOW_WIDTH_DEFAULT (640)
+#define WINDOW_HEIGHT_DEFAULT (350)
+
+#define WINDOW_PADDING_DEFAULT (4)
+#define WINDOW_THICKNESS_DEFAULT (1)
+#define WINDOW_INNER_DEFAULT (ColourRGB(0xF0,0xF0,0xF0))
+#define WINDOW_OUTER_DEFAULT (ColourRGB(0xC0,0xC0,0xC0))
+#define WINDOW_BORDER_DEFAULT (ColourRGB(0x00,0x00,0x00))
+#define WINDOW_TITLEBAR_HEIGHT_DEFAULT (4)
+
 #define MAX_TITLE_LENGTH (32)
 #define MAX_SEGMENTS (64)
 
@@ -61,7 +71,8 @@ typedef struct
 {
         DWORD X,Y,PX,PY;
         DWORD START_X, START_Y; /* For Actions */
-        DWORD W,H;
+        DWORD W,H,Padding,Thickness,TitleBarHeight;
+        RGBA Outer, Inner, Border;
         char  Title[MAX_TITLE_LENGTH];
         BOOL  RequiresRedraw;
         BOOL  CanMove, InAction;
@@ -74,7 +85,7 @@ typedef struct
         BOOL Dirty;
 } SEGMENT;
 
-KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H);
+KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H, DWORD Padding, DWORD Thickness, DWORD TitleBarHeight, RGBA Outer, RGBA Inner, RGBA Border);
 void WMIterate(void);
 PROCID WMInit(void);
 void WMMove(WINDOW *Window, DWORD X, DWORD Y);

@@ -89,7 +89,7 @@ uint32_t RenderBlend(uint32_t bg, uint32_t fg, uint8_t intensity, uint8_t bpp)
 /**
  * Display a character onto the frame buffer.
  */
-void RenderChar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
+void RenderChar(KRNLRES *fbRes, unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
 {
         if (!fbRes || !fbRes->Region.ptr)
         {
@@ -160,7 +160,7 @@ void RenderChar(unsigned char chr, uint32_t px, uint32_t py, uint32_t bg, uint32
         }
 }
 
-void RenderPrint(const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
+void RenderPrint(KRNLRES *fbRes, const unsigned char *text, uint32_t px, uint32_t py, uint32_t bg, uint32_t fg)
 {
         uint32_t i;
 
@@ -169,7 +169,7 @@ void RenderPrint(const unsigned char *text, uint32_t px, uint32_t py, uint32_t b
                 return;
         while (text[i])
         {
-                RenderChar(text[i], px + (i * font->char_width * scale), py, bg, fg);
+                RenderChar(fbRes, text[i], px + (i * font->char_width * scale), py, bg, fg);
                 i += 1;
         }
 }

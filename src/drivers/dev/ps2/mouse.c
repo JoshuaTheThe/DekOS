@@ -53,7 +53,7 @@ void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 cursor_saved = 1;
 
                 RenderSetFont(&cursors);
-                RenderChar(mouse_icon, *mx, *my, 0x00000000, 0xFFFFFFFF);
+                RenderChar(fbRes, mouse_icon, *mx, *my, 0x00000000, 0xFFFFFFFF);
                 RenderSetFont(&font_8x8);
                 *prev_mx = *mx;
                 *prev_my = *my;

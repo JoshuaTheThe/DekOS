@@ -44,7 +44,7 @@ void idtDefault(int code, int eip, int cs)
         }
 
         RenderGetDim(iDim);
-        RenderSetFont(cascadia);
+        RenderSetFont(systemfont);
 
         memsetdw(fbRes->Region.ptr, rgb(0, 0, 128), iDim[0] * iDim[1]);
         uint32_t px, py;
@@ -64,7 +64,7 @@ void idtDefault(int code, int eip, int cs)
         for (int i = 0; i < mc; ++i)
         {
                 RenderAlign(messages[i], &px, &py, 32, base_y + 32 + i * font->char_height, ALIGN_LEFT, ALIGN_TOP);
-                RenderPrint((unsigned char *)messages[i], px, py, rgb(0, 0, 128), rgb(255, 255, 255));
+                RenderPrint(fbRes, (unsigned char *)messages[i], px, py, rgb(0, 0, 128), rgb(255, 255, 255));
         }
 
         /* Other stuff */
@@ -74,7 +74,7 @@ void idtDefault(int code, int eip, int cs)
         BOOL nDimM[3] = {0, 0, 1};
         RenderSetDim(nDim, nDimM);
         RenderAlign(os_name, &px, &py, 32, base_y, ALIGN_CENTER, ALIGN_TOP);
-        RenderPrint((unsigned char *)os_name, px, py, rgb(255, 255, 255), rgb(0, 0, 128));
+        RenderPrint(fbRes, (unsigned char *)os_name, px, py, rgb(255, 255, 255), rgb(0, 0, 128));
 
         /* Debug */
         nDim[2] = 1;
@@ -82,7 +82,7 @@ void idtDefault(int code, int eip, int cs)
         char debug_info[1024];
         snprintf(debug_info, sizeof(debug_info), "Error: %02x : %08x : %08x during %d", code, cs, eip, schedGetCurrentPid().num);
         RenderAlign(debug_info, &px, &py, 32, base_y + 32 + (mc + 1) * font->char_height, ALIGN_LEFT, ALIGN_TOP);
-        RenderPrint((unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
+        RenderPrint(fbRes, (unsigned char *)debug_info, px, py, rgb(0, 0, 128), rgb(255, 255, 255));
 
         char x = ps2_getchar();
         switch (x)
