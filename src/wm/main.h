@@ -63,6 +63,8 @@ typedef struct
                         DWORD Lines;
                         DWORD Columns;
                         font_t *Font;
+
+                        RGBA Bg, Fg;
                 } Text;
         } ElementData;
 } ELEMENT;

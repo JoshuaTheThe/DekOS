@@ -193,8 +193,8 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
 
                 RenderSetFont(Font);
 
-                DWORD TextColor = rgb(0x00, 0x00, 0x00);
-                DWORD BackgroundColor = rgb(0xF0, 0xF0, 0xF0);
+                RGBA TextColor = Element->ElementData.Text.Fg;
+                RGBA BackgroundColor = Element->ElementData.Text.Bg;
 
                 DWORD AvailableWidth = W - (ElementPadding + Window->Thickness) * 2;
                 DWORD AvailableHeight = H - (ElementPadding + Window->Thickness) * 2;
@@ -215,7 +215,7 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
                                         break;
 
                                 DWORD CurrentX = TextX + (col * Font->char_width);
-                                RenderChar(BackBuffer, ch, CurrentX, CurrentY, BackgroundColor, TextColor);
+                                RenderChar(BackBuffer, ch, CurrentX, CurrentY, ColourDword(BackgroundColor), ColourDword(TextColor));
                         }
 
                         if (CurrentY + Font->char_height > TextY + AvailableHeight)

@@ -295,18 +295,24 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 Window = WMCreateWindow("system",
                                         WINDOW_POSITION_DEFAULT_X,
                                         WINDOW_POSITION_DEFAULT_Y,
-                                        Thickness + Padding + TTY_W * systemfont->char_width,
-                                        Thickness * 2 + Padding * 2 + TitleBarHeight + TTY_H * systemfont->char_height + 64,
+                                        TTY_W * systemfont->char_width,
+                                        Thickness * 2 + Padding * 2 + TitleBarHeight * 2 + (TTY_H + 1) * systemfont->char_height,
                                         Padding,
                                         Thickness,
                                         TitleBarHeight,
                                         Outer,
                                         Inner,
                                         Border);
-                KRNLRES *Element = WMCreateElement(Window, 0, 0, TTY_W * systemfont->char_width, TTY_H * systemfont->char_height, WINDOW_ELEMENT_TEXT);
+                KRNLRES *Element = WMCreateElement(Window, 0, 0, TTY_W * systemfont->char_width, (TTY_H + 1) * systemfont->char_height, WINDOW_ELEMENT_TEXT);
                 ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Font = systemfont;
                 ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Columns = TTY_W;
                 ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Lines = TTY_H;
+
+                extern uint32_t tty_bg;
+                extern uint32_t tty_fg;
+
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Fg = ColourRGBD(tty_fg);
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Bg = ColourRGBD(tty_bg);
 
                 char **p = malloc(TTY_H * sizeof(char *));
                 for (size_t i = 0; i < TTY_H; ++i)
