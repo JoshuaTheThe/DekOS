@@ -39,12 +39,8 @@
 
 #include <wm/main.h>
 
-#include <forth.h>
-
 #include <ini.h>
-
 #include <tty/tty.h>
-
 #include <init/pde.h>
 
 void sysHang(void);
