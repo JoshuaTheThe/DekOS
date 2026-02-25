@@ -16,6 +16,8 @@ SEGMENT Segments[MAX_SEGMENTS];
 DWORD MovementX, MovementY;
 DWORD ElementPadding = 0;
 
+DISPLAY disp;
+
 DWORD TitleBarHeight(WINDOW *Window)
 {
         if (!Window)
@@ -73,13 +75,15 @@ KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H, DWORD P
         ((WINDOW *)Window->Region.ptr)->Inner = Inner;
         ((WINDOW *)Window->Region.ptr)->Border = Border;
         ((WINDOW *)Window->Region.ptr)->TitleBarHeight = TitleBarHeight;
-        ((WINDOW *)Window->Region.ptr)->surface.BPP = 32;
-        ((WINDOW *)Window->Region.ptr)->surface.Buffer = malloc(W*H*4);
-        ((WINDOW *)Window->Region.ptr)->surface.DepthBuffer = malloc(W*H*sizeof(float));
-        ((WINDOW *)Window->Region.ptr)->surface.FOV = 1;
-        ((WINDOW *)Window->Region.ptr)->surface.X = X;
-        ((WINDOW *)Window->Region.ptr)->surface.Y = Y;
-        ((WINDOW *)Window->Region.ptr)->surface.Z = 1;
+        ((WINDOW *)Window->Region.ptr)->Surface.BPP = 32;
+        ((WINDOW *)Window->Region.ptr)->Surface.Buffer = malloc(W*H*4);
+        ((WINDOW *)Window->Region.ptr)->Surface.DepthBuffer = malloc(W*H*sizeof(float));
+        ((WINDOW *)Window->Region.ptr)->Surface.FOV = 1;
+        ((WINDOW *)Window->Region.ptr)->Surface.X = X;
+        ((WINDOW *)Window->Region.ptr)->Surface.Y = Y;
+        ((WINDOW *)Window->Region.ptr)->Surface.Z = 1;
+        ((WINDOW *)Window->Region.ptr)->Surface.W = W;
+        ((WINDOW *)Window->Region.ptr)->Surface.H = H;
         return Window;
 }
 
@@ -287,6 +291,7 @@ void WMDraw(KRNLRES *P)
         /**
          * Title
          */
+
         RenderSetFont(&font_8x8);
         DWORD X = (Window->W - strnlen(Window->Title, MAX_TEXT_LENGTH) * font_8x8.char_width - (Window->Thickness + Window->Padding)) / 2;
         DWORD Y = Window->Thickness + Window->Padding + Window->TitleBarHeight;

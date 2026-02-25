@@ -38,6 +38,7 @@ typedef struct
 void GDI2Pixel(SURFACE *Surface, float X, float Y, float Z, RGBA Col);
 void GDI2DrawRect(SURFACE *Surface, RECT *Rect);
 void GDI2BlitSurface(DISPLAY *Display, SURFACE *Surface);
+void GDI2RenderCharacter(SURFACE *Surface, font_t *Font, char chr);
 
 static inline RGBA GDI2RGBAFrom(BYTE R, BYTE G, BYTE B, BYTE A)
 {
