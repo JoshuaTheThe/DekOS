@@ -53,7 +53,7 @@ static inline RGBA GDI2RGBAFromDWORD(DWORD rgba)
 
 static inline DWORD GDI2DwordFromRGBA(RGBA rgba)
 {
-        return (DWORD)rgba.A << 24 | rgba.R << 16 | rgba.G << 8 | rgba.B;
+        return (DWORD)rgba.A << 24 | (DWORD)rgba.R << 16 | (DWORD)rgba.G << 8 | (DWORD)rgba.B;
 }
 
 #endif
