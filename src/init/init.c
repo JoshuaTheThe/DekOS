@@ -38,6 +38,7 @@
 #include <tty/render/fonts.h>
 
 #include <wm/main.h>
+#include <wm/gdi2.h>
 
 #include <ini.h>
 #include <tty/tty.h>
@@ -284,9 +285,9 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         {
                 const size_t Padding = IniGet(&Cfg, "wm_padding") ? atoi(IniGet(&Cfg, "wm_padding"), NULL) : WINDOW_PADDING_DEFAULT;
                 const size_t Thickness = IniGet(&Cfg, "wm_thickness") ? atoi(IniGet(&Cfg, "wm_thickness"), NULL) : WINDOW_THICKNESS_DEFAULT;
-                const RGBA Outer = IniGet(&Cfg, "wm_outer") ? ColourRGBD(strthex(IniGet(&Cfg, "wm_outer"))) : WINDOW_OUTER_DEFAULT;
-                const RGBA Inner = IniGet(&Cfg, "wm_inner") ? ColourRGBD(strthex(IniGet(&Cfg, "wm_inner"))) : WINDOW_INNER_DEFAULT;
-                const RGBA Border = IniGet(&Cfg, "wm_border") ? ColourRGBD(strthex(IniGet(&Cfg, "wm_border"))) : WINDOW_BORDER_DEFAULT;
+                const RGBA Outer = IniGet(&Cfg, "wm_outer") ? GDI2RGBAFromDWORD(strthex(IniGet(&Cfg, "wm_outer"))) : WINDOW_OUTER_DEFAULT;
+                const RGBA Inner = IniGet(&Cfg, "wm_inner") ? GDI2RGBAFromDWORD(strthex(IniGet(&Cfg, "wm_inner"))) : WINDOW_INNER_DEFAULT;
+                const RGBA Border = IniGet(&Cfg, "wm_border") ? GDI2RGBAFromDWORD(strthex(IniGet(&Cfg, "wm_border"))) : WINDOW_BORDER_DEFAULT;
                 const DWORD TitleBarHeight = IniGet(&Cfg, "wm_titlebar_height") ? atoi(IniGet(&Cfg, "wm_titlebar_height"), NULL) : WINDOW_TITLEBAR_HEIGHT_DEFAULT;
                 Window = WMCreateWindow("system",
                                         WINDOW_POSITION_DEFAULT_X,
@@ -307,8 +308,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 extern uint32_t tty_bg;
                 extern uint32_t tty_fg;
 
-                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Fg = ColourRGBD(tty_fg);
-                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Bg = ColourRGBD(tty_bg);
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Fg = GDI2RGBAFromDWORD(tty_fg);
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Bg = GDI2RGBAFromDWORD(tty_bg);
 
                 char **p = malloc(TTY_H * sizeof(char *));
                 for (size_t i = 0; i < TTY_H; ++i)

@@ -10,8 +10,6 @@ typedef struct
         BYTE B,G,R,A;
 } RGBA;
 
-RGBA ColourRGB(BYTE R, BYTE G, BYTE B);
-DWORD ColourDword(RGBA Col);
 void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H);
 void SetColour(RGBA Col);
 RGBA GetColour(void);
@@ -20,6 +18,5 @@ void GDISetDither(DWORD X, DWORD Y, RGBA A, RGBA B, BYTE Level);
 void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2);
 void SetColourFn(void (*Foo)(DWORD,DWORD));
 void GDIBorderedRect(RGBA Outer, RGBA Inner, RGBA Border, DWORD X, DWORD Y, DWORD W, DWORD H, DWORD Padding, DWORD Thickness);
-RGBA ColourRGBD(DWORD RGB);
 
 #endif

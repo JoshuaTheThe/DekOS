@@ -2,7 +2,7 @@
 #include <drivers/dev/serial.h>
 #include <string.h>
 
-void GDI2Pixel32(SURFACE *Surface, float X, float Y, float Z, ColourRGBA Col)
+void GDI2Pixel32(SURFACE *Surface, float X, float Y, float Z, RGBA Col)
 {
         if (!Surface || !Surface->Buffer || Z <= 0.1)
                 return;
@@ -18,7 +18,7 @@ void GDI2Pixel32(SURFACE *Surface, float X, float Y, float Z, ColourRGBA Col)
                 const float Aleph = (float)Col.A / 255.0;
                 const float InvAleph = 1.0 - Aleph;
 
-                ColourRGBA Background = *(ColourRGBA *)&Surface->Buffer[Index], Blended;
+                RGBA Background = *(RGBA *)&Surface->Buffer[Index], Blended;
                 Blended.R = (uint8_t)(Col.R * Aleph + Background.R * InvAleph);
                 Blended.G = (uint8_t)(Col.G * Aleph + Background.G * InvAleph);
                 Blended.B = (uint8_t)(Col.B * Aleph + Background.B * InvAleph);
@@ -27,7 +27,7 @@ void GDI2Pixel32(SURFACE *Surface, float X, float Y, float Z, ColourRGBA Col)
         }
 }
 
-void GDI2Pixel(SURFACE *Surface, float X, float Y, float Z, ColourRGBA Col)
+void GDI2Pixel(SURFACE *Surface, float X, float Y, float Z, RGBA Col)
 {
         switch (Surface->BPP)
         {
@@ -82,19 +82,19 @@ void GDI2DrawRect(SURFACE *Surface, RECT *Rect)
                 {
                         float u = width ? (float)(x - minX) / width : 0;
 
-                        ColourRGBA top;
+                        RGBA top;
                         top.R = (uint8_t)(Rect->Points[0].Col.R * (1 - u) + Rect->Points[1].Col.R * u);
                         top.G = (uint8_t)(Rect->Points[0].Col.G * (1 - u) + Rect->Points[1].Col.G * u);
                         top.B = (uint8_t)(Rect->Points[0].Col.B * (1 - u) + Rect->Points[1].Col.B * u);
                         top.A = (uint8_t)(Rect->Points[0].Col.A * (1 - u) + Rect->Points[1].Col.A * u);
 
-                        ColourRGBA bottom;
+                        RGBA bottom;
                         bottom.R = (uint8_t)(Rect->Points[3].Col.R * (1 - u) + Rect->Points[2].Col.R * u);
                         bottom.G = (uint8_t)(Rect->Points[3].Col.G * (1 - u) + Rect->Points[2].Col.G * u);
                         bottom.B = (uint8_t)(Rect->Points[3].Col.B * (1 - u) + Rect->Points[2].Col.B * u);
                         bottom.A = (uint8_t)(Rect->Points[3].Col.A * (1 - u) + Rect->Points[2].Col.A * u);
 
-                        ColourRGBA final;
+                        RGBA final;
                         final.R = (uint8_t)(top.R * (1 - v) + bottom.R * v);
                         final.G = (uint8_t)(top.G * (1 - v) + bottom.G * v);
                         final.B = (uint8_t)(top.B * (1 - v) + bottom.B * v);

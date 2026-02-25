@@ -8,21 +8,6 @@ void (*ColourFunction)(DWORD,DWORD);
 BOOL UseColourFunction=FALSE;
 BOOL InColourFunction=FALSE;
 
-RGBA ColourRGB(BYTE R, BYTE G, BYTE B)
-{
-        return (RGBA){.R = R, .G = G, .B = B, .A = 255};
-}
-
-RGBA ColourRGBD(DWORD RGB)
-{
-        return (RGBA){.R = (RGB >> 16) & 255, .G = (RGB >> 8) & 255, .B = (RGB) & 255, .A = (RGB >> 24) & 255};
-}
-
-DWORD ColourDword(RGBA Col)
-{
-        return *(DWORD *)&Col;
-}
-
 void SetColour(RGBA Col)
 {
         if (!InColourFunction)
@@ -30,7 +15,7 @@ void SetColour(RGBA Col)
                 UseColourFunction = FALSE;
                 ColourFunction = NULL;
         }
-        Colour = ColourDword(Col);
+        Colour = (DWORD)Col.A << 24 | (DWORD)Col.R << 16 | (DWORD)Col.G << 8 | (DWORD)Col.B;
 }
 
 RGBA GetColour(void)
@@ -41,7 +26,7 @@ RGBA GetColour(void)
 void SetPixel(DWORD X, DWORD Y, RGBA Col)
 {
         static DWORD Dim[3] = {(DWORD)-1};
-        DWORD Colour = ColourDword(Col);
+        DWORD Colour = (DWORD)Col.A << 24 | Col.R << 16 | Col.G << 8 | Col.B;
         if (BackBuffer->Owner.num != schedGetCurrentPid().num)
                 return;
         if (Dim[0] == (DWORD)-1)
@@ -54,6 +39,7 @@ void SetPixel(DWORD X, DWORD Y, RGBA Col)
 /**
  * GDIDrawRect - Draws a rectangle of given Dim (duh)
  */
+
 void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H)
 {
         if (BackBuffer->Owner.num != schedGetCurrentPid().num)
@@ -82,6 +68,7 @@ void GDIDrawRect(DWORD X, DWORD Y, DWORD W, DWORD H)
         }
 }
 
+
 void GDIBorderedRect(RGBA Outer, RGBA Inner, RGBA Border, DWORD X, DWORD Y, DWORD W, DWORD H, DWORD Padding, DWORD Thickness)
 {
         SetColour(Outer);
@@ -108,6 +95,7 @@ void GDIBorderedRect(RGBA Outer, RGBA Inner, RGBA Border, DWORD X, DWORD Y, DWOR
 /**
  * GDIDrawLine - Draws a Line of given Dim (duh)
  */
+
 void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2)
 {
         if (BackBuffer->Owner.num != schedGetCurrentPid().num)
@@ -169,6 +157,7 @@ void GDIDrawLine(DWORD X1, DWORD Y1, DWORD X2, DWORD Y2)
 /**
  * Use a Function as the colour
  */
+
 void SetColourFn(void (*Foo)(DWORD,DWORD))
 {
         ColourFunction = Foo;
@@ -190,10 +179,10 @@ void GDISetDither(DWORD X, DWORD Y, RGBA A, RGBA B, BYTE Level)
 
         if ((pattern & 0xFF) < Level)
         {
-                Colour = ColourDword(A);
+                Colour = (DWORD)A.A << 24 | (DWORD)A.R << 16 | (DWORD)A.G << 8 | (DWORD)A.B;
         }
         else
         {
-                Colour = ColourDword(B);
+                Colour = (DWORD)B.A << 24 | (DWORD)B.R << 16 | (DWORD)B.G << 8 | (DWORD)B.B;
         }
 }

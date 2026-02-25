@@ -73,6 +73,13 @@ KRNLRES *WMCreateWindow(char *Title, DWORD X, DWORD Y, DWORD W, DWORD H, DWORD P
         ((WINDOW *)Window->Region.ptr)->Inner = Inner;
         ((WINDOW *)Window->Region.ptr)->Border = Border;
         ((WINDOW *)Window->Region.ptr)->TitleBarHeight = TitleBarHeight;
+        ((WINDOW *)Window->Region.ptr)->surface.BPP = 32;
+        ((WINDOW *)Window->Region.ptr)->surface.Buffer = malloc(W*H*4);
+        ((WINDOW *)Window->Region.ptr)->surface.DepthBuffer = malloc(W*H*sizeof(float));
+        ((WINDOW *)Window->Region.ptr)->surface.FOV = 1;
+        ((WINDOW *)Window->Region.ptr)->surface.X = X;
+        ((WINDOW *)Window->Region.ptr)->surface.Y = Y;
+        ((WINDOW *)Window->Region.ptr)->surface.Z = 1;
         return Window;
 }
 
@@ -108,8 +115,8 @@ void WMBackgroundPattern(DWORD X, DWORD Y)
         static RGBA DarkB = {0};
         if (LightB.A == 0)
         {
-                LightB = ColourRGB(0x00, 0x00, 0xFF);
-                DarkB = ColourRGB(0x00, 0x00, 0x7F);
+                LightB = GDI2RGBAFrom(0x00, 0x00, 0xFF, 0xFF);
+                DarkB = GDI2RGBAFrom(0x00, 0x00, 0x7F, 0xFF);
         }
         GDISetDither(X, Y, LightB, DarkB, X / 10);
         SetPixel(X, Y, GetColour());
@@ -145,8 +152,8 @@ void WMTitleBar(DWORD X, DWORD Y)
         static RGBA DarkB = {0};
         if (LightB.A == 0)
         {
-                LightB = ColourRGB(0x40, 0x00, 0xFF);
-                DarkB = ColourRGB(0x40, 0x00, 0x7F);
+                LightB = GDI2RGBAFrom(0x40, 0x00, 0xFF, 0xFF);
+                DarkB = GDI2RGBAFrom(0x40, 0x00, 0x7F, 0xFF);
         }
         GDISetDither(X, Y, LightB, DarkB, X / 2);
 }
@@ -176,9 +183,9 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
             Element->ElementData.Text.Font &&
             Element->ElementData.Text.Text)
         {
-                GDIBorderedRect(ColourRGB(0xC0, 0xC0, 0xC0),
-                                ColourRGB(0xF0, 0xF0, 0xF0),
-                                ColourRGB(0, 0, 0),
+                GDIBorderedRect(GDI2RGBAFrom(0xC0, 0xC0, 0xC0, 0xFF),
+                                GDI2RGBAFrom(0xF0, 0xF0, 0xF0, 0xFF),
+                                GDI2RGBAFrom(0, 0, 0, 0xFF),
                                 X, Y, W, H,
                                 ElementPadding,
                                 Window->Thickness);
@@ -215,7 +222,7 @@ void WMDrawElement(WINDOW *Window, ELEMENT *Element)
                                         break;
 
                                 DWORD CurrentX = TextX + (col * Font->char_width);
-                                RenderChar(BackBuffer, ch, CurrentX, CurrentY, ColourDword(BackgroundColor), ColourDword(TextColor));
+                                RenderChar(BackBuffer, ch, CurrentX, CurrentY, GDI2DwordFromRGBA(BackgroundColor), GDI2DwordFromRGBA(TextColor));
                         }
 
                         if (CurrentY + Font->char_height > TextY + AvailableHeight)
@@ -285,7 +292,7 @@ void WMDraw(KRNLRES *P)
         DWORD Y = Window->Thickness + Window->Padding + Window->TitleBarHeight;
         SetColourFn(WMTitleBar);
         GDIDrawRect(Window->X + Window->Padding, Window->Y + Window->Thickness + Window->Padding, Window->W - Window->Padding * 2, TitleBarHeight(Window));
-        SetColour(ColourRGB(0, 0, 0));
+        SetColour(GDI2RGBAFrom(0, 0, 0, 0xFF));
         RenderPrint(BackBuffer, (unsigned char *)Window->Title, X + Window->X, Y + Window->Y, rgb(0xf0, 0xf0, 0xf0), rgb(0, 0, 0));
         RenderSetFont(font);
         GDIDrawRect(Window->X + Window->Padding, Window->Y + Window->Thickness + Window->Padding + Window->TitleBarHeight * 2 + font_8x8.char_height, Window->W - Window->Padding * 2, Window->Thickness);

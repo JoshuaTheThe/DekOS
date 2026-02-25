@@ -7,7 +7,8 @@
 #include<memory/alloc.h>
 #include<memory/string.h>
 #include<wm/gdi.h>
-#include <drivers/dev/ps2/ps2.h>
+#include<wm/gdi2.h>
+#include<drivers/dev/ps2/ps2.h>
 #include<drivers/math.h>
 
 #define WINDOW_POSITION_DEFAULT_X (64)
@@ -18,9 +19,9 @@
 
 #define WINDOW_PADDING_DEFAULT (4)
 #define WINDOW_THICKNESS_DEFAULT (1)
-#define WINDOW_INNER_DEFAULT (ColourRGB(0xF0,0xF0,0xF0))
-#define WINDOW_OUTER_DEFAULT (ColourRGB(0xC0,0xC0,0xC0))
-#define WINDOW_BORDER_DEFAULT (ColourRGB(0x00,0x00,0x00))
+#define WINDOW_INNER_DEFAULT (GDI2RGBAFrom(0xF0,0xF0,0xF0,0xFF))
+#define WINDOW_OUTER_DEFAULT (GDI2RGBAFrom(0xC0,0xC0,0xC0,0xFF))
+#define WINDOW_BORDER_DEFAULT (GDI2RGBAFrom(0x00,0x00,0x00,0xFF))
 #define WINDOW_TITLEBAR_HEIGHT_DEFAULT (4)
 
 #define MAX_TITLE_LENGTH (32)
@@ -67,10 +68,12 @@ typedef struct
                         RGBA Bg, Fg;
                 } Text;
         } ElementData;
+
 } ELEMENT;
 
 typedef struct
 {
+        SURFACE surface;
         DWORD X,Y,PX,PY;
         DWORD START_X, START_Y; /* For Actions */
         DWORD W,H,Padding,Thickness,TitleBarHeight;

@@ -3,11 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-
-typedef struct
-{
-        uint8_t R, G, B, A;
-} ColourRGBA;
+#include <wm/gdi.h>
 
 typedef struct
 {
@@ -21,7 +17,7 @@ typedef struct
 
 typedef struct
 {
-        ColourRGBA Col;
+        RGBA Col;
         float X, Y, Z;
 } POINT;
 
@@ -39,8 +35,23 @@ typedef struct
         uint8_t BPP;
 } SURFACE;
 
-void GDI2Pixel(SURFACE *Surface, float X, float Y, float Z, ColourRGBA Col);
+void GDI2Pixel(SURFACE *Surface, float X, float Y, float Z, RGBA Col);
 void GDI2DrawRect(SURFACE *Surface, RECT *Rect);
 void GDI2BlitSurface(DISPLAY *Display, SURFACE *Surface);
+
+static inline RGBA GDI2RGBAFrom(BYTE R, BYTE G, BYTE B, BYTE A)
+{
+        return (RGBA){.R=R,.G=G,.B=B,.A=A};
+}
+
+static inline RGBA GDI2RGBAFromDWORD(DWORD rgba)
+{
+        return (RGBA){.R=rgba >> 16,.G=rgba >> 8,.B=rgba & 255,.A=rgba >> 24};
+}
+
+static inline DWORD GDI2DwordFromRGBA(RGBA rgba)
+{
+        return (DWORD)rgba.A << 24 | rgba.R << 16 | rgba.G << 8 | rgba.B;
+}
 
 #endif
