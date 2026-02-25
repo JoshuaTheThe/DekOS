@@ -48,7 +48,6 @@ typedef enum
  */
 typedef struct
 {
-        SURFACE Surface;
         DWORD X, Y, W, H;
         ELEMENTTYPE EType;
         union
@@ -73,7 +72,6 @@ typedef struct
 
 typedef struct
 {
-        SURFACE Surface;
         DWORD X,Y,PX,PY;
         DWORD START_X, START_Y; /* For Actions */
         DWORD W,H,Padding,Thickness,TitleBarHeight;
