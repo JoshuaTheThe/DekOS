@@ -334,8 +334,8 @@ void WMAction(KRNLRES *P)
 
         if (mbuttons & MOUSE_LEFT_BUTTON && !Window->InAction)
         {
-                Window->START_X = mx;
-                Window->START_Y = my;
+                Window->START_X = mx - Window->X;
+                Window->START_Y = my - Window->Y;
                 Window->InAction = TRUE;
                 FocusedWindow = P;
                 Window->RequiresRedraw = TRUE;
@@ -343,13 +343,14 @@ void WMAction(KRNLRES *P)
         if (Window->InAction && !(mbuttons & MOUSE_LEFT_BUTTON))
         {
                 Window->InAction = FALSE;
+        }
+        if (Window->InAction)
+        {
                 DWORD TH = TitleBarHeight(Window) + Window->Padding;
-                DWORD PosX = Window->START_X - Window->X;
-                DWORD PosY = Window->START_Y - Window->Y;
-                BOOL InTitleBar = (PosX <= Window->W) && (PosY <= TH);
+                BOOL InTitleBar = (Window->START_X <= Window->W) && (Window->START_Y <= TH);
                 if (InTitleBar)
                 {
-                        WMMove(Window, mx - (Window->START_X - Window->X), my - (Window->START_Y - Window->Y));
+                        WMMove(Window, mx - Window->START_X, my - Window->START_Y);
                         return;
                 }
                 /**
@@ -410,6 +411,7 @@ void WMMain(void)
         while (true)
         {
                 WMIterate();
+                hlt();
         }
 }
 
