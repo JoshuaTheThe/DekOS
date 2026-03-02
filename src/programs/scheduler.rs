@@ -3,6 +3,7 @@
 
 use core::panic::PanicInfo;
 use core::arch::asm;
+use core::ffi::c_void;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> !
@@ -329,4 +330,10 @@ impl Scheduler
                         None
                 }
         }
+}
+
+extern "C"
+{
+        fn malloc(size: usize) -> *mut c_void;
+        fn free(p: *const c_void);
 }
