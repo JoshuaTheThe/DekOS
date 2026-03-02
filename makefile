@@ -11,6 +11,9 @@ define DEFAULT_VAR =
     endif
 endef
 
+override DEFAULT_ARCH := x86
+$(eval $(call DEFAULT_VAR,ARCH,$(DEFAULT_ARCH)))
+
 # C toolchain
 override DEFAULT_KCC := clang
 $(eval $(call DEFAULT_VAR,KCC,$(DEFAULT_KCC)))
@@ -34,7 +37,7 @@ $(eval $(call DEFAULT_VAR,KCFLAGS,$(DEFAULT_KCFLAGS)))
 override DEFAULT_KCPPFLAGS :=
 $(eval $(call DEFAULT_VAR,KCPPFLAGS,$(DEFAULT_KCPPFLAGS)))
 
-override DEFAULT_KNASMFLAGS := -F dwarf
+override DEFAULT_KNASMFLAGS := -F dwarf -felf32
 $(eval $(call DEFAULT_VAR,KNASMFLAGS,$(DEFAULT_KNASMFLAGS)))
 
 override DEFAULT_KLDFLAGS :=
@@ -49,81 +52,113 @@ $(eval $(call DEFAULT_VAR,KFORTRAN,$(DEFAULT_KFORTRAN)))
 override DEFAULT_KFORTRANFLAGS :=
 $(eval $(call DEFAULT_VAR,KFORTRANFLAGS,$(DEFAULT_KFORTRANFLAGS)))
 
-override KFORTRANFLAGS += \
-    -c \
-    -m32 \
-    -fno-range-check \
-    -fno-leading-underscore \
-    -Wno-argument-mismatch \
-    -ffixed-line-length-none \
-    -ffree-form \
-    $(DEFAULT_KFORTRANFLAGS)
+# Architecture-specific flags (to be overridden by arch.mk)
+override ARCH_CFLAGS :=
+override ARCH_ASFLAGS :=
+override ARCH_KLDFLAGS :=
+override ARCH_KRUSTFLAGS :=
+override ARCH_KZIGFLAGS :=
+override ARCH_KFORTRANFLAGS :=
+override ARCH_KCPPFLAGS :=
+override ARCH_KNASMFLAGS := -felf32 -F dwarf
+override ARCH_LINKER_SCRIPT := src/arch/$(ARCH)/linker.ld
+override ARCH_OUTPUT_SUFFIX :=
 
+# Include architecture-specific configuration
+include src/arch/$(ARCH)/arch.mk
+
+# Apply architecture flags (with defaults for x86)
 override KCFLAGS += \
     -c \
     -std=gnu11 \
     -ffreestanding \
     -fno-builtin \
-    -m32 \
-    -mno-mmx \
     -Werror \
-    -mcmodel=kernel \
     -O0 \
     -fstack-protector-strong \
     -fstack-check \
-    -mstack-protector-guard=global
+    $(ARCH_CFLAGS)
+
+override KFORTRANFLAGS += \
+    -c \
+    -ffreestanding \
+    -fno-range-check \
+    -fno-leading-underscore \
+    -Wno-argument-mismatch \
+    -ffixed-line-length-none \
+    -ffree-form \
+    $(ARCH_KFORTRANFLAGS)
 
 override KZIGFLAGS += \
-    build-obj \
-    -target i386-freestanding \
-    -mcpu i386 \
-    -femit-implib \
+     build-obj \
     -fno-stack-check \
+    $(ARCH_KZIGFLAGS) \
     $(DEFAULT_KZIGFLAGS)
 
 override ASFLAGS += \
     -c \
-    -m32
+    $(ARCH_ASFLAGS)
 
 override KCPPFLAGS := \
     -I src \
+    -I src/arch/$(ARCH) \
     -I limine \
+    $(ARCH_KCPPFLAGS) \
     $(KCPPFLAGS) \
     -MMD \
     -MP
 
 override KNASMFLAGS += \
     -Wall \
-    $(DEFAULT_KNASMFLAGS) \
-    -f elf32
+    $(ARCH_KNASMFLAGS) \
+    $(DEFAULT_KNASMFLAGS)
 
 override KRUSTFLAGS += \
-    --target i686-unknown-linux-gnu \
     -C panic=abort \
     -C opt-level=0 \
     -C debuginfo=2 \
     -C lto=off \
     -C codegen-units=1 \
-    -C relocation-model=static \
-    -C link-arg=-nostartfiles \
-    -C link-arg=-static \
-    -C link-args=-e_start \
+    $(ARCH_KRUSTFLAGS) \
     $(DEFAULT_KRUSTFLAGS)
 
 override KLDFLAGS += \
-    -m elf_i386 \
     -nostdlib \
     -static \
     -z max-page-size=0x1000 \
-    -T src/linker.ld
+    $(DEFAULT_KLDFLAGS)
 
-# Source files
-override CFILES := $(shell cd src && find -L * -type f -name '*.c' | LC_ALL=C sort)
-override ASFILES := $(shell cd src && find -L * -type f -name '*.s' | LC_ALL=C sort)
-override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm' | LC_ALL=C sort)
-override RUSTFILES := init/init.rs
-override ZIGFILES := $(shell cd src && find -L * -type f -name '*.zig' | LC_ALL=C sort)
-override FORFILES := $(shell cd src && find -L * -type f -name '*.for' | LC_ALL=C sort)
+ifeq ($(findstring -T,$(ARCH_KLDFLAGS)),)
+    ifneq ($(wildcard $(ARCH_LINKER_SCRIPT)),)
+        override KLDFLAGS += -T $(ARCH_LINKER_SCRIPT)
+    else
+        override KLDFLAGS += -T src/linker.ld
+    endif
+else
+    override KLDFLAGS += $(ARCH_KLDFLAGS)
+endif
+
+# Update output name for architecture
+override OUTPUT := $(OUTPUT)$(ARCH_OUTPUT_SUFFIX)
+
+# Source files - common + architecture specific
+override CFILES := $(shell cd src && find -L * -type f -name '*.c' | grep -v "^arch/" | LC_ALL=C sort)
+override CFILES += $(shell cd src && find -L arch/$(ARCH) -type f -name '*.c' 2>/dev/null | LC_ALL=C sort)
+
+override ASFILES := $(shell cd src && find -L * -type f -name '*.s' | grep -v "^arch/" | LC_ALL=C sort)
+override ASFILES += $(shell cd src && find -L arch/$(ARCH) -type f -name '*.s' 2>/dev/null | LC_ALL=C sort)
+
+override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm' | grep -v "^arch/" | LC_ALL=C sort)
+override NASMFILES += $(shell cd src && find -L arch/$(ARCH) -type f -name '*.asm' 2>/dev/null | LC_ALL=C sort)
+
+override RUSTFILES := $(shell cd src && find -L * -type f -name '*.rs' | grep -v "^arch/" | LC_ALL=C sort)
+override RUSTFILES += $(shell cd src && find -L arch/$(ARCH) -type f -name '*.rs' 2>/dev/null | LC_ALL=C sort)
+
+override ZIGFILES := $(shell cd src && find -L * -type f -name '*.zig' | grep -v "^arch/" | LC_ALL=C sort)
+override ZIGFILES += $(shell cd src && find -L arch/$(ARCH) -type f -name '*.zig' 2>/dev/null | LC_ALL=C sort)
+
+override FORFILES := $(shell cd src && find -L * -type f -name '*.for' | grep -v "^arch/" | LC_ALL=C sort)
+override FORFILES += $(shell cd src && find -L arch/$(ARCH) -type f -name '*.for' 2>/dev/null | LC_ALL=C sort)
 
 # Object files
 override COBJ := $(addprefix obj/,$(CFILES:.c=.c.o))
@@ -142,6 +177,7 @@ all: bin/$(OUTPUT)
 bin/$(OUTPUT): $(OBJ)
 	mkdir -p "$$(dirname $@)"
 	$(KLD) $(OBJ) $(KLDFLAGS) -o $@
+	@echo " [INFO] Built $(OUTPUT) for architecture $(ARCH)"
 
 -include $(HEADER_DEPS)
 
@@ -151,7 +187,7 @@ obj/%.for.o: src/%.for
 
 obj/%.zig.o: src/%.zig
 	mkdir -p "$$(dirname $@)"
-	cd "$$(dirname $@)" && $(KZIGC) build-obj "$(abspath $<)" -target x86-freestanding -mcpu i686 -fno-stack-check --name $(basename $(notdir $<)).zig
+	cd "$$(dirname $@)" && $(KZIGC) $(KZIGFLAGS) "$(abspath $<)" --name $(basename $(notdir $<)).zig
 
 obj/%.c.o: src/%.c
 	mkdir -p "$$(dirname $@)"
@@ -169,10 +205,19 @@ obj/%.rs.o: src/%.rs
 	mkdir -p "$$(dirname $@)"
 	$(KRUSTC) $(KRUSTFLAGS) --crate-type lib --emit obj=$@ $<
 
+.PHONY: arch-x86
+arch-x86:
+	$(MAKE) ARCH=x86 all
+
+image: bin/$(OUTPUT)
+	@echo " [INFO] Creating raw disk image for $(ARCH)..."
+	@mkdir -p bin
+	@dd if=/dev/zero of=bin/polyglotOS-$(ARCH).img bs=1M count=64 2>/dev/null
+	@dd if=bin/$(OUTPUT) of=bin/polyglotOS-$(ARCH).img bs=512 seek=1 conv=notrunc 2>/dev/null
+
 .PHONY: clean
 clean:
-	rm -rf obj
-	rm -rf bin
+	rm -rf obj bin
 
 .PHONY: disk
 disk:
@@ -181,20 +226,43 @@ disk:
 	mkfs.vfat -F 32 -n SLAVE_DISK bin/fat32.img
 
 .PHONY: run
-run:
-	./util/run.sh
+run: bin/$(OUTPUT)
+	./util/run.sh $(ARCH)
+
+.PHONY: debug
+debug: bin/$(OUTPUT)
+	./util/debug.sh $(ARCH)
 
 .PHONY: rust-deps
 rust-deps:
 	rustup target add i686-unknown-linux-gnu
+	rustup target add aarch64-unknown-none
+	rustup target add riscv64gc-unknown-none-elf
+	rustup target add wasm32-unknown-unknown
 	rustup component add rust-src
 	rustup component add llvm-tools-preview
 
-.PHONY: zig-clean
-zig-clean:
-	rm -rf obj/*.zig.o
+.PHONY: list-arch
+list-arch:
+	@echo "Available architectures:"
+	@ls -1 arch/
 
-.PHONY: rust-clean
-rust-clean:
-	rm -rf obj/*.rs.o
-	
+.PHONY: info
+info:
+	@echo "polyglotOS Build Information:"
+	@echo "  Architecture: $(ARCH)"
+	@echo "  Output: bin/$(OUTPUT)"
+	@echo "  Languages: C Rust Zig Fortran"
+	@echo "  C Compiler: $(KCC)"
+	@echo "  Rust Compiler: $(KRUSTC)"
+	@echo "  Zig Compiler: $(KZIGC)"
+	@echo "  Fortran Compiler: $(KFORTRAN)"
+	@echo "  Linker: $(KLD)"
+	@echo ""
+	@echo "Source files:"
+	@echo "  C: $(words $(CFILES)) files"
+	@echo "  Assembly: $(words $(ASFILES)) files"
+	@echo "  NASM: $(words $(NASMFILES)) files"
+	@echo "  Rust: $(words $(RUSTFILES)) files"
+	@echo "  Zig: $(words $(ZIGFILES)) files"
+	@echo "  Fortran: $(words $(FORFILES)) files"

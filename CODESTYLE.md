@@ -1,5 +1,6 @@
 # Code-Style for requests
 - indentation must be of eight spaces (no more no less), for languages with some sort of begin of block statement, have it be on the next line, for instance
+- unless the language does not allow it ofc
 ```c
 int main(void)
 {
