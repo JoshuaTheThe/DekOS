@@ -129,33 +129,16 @@ void deleteTask(size_t i)
 
 multiboot_info_t mbi;
 
-extern void rmain(void);
+extern void rmain(uint32_t magic, uint32_t mem_lower, uint32_t mem_upper);
 
-/* Initialize the System */
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
-        mbi = *(multiboot_info_t *)mbinfo_ptr;
-        PDEInit();
-
+        multiboot_info_t mbi = *(multiboot_info_t *)mbinfo_ptr;
+        
         cli();
-        while (magic != 0x2BADB002)
-        {
-                hlt();
-        }
-
-        // setframebuffer(framebuffer);
-        // setfont(&systemfont); /* bitmap */
         systemfont = &font_8x8;
+        rmain(magic, mbi.mem_lower, mbi.mem_upper);
         RenderSetFont(&font_8x8);
-        FeaturesInit();
-        gdtInit();
-        idtInit();
-        pitInit(250);
-        memInit(mbi.mem_upper * 1024 + mbi.mem_lower * 1024);
-        schedInit();
-        SerialInit();
-        init_parallel_ports();
-        rmain();
         
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
         printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",

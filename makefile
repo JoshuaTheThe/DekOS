@@ -93,7 +93,7 @@ override KLDFLAGS += \
 override CFILES := $(shell cd src && find -L * -type f -name '*.c' | LC_ALL=C sort)
 override ASFILES := $(shell cd src && find -L * -type f -name '*.s' | LC_ALL=C sort)
 override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm' | LC_ALL=C sort)
-override RUSTFILES := $(shell cd src && find -L * -type f -name '*.rs' | LC_ALL=C sort)
+override RUSTFILES := init/init.rs#$(shell cd src && find -L * -type f -name '*.rs' | LC_ALL=C sort)
 
 # Object files
 override COBJ := $(addprefix obj/,$(CFILES:.c=.c.o))
