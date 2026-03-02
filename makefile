@@ -18,9 +18,11 @@ $(eval $(call DEFAULT_VAR,KCC,$(DEFAULT_KCC)))
 override DEFAULT_KLD := ld
 $(eval $(call DEFAULT_VAR,KLD,$(DEFAULT_KLD)))
 
-# Rust toolchain
 override DEFAULT_KRUSTC := rustc +nightly
 $(eval $(call DEFAULT_VAR,KRUSTC,$(DEFAULT_KRUSTC)))
+
+override DEFAULT_KZIGC := zig
+$(eval $(call DEFAULT_VAR,KZIGC,$(DEFAULT_KZIGC)))
 
 override DEFAULT_KRUSTFLAGS :=
 $(eval $(call DEFAULT_VAR,KRUSTFLAGS,$(DEFAULT_KRUSTFLAGS)))
@@ -38,6 +40,9 @@ $(eval $(call DEFAULT_VAR,KNASMFLAGS,$(DEFAULT_KNASMFLAGS)))
 override DEFAULT_KLDFLAGS :=
 $(eval $(call DEFAULT_VAR,KLDFLAGS,$(DEFAULT_KLDFLAGS)))
 
+override DEFAULT_KZIGFLAGS :=
+$(eval $(call DEFAULT_VAR,KZIGFLAGS,$(DEFAULT_KZIGFLAGS)))
+
 override KCFLAGS += \
     -c \
     -std=gnu11 \
@@ -51,6 +56,14 @@ override KCFLAGS += \
     -fstack-protector-strong \
     -fstack-check \
     -mstack-protector-guard=global
+
+override KZIGFLAGS += \
+    build-obj \
+    -target i386-freestanding \
+    -mcpu i386 \
+    -femit-implib \
+    -fno-stack-check \
+    $(DEFAULT_KZIGFLAGS)
 
 override ASFLAGS += \
     -c \
@@ -94,14 +107,16 @@ override CFILES := $(shell cd src && find -L * -type f -name '*.c' | LC_ALL=C so
 override ASFILES := $(shell cd src && find -L * -type f -name '*.s' | LC_ALL=C sort)
 override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm' | LC_ALL=C sort)
 override RUSTFILES := init/init.rs#$(shell cd src && find -L * -type f -name '*.rs' | LC_ALL=C sort)
+override ZIGFILES := $(shell cd src && find -L * -type f -name '*.zig' | LC_ALL=C sort)
 
 # Object files
 override COBJ := $(addprefix obj/,$(CFILES:.c=.c.o))
 override ASOBJ := $(addprefix obj/,$(ASFILES:.s=.s.o))
 override NASMOBJ := $(addprefix obj/,$(NASMFILES:.asm=.asm.o))
 override RUSTOBJ := $(addprefix obj/,$(RUSTFILES:.rs=.rs.o))
+override ZIGOBJ := $(addprefix obj/,$(ZIGFILES:.zig=.zig.o))
 
-override OBJ := $(COBJ) $(ASOBJ) $(NASMOBJ) $(RUSTOBJ)
+override OBJ := $(COBJ) $(ASOBJ) $(NASMOBJ) $(RUSTOBJ) $(ZIGOBJ)
 override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d))
 
 .PHONY: all
@@ -112,6 +127,11 @@ bin/$(OUTPUT): $(OBJ)
 	$(KLD) $(OBJ) $(KLDFLAGS) -o $@
 
 -include $(HEADER_DEPS)
+
+# Zig compilation - with proper quoting
+obj/%.zig.o: src/%.zig
+	mkdir -p "$$(dirname $@)"
+	cd "$$(dirname $@)" && $(KZIGC) build-obj "$(abspath $<)" -target x86-freestanding -mcpu i686 -fno-stack-check --name $(basename $(notdir $<)).zig
 
 # C compilation
 obj/%.c.o: src/%.c
@@ -148,12 +168,15 @@ disk:
 run:
 	./util/run.sh
 
-# FIXED: Rust dependencies for built-in target
 .PHONY: rust-deps
 rust-deps:
 	rustup target add i686-unknown-linux-gnu
 	rustup component add rust-src
 	rustup component add llvm-tools-preview
+
+.PHONY: zig-clean
+zig-clean:
+	rm -rf obj/*.zig.o
 
 .PHONY: rust-clean
 rust-clean:

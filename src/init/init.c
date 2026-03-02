@@ -130,6 +130,7 @@ void deleteTask(size_t i)
 multiboot_info_t mbi;
 
 extern void rmain(uint32_t magic, uint32_t mem_lower, uint32_t mem_upper);
+extern void zmain(void);
 
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
@@ -139,6 +140,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         systemfont = &font_8x8;
         rmain(magic, mbi.mem_lower, mbi.mem_upper);
         RenderSetFont(&font_8x8);
+        zmain();
         
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
         printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",

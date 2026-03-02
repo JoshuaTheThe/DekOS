@@ -6,3 +6,6 @@ int main(void)
         printf("Hello, World!\n");
 }
 ```
+
+## Languages
+- features may be made in C, Rust, Zig or Fortran. (lol)
