@@ -129,6 +129,8 @@ void deleteTask(size_t i)
 
 multiboot_info_t mbi;
 
+extern void rmain(void);
+
 /* Initialize the System */
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
@@ -153,7 +155,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         schedInit();
         SerialInit();
         init_parallel_ports();
-
+        rmain();
+        
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
         printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",
                sizeof(KRNLRES), offsetof(KRNLRES, rid));
