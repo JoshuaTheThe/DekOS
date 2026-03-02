@@ -17,3 +17,6 @@
 
 # Other
 - [ ] Finish TODO
+
+# Rewrite Critical Sections in Rust
+- [] title
