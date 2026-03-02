@@ -73,35 +73,46 @@ pub struct Stack
         pub raw:  *mut u8,
 }
 
-impl Stack {
-    pub fn new() -> Self {
-        Self {
-            size: 0,
-            raw: core::ptr::null_mut(), // The null pointer: C's gift to Rust
+impl Stack
+{
+        pub fn new() -> Self
+        {
+                Self
+                {
+                        size: 0,
+                        raw: core::ptr::null_mut(), // The null pointer: C's gift to Rust
+                }
         }
-    }
     
-    pub fn push(&mut self, value: u8) {
-        unsafe {
-            // TODO: Actually implement stack pushing
-            // This is the "doesn't matter" part after all
-            if !self.raw.is_null() {
-                core::ptr::write(self.raw, value);
-            }
+        pub fn push(&mut self, value: u8)
+        {
+                unsafe
+                {
+                        // TODO: Actually implement stack pushing
+                        // This is the "doesn't matter" part after all
+                        if !self.raw.is_null()
+                        {
+                            core::ptr::write(self.raw, value);
+                        }
+                }
         }
-    }
     
-    pub fn pop(&mut self) -> Option<u8> {
-        unsafe {
-            if self.raw.is_null() {
-                None
-            } else {
-                Some(core::ptr::read(self.raw))
-                // TODO: Update stack pointer
-                // Maybe later
-            }
+        pub fn pop(&mut self) -> Option<u8>
+        {
+                unsafe
+                {
+                        if self.raw.is_null()
+                        {
+                                None
+                        }
+                        else
+                        {
+                                Some(core::ptr::read(self.raw))
+                                // TODO: Update stack pointer
+                                // Maybe later
+                        }
+                }
         }
-    }
 }
 
 pub struct ProcessInformation
@@ -115,26 +126,31 @@ pub struct ProcessInformation
         pub parent: Pid,
 }
 
-impl ProcessInformation {
-    pub fn new() -> Self {
-        Self {
-            active: false,
-            valid: false,
-            delete: false,
-            debug: false,
-            x: 0, y: 0, // Still don't know what these do
-            pid: 0,
-            parent: 0,
+impl ProcessInformation
+{
+        pub fn new() -> Self
+        {
+                Self
+                {
+                        active: false,
+                        valid: false,
+                        delete: false,
+                        debug: false,
+                        x: 0, y: 0, // Still don't know what these do
+                        pid: 0,
+                        parent: 0,
+                }
         }
-    }
     
-    pub fn mark_for_death(&mut self) {
-        self.delete = true; // You'll be back
-    }
+        pub fn mark_for_death(&mut self)
+        {
+                self.delete = true;
+        }
     
-    pub fn is_zombie(&self) -> bool {
-        self.delete && !self.active // The undead processes
-    }
+        pub fn is_zombie(&self) -> bool
+        {
+                self.delete && !self.active
+        }
 }
 
 pub struct ProcessEnviroment
