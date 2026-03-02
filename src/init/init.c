@@ -131,6 +131,7 @@ multiboot_info_t mbi;
 
 extern void rmain(uint32_t magic, uint32_t mem_lower, uint32_t mem_upper);
 extern void zmain(void);
+extern void fmain(void);
 
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
@@ -141,6 +142,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         rmain(magic, mbi.mem_lower, mbi.mem_upper);
         RenderSetFont(&font_8x8);
         zmain();
+        fmain();
         
         fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
         printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",

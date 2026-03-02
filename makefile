@@ -43,6 +43,22 @@ $(eval $(call DEFAULT_VAR,KLDFLAGS,$(DEFAULT_KLDFLAGS)))
 override DEFAULT_KZIGFLAGS :=
 $(eval $(call DEFAULT_VAR,KZIGFLAGS,$(DEFAULT_KZIGFLAGS)))
 
+override DEFAULT_KFORTRAN := gfortran
+$(eval $(call DEFAULT_VAR,KFORTRAN,$(DEFAULT_KFORTRAN)))
+
+override DEFAULT_KFORTRANFLAGS :=
+$(eval $(call DEFAULT_VAR,KFORTRANFLAGS,$(DEFAULT_KFORTRANFLAGS)))
+
+override KFORTRANFLAGS += \
+    -c \
+    -m32 \
+    -fno-range-check \
+    -fno-leading-underscore \
+    -Wno-argument-mismatch \
+    -ffixed-line-length-none \
+    -ffree-form \
+    $(DEFAULT_KFORTRANFLAGS)
+
 override KCFLAGS += \
     -c \
     -std=gnu11 \
@@ -81,7 +97,6 @@ override KNASMFLAGS += \
     $(DEFAULT_KNASMFLAGS) \
     -f elf32
 
-# FIXED: Use built-in i686-unknown-linux-gnu target
 override KRUSTFLAGS += \
     --target i686-unknown-linux-gnu \
     -C panic=abort \
@@ -106,8 +121,9 @@ override KLDFLAGS += \
 override CFILES := $(shell cd src && find -L * -type f -name '*.c' | LC_ALL=C sort)
 override ASFILES := $(shell cd src && find -L * -type f -name '*.s' | LC_ALL=C sort)
 override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm' | LC_ALL=C sort)
-override RUSTFILES := init/init.rs#$(shell cd src && find -L * -type f -name '*.rs' | LC_ALL=C sort)
+override RUSTFILES := init/init.rs
 override ZIGFILES := $(shell cd src && find -L * -type f -name '*.zig' | LC_ALL=C sort)
+override FORFILES := $(shell cd src && find -L * -type f -name '*.for' | LC_ALL=C sort)
 
 # Object files
 override COBJ := $(addprefix obj/,$(CFILES:.c=.c.o))
@@ -115,8 +131,9 @@ override ASOBJ := $(addprefix obj/,$(ASFILES:.s=.s.o))
 override NASMOBJ := $(addprefix obj/,$(NASMFILES:.asm=.asm.o))
 override RUSTOBJ := $(addprefix obj/,$(RUSTFILES:.rs=.rs.o))
 override ZIGOBJ := $(addprefix obj/,$(ZIGFILES:.zig=.zig.o))
+override FOROBJ := $(addprefix obj/,$(FORFILES:.for=.for.o))
 
-override OBJ := $(COBJ) $(ASOBJ) $(NASMOBJ) $(RUSTOBJ) $(ZIGOBJ)
+override OBJ := $(COBJ) $(ASOBJ) $(NASMOBJ) $(RUSTOBJ) $(ZIGOBJ) $(FOROBJ)
 override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d))
 
 .PHONY: all
@@ -128,27 +145,26 @@ bin/$(OUTPUT): $(OBJ)
 
 -include $(HEADER_DEPS)
 
-# Zig compilation - with proper quoting
+obj/%.for.o: src/%.for
+	mkdir -p "$$(dirname $@)"
+	$(KFORTRAN) $(KFORTRANFLAGS) $< -o $@
+
 obj/%.zig.o: src/%.zig
 	mkdir -p "$$(dirname $@)"
 	cd "$$(dirname $@)" && $(KZIGC) build-obj "$(abspath $<)" -target x86-freestanding -mcpu i686 -fno-stack-check --name $(basename $(notdir $<)).zig
 
-# C compilation
 obj/%.c.o: src/%.c
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 
-# Assembly compilation (GAS syntax)
 obj/%.s.o: src/%.s
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(ASFLAGS) -c $< -o $@
 
-# Assembly compilation (NASM syntax)
 obj/%.asm.o: src/%.asm
 	mkdir -p "$$(dirname $@)"
 	nasm $(KNASMFLAGS) $< -o $@
 
-# FIXED: Rust compilation with proper output
 obj/%.rs.o: src/%.rs
 	mkdir -p "$$(dirname $@)"
 	$(KRUSTC) $(KRUSTFLAGS) --crate-type lib --emit obj=$@ $<

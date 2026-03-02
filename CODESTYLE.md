@@ -8,4 +8,5 @@ int main(void)
 ```
 
 ## Languages
-- features may be made in C, Rust, Zig or Fortran. (lol)
+- features may be made in C, Rust, Zig or Fortran. (lol, using .for)
+
