@@ -4,6 +4,7 @@
 use core::panic::PanicInfo;
 use core::arch::asm;
 use core::ffi::c_void;
+use core::cell::UnsafeCell;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> !
@@ -337,3 +338,8 @@ extern "C"
         fn malloc(size: usize) -> *mut c_void;
         fn free(p: *const c_void);
 }
+
+// This would be per thread, plus, single threaded, for now
+struct SyncPtr<T>(UnsafeCell<T>);
+unsafe impl<T> Sync for SyncPtr<T> {}
+static PRIMARY_SCHEDULER: SyncPtr<Option<Scheduler>> = SyncPtr(UnsafeCell::new(None));
