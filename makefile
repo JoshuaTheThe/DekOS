@@ -116,9 +116,13 @@ override KNASMFLAGS += \
 override KRUSTFLAGS += \
     -C panic=abort \
     -C opt-level=0 \
-    -C debuginfo=2 \
+    -C debuginfo=0 \
     -C lto=off \
     -C codegen-units=1 \
+    -C force-unwind-tables=n \
+    --cfg feature=\"panic_immediate_abort\" \
+    -C link-arg=-nostartfiles \
+    -C link-arg=-static \
     $(ARCH_KRUSTFLAGS) \
     $(DEFAULT_KRUSTFLAGS)
 
@@ -168,15 +172,26 @@ override RUSTOBJ := $(addprefix obj/,$(RUSTFILES:.rs=.rs.o))
 override ZIGOBJ := $(addprefix obj/,$(ZIGFILES:.zig=.zig.o))
 override FOROBJ := $(addprefix obj/,$(FORFILES:.for=.for.o))
 
-override OBJ := $(COBJ) $(ASOBJ) $(NASMOBJ) $(RUSTOBJ) $(ZIGOBJ) $(FOROBJ)
+# Merged Rust object (to fix duplicate symbols)
+RUST_MERGED := obj/rust_merged.o
+
+# All objects except Rust ones (for the merge step)
+NON_RUST_OBJ := $(COBJ) $(ASOBJ) $(NASMOBJ) $(ZIGOBJ) $(FOROBJ)
+
 override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d))
 
 .PHONY: all
 all: bin/$(OUTPUT)
 
-bin/$(OUTPUT): $(OBJ)
+# Merge all Rust objects into one
+$(RUST_MERGED): $(RUSTOBJ)
+	@echo " [INFO] Merging Rust objects to fix duplicate symbols..."
+	ld -r $(filter -m%, $(ARCH_KLDFLAGS)) --allow-multiple-definition -o $@ $(RUSTOBJ)
+
+# Link with merged Rust object
+bin/$(OUTPUT): $(NON_RUST_OBJ) $(RUST_MERGED)
 	mkdir -p "$$(dirname $@)"
-	$(KLD) $(OBJ) $(KLDFLAGS) -o $@
+	$(KLD) $(NON_RUST_OBJ) $(RUST_MERGED) $(KLDFLAGS) -o $@
 	@echo " [INFO] Built $(OUTPUT) for architecture $(ARCH)"
 
 -include $(HEADER_DEPS)
@@ -203,7 +218,7 @@ obj/%.asm.o: src/%.asm
 
 obj/%.rs.o: src/%.rs
 	mkdir -p "$$(dirname $@)"
-	$(KRUSTC) $(KRUSTFLAGS) --crate-type lib --emit obj=$@ $<
+	$(KRUSTC) $(KRUSTFLAGS) --crate-type staticlib --emit obj=$@ $<
 
 .PHONY: arch-x86
 arch-x86:
@@ -228,10 +243,6 @@ disk:
 .PHONY: run
 run: bin/$(OUTPUT)
 	./util/run.sh $(ARCH)
-
-.PHONY: debug
-debug: bin/$(OUTPUT)
-	./util/debug.sh $(ARCH)
 
 .PHONY: rust-deps
 rust-deps:

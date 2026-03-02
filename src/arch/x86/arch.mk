@@ -14,7 +14,7 @@ override ARCH_ASFLAGS += \
     --target=i686-pc-none-elf
 
 override ARCH_KLDFLAGS += \
-    -m elf_i386 \
+    -melf_i386 \
     -T src/arch/x86/linker.ld
 
 override ARCH_KRUSTFLAGS += \
