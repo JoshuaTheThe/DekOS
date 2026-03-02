@@ -16,7 +16,7 @@ fn panic(_info: &PanicInfo) -> !
 #[no_mangle]
 fn rmain()
 {
-        let message = "Hello from Rust!\n";
+        let message = "Hello from Rust!\n\0";
         unsafe
         {
                 SerialPrint(message.as_ptr());
