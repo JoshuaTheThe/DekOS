@@ -1,6 +1,6 @@
-#include <init/pde.h>
+#include <arch/x86/pde.h>
 #include <memory/string.h>
-#include <init/pmm.h>
+#include <arch/x86/pmm.h>
 
 pde_t *page_directory = (pde_t *)PAGE_DIRECTORY_ADDRESS;
 page_table_t *page_tables = (page_table_t *)PAGE_TABLES_ADDRESS;

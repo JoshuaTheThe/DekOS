@@ -1,4 +1,4 @@
-#include <init/gdt.h>
+#include <arch/x86/gdt.h>
 #include <memory/string.h>
 
 static gdtEntry_t gdt[GDT_SIZE];

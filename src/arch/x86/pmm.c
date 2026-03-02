@@ -1,4 +1,4 @@
-#include <init/pmm.h>
+#include <arch/x86/pmm.h>
 #include <memory/string.h>
 
 static uint32_t *bitmap = (uint32_t *)0x00102000;

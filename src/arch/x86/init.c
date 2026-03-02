@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <utils.h>
 
-#include <init/idt.h>
-#include <init/gdt.h>
+#include <arch/x86/idt.h>
+#include <arch/x86/gdt.h>
 
 #include <drivers/features/feature.h>
 
@@ -42,7 +42,7 @@
 
 #include <ini.h>
 #include <tty/tty.h>
-#include <init/pde.h>
+#include <arch/x86/pde.h>
 
 void sysHang(void);
 

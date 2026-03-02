@@ -1,4 +1,4 @@
-#include <init/idt.h>
+#include <arch/x86/idt.h>
 #include <tty/render/fonts.h>
 #include <tty/render/render.h>
 #include <memory/string.h>
