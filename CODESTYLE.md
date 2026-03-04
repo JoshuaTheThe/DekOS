@@ -10,4 +10,4 @@ int main(void)
 
 ## Languages
 - features may be made in C, Rust, Zig or Fortran. (lol, using .for)
-
+- Notice, C++ in all forms is FORBIDDEN for all aternum.
