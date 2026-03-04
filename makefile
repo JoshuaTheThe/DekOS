@@ -260,7 +260,7 @@ list-arch:
 
 .PHONY: info
 info:
-	@echo "polyglotOS Build Information:"
+	@echo "DekOS Build Information:"
 	@echo "  Architecture: $(ARCH)"
 	@echo "  Output: bin/$(OUTPUT)"
 	@echo "  Languages: C Rust Zig Fortran"
