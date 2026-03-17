@@ -11,9 +11,9 @@
 
 #define __VER__ "a1.3"
 
-#define cli() __asm("cli")
-#define sti() __asm("sti")
-#define hlt() __asm("hlt")
+#define cli() __asm volatile("cli")
+#define sti() __asm volatile("sti")
+#define hlt() __asm volatile("hlt")
 
 #define pushf() __asm volatile("pushfl; popl %0" : "=r"(flags));
 #define popf() __asm volatile("pushl %0; popfl" : : "r"(flags));

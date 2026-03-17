@@ -51,6 +51,76 @@ void GDI2Pixel(SURFACE *Surface, float X, float Y, float Z, RGBA Col)
         }
 }
 
+void GDI2DrawRectDisplay(DISPLAY *Display, RECT *Rect)
+{
+        if (!Display || !Rect)
+                return;
+
+        float minX = Rect->Points[0].X;
+        float maxX = Rect->Points[0].X;
+        float minY = Rect->Points[0].Y;
+        float maxY = Rect->Points[0].Y;
+
+        for (int i = 1; i < 4; i++)
+        {
+                if (Rect->Points[i].X < minX)
+                        minX = Rect->Points[i].X;
+                if (Rect->Points[i].X > maxX)
+                        maxX = Rect->Points[i].X;
+                if (Rect->Points[i].Y < minY)
+                        minY = Rect->Points[i].Y;
+                if (Rect->Points[i].Y > maxY)
+                        maxY = Rect->Points[i].Y;
+        }
+
+        float width = maxX - minX;
+        float height = maxY - minY;
+        SURFACE Surface = {
+                .W = Display->W,
+                .H = Display->H,
+                .BPP = Display->BPP,
+                .Buffer = Display->Framebuffer,
+                .DepthBuffer = Display->DepthBuffer,
+                .FOV = Display->FOV,
+                .Z = 1.0,
+                .X = 0,
+                .Y = 0,
+        };
+
+        for (float y = minY; y <= maxY; y += 1.0)
+        {
+                float v = height ? (float)(y - minY) / height : 0;
+                for (float x = minX; x <= maxX; x += 1.0)
+                {
+                        float u = width ? (float)(x - minX) / width : 0;
+
+                        RGBA top;
+                        top.R = (uint8_t)(Rect->Points[0].Col.R * (1 - u) + Rect->Points[1].Col.R * u);
+                        top.G = (uint8_t)(Rect->Points[0].Col.G * (1 - u) + Rect->Points[1].Col.G * u);
+                        top.B = (uint8_t)(Rect->Points[0].Col.B * (1 - u) + Rect->Points[1].Col.B * u);
+                        top.A = (uint8_t)(Rect->Points[0].Col.A * (1 - u) + Rect->Points[1].Col.A * u);
+
+                        RGBA bottom;
+                        bottom.R = (uint8_t)(Rect->Points[3].Col.R * (1 - u) + Rect->Points[2].Col.R * u);
+                        bottom.G = (uint8_t)(Rect->Points[3].Col.G * (1 - u) + Rect->Points[2].Col.G * u);
+                        bottom.B = (uint8_t)(Rect->Points[3].Col.B * (1 - u) + Rect->Points[2].Col.B * u);
+                        bottom.A = (uint8_t)(Rect->Points[3].Col.A * (1 - u) + Rect->Points[2].Col.A * u);
+
+                        RGBA final;
+                        final.R = (uint8_t)(top.R * (1 - v) + bottom.R * v);
+                        final.G = (uint8_t)(top.G * (1 - v) + bottom.G * v);
+                        final.B = (uint8_t)(top.B * (1 - v) + bottom.B * v);
+                        final.A = (uint8_t)(top.A * (1 - v) + bottom.A * v);
+
+                        float z = (float)(Rect->Points[0].Z * (1 - u) * (1 - v) +
+                                          Rect->Points[1].Z * u * (1 - v) +
+                                          Rect->Points[2].Z * u * v +
+                                          Rect->Points[3].Z * (1 - u) * v);
+                        GDI2Pixel(&Surface, x, y, z, final);
+                }
+        }
+}
+
 void GDI2DrawRect(SURFACE *Surface, RECT *Rect)
 {
         if (!Surface || !Rect)
@@ -134,6 +204,13 @@ void GDI2BlitSurface(DISPLAY *Display, SURFACE *Surface)
                        &Surface->Buffer[BufIDX],
                        copyW * (Surface->BPP / 8));
         }
+}
+
+void GDI2Commit(DISPLAY *Display)
+{
+        memcpy(Display->Front, Display->Framebuffer,
+                        Display->W * Display->H *
+                        Display->BPP >> 3);
 }
 
 void GDI2DrawLine(SURFACE *Surface, POINT Points[2])
@@ -392,3 +469,35 @@ void GDI2DrawLineAA(SURFACE *Surface, POINT Points[2])
                 }
         }
 }
+
+void GDI2ClearSurface(SURFACE *Surface)
+{
+        if (!Surface)
+                return;
+        if (Surface->Buffer)
+        {
+                memset(Surface->Buffer, 0, Surface->W * Surface->H * (Surface->BPP >> 3));
+        }
+        if (Surface->DepthBuffer)
+        {
+                for (size_t i = 0; i < (size_t)Surface->W * (size_t)Surface->H; ++i)
+                {
+                        Surface->DepthBuffer[i] = INFINITY;
+                }
+        }
+}
+
+void GDI2ClearDisplay(DISPLAY *Display)
+{
+        if (!Display || !Display->Framebuffer)
+                return;
+        memset(Display->Framebuffer, 0, Display->W * Display->H * (Display->BPP >> 3));
+        if (Display->DepthBuffer)
+        {
+                for (size_t i = 0; i < (size_t)Display->W * (size_t)Display->H; ++i)
+                {
+                        Display->DepthBuffer[i] = INFINITY;
+                }
+        }
+}
+

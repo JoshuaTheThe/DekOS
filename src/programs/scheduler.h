@@ -102,6 +102,7 @@ void schedNextContext(void);
 schedPid_t schedGetKernelPid(void);
 bool schedValidatePid(schedPid_t prId);
 schedProcess_t *schedGetProcessN(schedPid_t Pid);
+void schedGrabArgs(char ***arg_v, size_t *arg_c);
 
 extern uint32_t tick_counter;
 

@@ -17,6 +17,7 @@
 
 # Other
 - [ ] Finish TODO
+- [ ] Migrate to GDI/2
 
 # Rewrite Critical Sections in Rust
 - [] title

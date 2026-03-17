@@ -5,3 +5,8 @@ bin
 *.plist
 isodir
 mnt
+*.~
+*.un
+*.un~
+*.swp
+*~

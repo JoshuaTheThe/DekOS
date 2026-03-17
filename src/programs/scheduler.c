@@ -90,6 +90,15 @@ void schedListProcesses(void)
         }
 }
 
+void    schedGrabArgs(char ***arg_v, size_t *arg_c)
+{
+        cli();
+        schedProcess_t *proc = schedGetProcess();
+        *arg_v = proc->argv;
+        *arg_c = proc->argc;
+        sti();
+}
+
 schedPid_t schedCreateProcess(const char *Name, char **Args, size_t Argc,
                               uint8_t *Program, uint32_t EntryPOffset,
                               uint8_t *Stack, uint32_t StackLength, schedPid_t parent, USERID User)

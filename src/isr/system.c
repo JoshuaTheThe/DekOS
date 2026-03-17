@@ -116,12 +116,12 @@ uint32_t sysReply(void)
                 {
                         schedNextContext();
                         schedLoadContext();
-                        __asm("jmp jumpToProc;");
+                        __asm volatile("jmp jumpToProc;");
                 }
                 else if (schedSwitch(arg1))
                 {
                         schedLoadContext();
-                        __asm("jmp jumpToProc;");
+                        __asm volatile("jmp jumpToProc;");
                 }
                 return -1;
                 break;

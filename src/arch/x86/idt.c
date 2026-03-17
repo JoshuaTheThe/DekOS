@@ -147,7 +147,7 @@ void idtInit(void)
 
         idtp.limit = (sizeof(idtEntry_t) * IDT_ENTRIES) - 1;
         idtp.base = (uint32_t)idt;
-        __asm("lidt (%0)" : : "r"(&idtp));
+        asm volatile ("lidt (%0)" : : "r"(&idtp));
 
         /* PIC Remap */
         outb(0x20, 0x11);

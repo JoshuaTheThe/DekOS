@@ -31,7 +31,7 @@ override DEFAULT_KRUSTFLAGS :=
 $(eval $(call DEFAULT_VAR,KRUSTFLAGS,$(DEFAULT_KRUSTFLAGS)))
 
 # C flags
-override DEFAULT_KCFLAGS := -pipe -Wall -Wextra -c -O0 -g
+override DEFAULT_KCFLAGS := -pipe -Wall -Wextra -c -O0 -g -fno-strict-aliasing
 $(eval $(call DEFAULT_VAR,KCFLAGS,$(DEFAULT_KCFLAGS)))
 
 override DEFAULT_KCPPFLAGS :=
@@ -74,7 +74,6 @@ override KCFLAGS += \
     -ffreestanding \
     -fno-builtin \
     -Werror \
-    -O0 \
     -fstack-protector-strong \
     -fstack-check \
     $(ARCH_CFLAGS)
@@ -179,6 +178,7 @@ RUST_MERGED := obj/rust_merged.o
 NON_RUST_OBJ := $(COBJ) $(ASOBJ) $(NASMOBJ) $(ZIGOBJ) $(FOROBJ)
 
 override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d))
+override HEADER_DEPS += $(addprefix obj/,$(CFILES:.C=.C.d))
 
 .PHONY: all
 all: bin/$(OUTPUT)

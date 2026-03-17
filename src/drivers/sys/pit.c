@@ -17,6 +17,6 @@ void pitDelay(uint32_t ticks)
         sti();
         uint32_t start = tick_counter;
         while ((tick_counter - start) < ticks)
-        { asm("pause"); }
+        { asm volatile("pause"); }
         popf();
 }

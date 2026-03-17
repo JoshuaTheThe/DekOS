@@ -37,6 +37,7 @@
 #include <tty/render/render.h>
 #include <tty/render/fonts.h>
 
+#include <wm2/wm.h>
 #include <wm/main.h>
 #include <wm/gdi2.h>
 
@@ -127,19 +128,19 @@ void deleteTask(size_t i)
 //         // }
 // }
 
-multiboot_info_t mbi;
-
 extern void rmain(uint32_t magic, uint32_t mem_lower, uint32_t mem_upper);
 extern void zmain(void);
 extern void fmain(void);
 
+multiboot_info_t *mbi;
+
 void kmain(uint32_t magic, uint32_t mbinfo_ptr)
 {
-        multiboot_info_t mbi = *(multiboot_info_t *)mbinfo_ptr;
+        mbi = (multiboot_info_t *)mbinfo_ptr;
         
         cli();
         systemfont = &font_8x8;
-        rmain(magic, mbi.mem_lower, mbi.mem_upper);
+        rmain(magic, mbi->mem_lower, mbi->mem_upper);
         RenderSetFont(&font_8x8);
         zmain();
         fmain();
@@ -153,12 +154,27 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 printf(" [ERROR] Could not create framebuffer resource\n");
                 sysHang();
         }
-        fbRes->Region.ptr = (uint32_t *)mbi.framebuffer_addr;
-        fbRes->Region.size = mbi.framebuffer_width * mbi.framebuffer_height * (mbi.framebuffer_bpp / 8);
+        fbRes->Region.ptr = (uint32_t *)mbi->framebuffer_addr;
+        fbRes->Region.size = mbi->framebuffer_width * mbi->framebuffer_height * (mbi->framebuffer_bpp / 8);
         fbRes->OnHeap = FALSE;
 
+        DISPLAY *Display = malloc(sizeof(Display));
+        // TODO - kernel panic
+        if(!Display)
+                while(1) cli();
+        const size_t pixels = mbi->framebuffer_width * mbi->framebuffer_height;
+        const size_t bytes = pixels * (mbi->framebuffer_bpp / 8);
+        Display->Framebuffer = malloc(bytes);
+        if (!Display->Framebuffer)
+                while(1) cli();
+        Display->DepthBuffer = NULL;
+        Display->FOV = 1;
+        Display->W = mbi->framebuffer_width;
+        Display->H = mbi->framebuffer_height;
+        Display->BPP = mbi->framebuffer_bpp;
+        Display->Front = (uint32_t *)mbi->framebuffer_addr;
         printf(" [INFO] created frame buffer of Rid %d\n", fbRes->rid);
-        int nDim[3] = {mbi.framebuffer_width, mbi.framebuffer_height, 1};
+        int nDim[3] = {mbi->framebuffer_width, mbi->framebuffer_height, 1};
         BOOL aDim[3] = {TRUE, TRUE, TRUE};
         RenderSetDim(nDim, aDim);
 
@@ -210,7 +226,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         printf("       | o o |\n");
         printf("/-----/-------\\------\\  EnneaOS uh i mean DekOS\n");
         printf("|    This Is The,    |  Version %s\n", __VER__);
-        printf("| The The The The :3 |  %dMiB of Ram\n", (mbi.mem_upper * 1024 + mbi.mem_lower * 1024) / (1024 * 1024));
+        printf("| The The The The :3 |  %dMiB of Ram\n", (mbi->mem_upper * 1024 + mbi->mem_lower * 1024) / (1024 * 1024));
         printf("|              -josh |  %dMiB of Heap\n", (_heap_end-_heap_start) / (1024*1024));
         printf("\\--------------------/\n\n");
 
@@ -265,7 +281,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
         }
 
-        PROCID Wm = WMInit();
+        //PROCID  Wm = WM_2_Initialise(Display);
+        /*PROCID Wm = WMInit();
         KRNLRES *Window;
         if (Wm.num == 0 || !Wm.valid)
         {
@@ -308,7 +325,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
                 ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Text = p;
                 ResourceHandoverK(fbRes, Wm);
-        }
+        }*/
         sti();
 
         while (true)
@@ -342,9 +359,9 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 sti();
                 if (fbRes->Owner.num == 0)
                 {
-                        ResourceHandoverK(fbRes, Wm);
+                        //ResourceHandoverK(fbRes, Wm);
+                        display();
                 }
-                ((WINDOW *)(Window->Region.ptr))->RequiresRedraw = redraw;
                 hlt();
         }
 

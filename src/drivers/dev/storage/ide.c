@@ -356,10 +356,10 @@ unsigned char IDEAccess(unsigned char direction, unsigned char drive, unsigned i
                 {
                         if ((err = IDEPolling(channel, 1)))
                                 return err;
-                        asm("pushw %es");
-                        asm("mov %%ax, %%es" : : "a"(selector));
-                        asm("rep insw" : : "c"(words), "d"(bus), "D"(edi));
-                        asm("popw %es");
+                        asm volatile("pushw %es");
+                        asm volatile("mov %%ax, %%es" : : "a"(selector));
+                        asm volatile("rep insw" : : "c"(words), "d"(bus), "D"(edi));
+                        asm volatile("popw %es");
                         edi += (words * 2);
                 }
         else
@@ -367,10 +367,10 @@ unsigned char IDEAccess(unsigned char direction, unsigned char drive, unsigned i
                 for (i = 0; i < numsects; i++)
                 {
                         IDEPolling(channel, 0);
-                        asm("pushw %ds");
-                        asm("mov %%ax, %%ds" ::"a"(selector));
-                        asm("rep outsw" ::"c"(words), "d"(bus), "S"(edi));
-                        asm("popw %ds");
+                        asm volatile("pushw %ds");
+                        asm volatile("mov %%ax, %%ds" ::"a"(selector));
+                        asm volatile("rep outsw" ::"c"(words), "d"(bus), "S"(edi));
+                        asm volatile("popw %ds");
                         edi += (words * 2);
                 }
                 IDEWrite(channel, ATA_REG_COMMAND, (char[]){ATA_CMD_CACHE_FLUSH, ATA_CMD_CACHE_FLUSH, ATA_CMD_CACHE_FLUSH_EXT}[lba_mode]);
@@ -415,16 +415,16 @@ unsigned char IDEAtaPIRead(unsigned char drive, unsigned int lba, unsigned char 
         IDEWrite(channel, ATA_REG_COMMAND, ATA_CMD_PACKET); // Send the Command.
         if ((err = IDEPolling(channel, 1)))
                 return err;
-        asm("rep   outsw" : : "c"(6), "d"(bus), "S"(atapi_packet)); // Send Packet Data
+        asm volatile("rep   outsw" : : "c"(6), "d"(bus), "S"(atapi_packet)); // Send Packet Data
         for (i = 0; i < numsects; i++)
         {
                 IDEWaitIRQ(); // Wait for an IRQ.
                 if ((err = IDEPolling(channel, 1)))
                         return err; // Polling and return if error.
-                asm("pushw %es");
-                asm("mov %%ax, %%es" ::"a"(selector));
-                asm("rep insw" ::"c"(words), "d"(bus), "D"(edi)); // Receive Data.
-                asm("popw %es");
+                asm volatile("pushw %es");
+                asm volatile("mov %%ax, %%es" ::"a"(selector));
+                asm volatile("rep insw" ::"c"(words), "d"(bus), "D"(edi)); // Receive Data.
+                asm volatile("popw %es");
                 edi += (words * 2);
         }
         IDEWaitIRQ();

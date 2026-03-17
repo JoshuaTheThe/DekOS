@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <wm/gdi.h>
 
+#define INFINITY (0x7ff0000000000000)
+
 typedef struct
 {
         uint32_t *Framebuffer;
@@ -40,6 +42,10 @@ void GDI2DrawRect(SURFACE *Surface, RECT *Rect);
 void GDI2DrawLine(SURFACE *Surface, POINT Rect[2]);
 void GDI2BlitSurface(DISPLAY *Display, SURFACE *Surface);
 void GDI2RenderCharacter(SURFACE *Surface, font_t *Font, char chr);
+void GDI2Commit(DISPLAY *Display);
+void GDI2ClearSurface(SURFACE *Surface);
+void GDI2DrawRectDisplay(DISPLAY *Display, RECT *Rect);
+void GDI2ClearDisplay(DISPLAY *Display);
 
 static inline RGBA GDI2RGBAFrom(BYTE R, BYTE G, BYTE B, BYTE A)
 {
