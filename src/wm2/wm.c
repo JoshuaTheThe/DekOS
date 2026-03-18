@@ -84,6 +84,13 @@ bool    WM_2_Draw(WM_2_Window *Window)
         return drawn > 0;
 }
 
+U0      WM_2_MoveDisplayObject(DISPLAY *Display, DispObject *Object, U32 X, U32 Y){
+        RestoreBackground(Display, &Object->PrimarySurface, Object->Behind);
+        Object->PrimarySurface.X = X;
+        Object->PrimarySurface.Y = Y;
+        SaveBackground(Display, &Object->PrimarySurface, Object->Behind);
+}
+
 U0      WM_2_RegisterDisplayObject(DispObject *Object){
         Object->NextSibling=RootObject.Children;
         Object->Parent=&RootObject;
