@@ -2,13 +2,14 @@
 #include <drivers/dev/serial.h>
 #include <string.h>
 #include <drivers/math.h>
+#include <wm2/def.h>
 
 void GDI2Pixel32(SURFACE *Surface, float X, float Y, float Z, RGBA Col)
 {
         if (!Surface || !Surface->Buffer || Z <= 0.1)
                 return;
-        int64_t SX = (size_t)(Surface->W / 2 + (X / Z) * Surface->FOV);
-        int64_t SY = (size_t)(Surface->H / 2 - (Y / Z) * Surface->FOV);
+        int64_t SX = (int64_t)(Surface->W / 2 + (X / Z) * Surface->FOV);
+        int64_t SY = (int64_t)(Surface->H / 2 - (Y / Z) * Surface->FOV);
         size_t Index = Surface->W * SY + SX;
         if (SX >= Surface->W || SY >= Surface->H || SX < 0 || SY < 0)
                 return;
@@ -186,31 +187,73 @@ void GDI2BlitSurface(DISPLAY *Display, SURFACE *Surface)
                 return;
         if (Display->BPP != Surface->BPP)
                 return;
-        for (int64_t row = 0; row < Surface->H; ++row)
+        int64_t dstX = Surface->X;
+        int64_t dstY = Surface->Y;
+        int64_t srcX = 0;
+        int64_t srcY = 0;
+        int64_t copyW = Surface->W;
+        int64_t copyH = Surface->H;
+        if (dstX < 0) { srcX -= dstX; copyW += dstX; dstX = 0; }
+        if (dstY < 0) { srcY -= dstY; copyH += dstY; dstY = 0; }
+        if (dstX + copyW > Display->W) copyW = Display->W - dstX;
+        if (dstY + copyH > Display->H) copyH = Display->H - dstY;
+        if (copyW <= 0 || copyH <= 0)
+                return;
+        for (int64_t row = 0; row < copyH; ++row)
         {
-                const size_t BufIDX = Surface->W * row;
-                const size_t dstX = Surface->X;
-                const size_t dstY = Surface->Y;
+                for (int64_t col = 0; col < copyW; ++col)
+                {
+                        const size_t SrcIdx = Surface->W * (srcY + row) + (srcX + col);
+                        const size_t DstIdx = Display->W * (dstY + row) + (dstX + col);
+                        if (Display->DepthBuffer)
+                        {
+                                float srcZ = Surface->DepthBuffer ? Surface->DepthBuffer[SrcIdx] : Surface->Z;
+                                if (Display->DepthBuffer[DstIdx] <= srcZ)
+                                        continue;
+                                Display->DepthBuffer[DstIdx] = srcZ;
+                        }
+                        RGBA Src = *(RGBA *)&Surface->Buffer[SrcIdx];
+                        RGBA Dst = *(RGBA *)&Display->Framebuffer[DstIdx];
+                        const float A    = Src.A / 255.0f;
+                        const float InvA = 1.0f - A;
+                        RGBA Out;
+                        Out.R = (uint8_t)(Src.R * A + Dst.R * InvA);
+                        Out.G = (uint8_t)(Src.G * A + Dst.G * InvA);
+                        Out.B = (uint8_t)(Src.B * A + Dst.B * InvA);
+                        Out.A = 255;
+                        Display->Framebuffer[DstIdx] = *(uint32_t *)&Out;
+                }
+        }
+}
 
-                if (dstX >= Display->W || dstY >= Display->H)
-                        return;
-
-                size_t copyW = Surface->W;
-                if (dstX + copyW > Display->W)
-                        copyW = Display->W - dstX;
-
-                const size_t FrbIDX = Display->W * (dstY + row) + dstX;
-                memcpy(&Display->Framebuffer[FrbIDX],
-                       &Surface->Buffer[BufIDX],
-                       copyW * (Surface->BPP / 8));
+void GDI2PartialCommit(DISPLAY *Display, SURFACE *Surface)
+{
+        if (!Display || !Surface)
+                return;
+        I32 startY = Surface->Y;
+        I32 endY   = Surface->Y + Surface->H;
+        I32 startX = Surface->X;
+        I32 endX   = Surface->X + Surface->W;
+        if (startY < 0)        startY = 0;
+        if (endY > Display->H) endY   = Display->H;
+        if (startX < 0)        startX = 0;
+        if (endX > Display->W) endX   = Display->W;
+        I32 copyW = endX - startX;
+        if (copyW <= 0) return;
+        for (I32 y = startY; y < endY; ++y)
+        {
+                const size_t Idx = y * Display->W + startX;
+                memcpy(&Display->Front[Idx],
+                       &Display->Framebuffer[Idx],
+                       copyW * (Display->BPP >> 3));
         }
 }
 
 void GDI2Commit(DISPLAY *Display)
 {
         memcpy(Display->Front, Display->Framebuffer,
-                        Display->W * Display->H *
-                        Display->BPP >> 3);
+               Display->W * Display->H *
+               Display->BPP >> 3);
 }
 
 void GDI2DrawLine(SURFACE *Surface, POINT Points[2])
@@ -476,7 +519,7 @@ void GDI2ClearSurface(SURFACE *Surface)
                 return;
         if (Surface->Buffer)
         {
-                memset(Surface->Buffer, 0, Surface->W * Surface->H * (Surface->BPP >> 3));
+                memset(Surface->Buffer, 0x00, Surface->W * Surface->H * (Surface->BPP >> 3));
         }
         if (Surface->DepthBuffer)
         {

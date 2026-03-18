@@ -46,6 +46,7 @@ void GDI2Commit(DISPLAY *Display);
 void GDI2ClearSurface(SURFACE *Surface);
 void GDI2DrawRectDisplay(DISPLAY *Display, RECT *Rect);
 void GDI2ClearDisplay(DISPLAY *Display);
+void GDI2PartialCommit(DISPLAY *Display, SURFACE *Surface);
 
 static inline RGBA GDI2RGBAFrom(BYTE R, BYTE G, BYTE B, BYTE A)
 {
