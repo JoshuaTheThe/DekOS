@@ -226,6 +226,55 @@ void GDI2BlitSurface(DISPLAY *Display, SURFACE *Surface)
         }
 }
 
+void GDI2BlitSurfaceToSurface(SURFACE *Dst, SURFACE *Src)
+{
+        if (!Dst || !Src)
+                return;
+        if (Dst->BPP != Src->BPP)
+                return;
+
+        int64_t dstX = Src->X;
+        int64_t dstY = Src->Y;
+        int64_t srcX = 0;
+        int64_t srcY = 0;
+        int64_t copyW = Src->W;
+        int64_t copyH = Src->H;
+
+        if (dstX < 0) { srcX -= dstX; copyW += dstX; dstX = 0; }
+        if (dstY < 0) { srcY -= dstY; copyH += dstY; dstY = 0; }
+        if (dstX + copyW > Dst->W) copyW = Dst->W - dstX;
+        if (dstY + copyH > Dst->H) copyH = Dst->H - dstY;
+        if (copyW <= 0 || copyH <= 0)
+                return;
+
+        for (int64_t row = 0; row < copyH; ++row)
+        {
+                for (int64_t col = 0; col < copyW; ++col)
+                {
+                        const size_t SrcIdx = Src->W * (srcY + row) + (srcX + col);
+                        const size_t DstIdx = Dst->W * (dstY + row) + (dstX + col);
+                        if (Dst->DepthBuffer)
+                        {
+                                float srcZ = Src->DepthBuffer ? Src->DepthBuffer[SrcIdx] : Src->Z;
+                                if (Dst->DepthBuffer[DstIdx] <= srcZ)
+                                        continue;
+                                Dst->DepthBuffer[DstIdx] = srcZ;
+                        }
+
+                        RGBA S   = *(RGBA *)&Src->Buffer[SrcIdx];
+                        RGBA D   = *(RGBA *)&Dst->Buffer[DstIdx];
+                        const float A    = S.A / 255.0f;
+                        const float InvA = 1.0f - A;
+                        RGBA Out;
+                        Out.R = (uint8_t)(S.R * A + D.R * InvA);
+                        Out.G = (uint8_t)(S.G * A + D.G * InvA);
+                        Out.B = (uint8_t)(S.B * A + D.B * InvA);
+                        Out.A = 255;
+                        Dst->Buffer[DstIdx] = *(uint32_t *)&Out;
+                }
+        }
+}
+
 void GDI2PartialCommit(DISPLAY *Display, SURFACE *Surface)
 {
         if (!Display || !Surface)

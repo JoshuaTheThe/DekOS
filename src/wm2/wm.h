@@ -11,6 +11,8 @@ typedef struct{
 
 U0              WM_2_PrimaryProc(U0);
 PROCID          WM_2_Initialise(DISPLAY *Display);
+U0              WM_2_RegisterDisplayObject(DispObject *Object);
+U0              WM_2_DeRegisterDisplayObject(DispObject *Object);
 
 #endif
 

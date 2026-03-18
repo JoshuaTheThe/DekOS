@@ -7,6 +7,8 @@
 // should probably make this a getter
 extern DWORD mx, my, mbuttons, pmx, pmy;
 
+static DispObject RootObject;
+
 static
 U0      SaveBackground(DISPLAY *Display, SURFACE *Surface, U32 *SaveBuf){
         I32 dstX = Surface->X, dstY = Surface->Y;
@@ -58,14 +60,56 @@ __attribute__((__used__))
 static
 bool    WM_2_Draw(WM_2_Window *Window)
 {
-        if (Window->IsDirty){
-                Window->IsDirty = false;
-                GDI2ClearSurface(&Window->PrimarySurface);
-                GDI2DrawRect(&Window->PrimarySurface, &Rect);
-                return true;
+        size_t drawn = 0, count = 0;
+        while (Window){
+                if (Window->IsDirty){
+                        Window->IsDirty = false;
+                        GDI2ClearSurface(&Window->PrimarySurface);
+                        // TODO! actual drawing here
+                        GDI2DrawRect(&Window->PrimarySurface, &Rect);
+                        if (Window->Children){
+                                WM_2_Draw(Window->Children);
+                                WM_2_Window *Child = Window->Children;
+                                while (Child){
+                                        GDI2BlitSurfaceToSurface(&Window->PrimarySurface,
+                                                                 &Child->PrimarySurface);
+                                        Child=Child->NextSibling;
+                                }
+                        }
+                        ++drawn;
+                }
+                ++count;
+                Window=Window->NextSibling;
+        }
+        return drawn > 0;
+}
+
+U0      WM_2_RegisterDisplayObject(DispObject *Object){
+        Object->NextSibling=RootObject.Children;
+        Object->Parent=&RootObject;
+        if(RootObject.Children){
+                RootObject.Children->PrevSibling=Object;        
         }
 
-        return false;
+        RootObject.Children=Object;
+        Object->IsDirty = true;
+        RootObject.IsDirty = true;
+}
+
+U0      WM_2_DeRegisterDisplayObject(DispObject *Object){
+        if(RootObject.Children==Object){
+                RootObject.Children=Object->NextSibling;
+                if(RootObject.Children){
+                        RootObject.Children->PrevSibling=NULL;
+                }
+                return;
+        }
+        
+        if(Object->NextSibling){
+                Object->NextSibling->PrevSibling = Object->PrevSibling;
+        }if(Object->PrevSibling){
+                Object->PrevSibling->NextSibling = Object->NextSibling;
+        }
 }
 
 //      Background Process
@@ -95,17 +139,7 @@ U0      WM_2_PrimaryProc(U0){
                 (uint32_t)Display->Front,
                 (uint32_t)Display->Framebuffer);
         SURFACE *MouseSurface = malloc(sizeof(SURFACE));
-        if(!MouseSurface){
-                printf(" [ERROR] Could not allocate mouse surface\n");
-                while(1)
-                        ;
-        }
         MouseSurface->Buffer = malloc(Image->Header.W * Image->Header.H * sizeof(int));
-        if(!MouseSurface->Buffer){
-                printf(" [ERROR] Could not allocate buffer for mouse surface\n");
-                while(1)
-                        ;
-        }
         printf(" [INFO] Created %dx%dx%d buffer\n", Image->Header.W, Image->Header.H, sizeof(int));
         MouseSurface->DepthBuffer = NULL;
         MouseSurface->FOV = 1.0;
@@ -124,6 +158,16 @@ U0      WM_2_PrimaryProc(U0){
         GDI2Commit(Display);
 
         for (;;){
+                bool redrawn = WM_2_Draw(RootObject.Children);
+                if (redrawn){
+                        DispObject *Obj = RootObject.Children;
+                        while (Obj){
+                                GDI2BlitSurface(Display, &Obj->PrimarySurface);
+                                GDI2PartialCommit(Display, &Obj->PrimarySurface);
+                                Obj = Obj->NextSibling;
+                        }
+                }                
+
                 mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
                 bool mouse_moved = ((U32)MouseSurface->X != mx || (U32)MouseSurface->Y != my);
                 if (mouse_moved){
@@ -142,6 +186,7 @@ U0      WM_2_PrimaryProc(U0){
 }
 
 PROCID  WM_2_Initialise(DISPLAY *Display){
+        memset(&RootObject, 0, sizeof(RootObject));
         pushf();
         cli();
         uint8_t *stack = malloc(8192*2);

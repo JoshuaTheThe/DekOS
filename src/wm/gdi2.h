@@ -41,6 +41,7 @@ void GDI2Pixel(SURFACE *Surface, float X, float Y, float Z, RGBA Col);
 void GDI2DrawRect(SURFACE *Surface, RECT *Rect);
 void GDI2DrawLine(SURFACE *Surface, POINT Rect[2]);
 void GDI2BlitSurface(DISPLAY *Display, SURFACE *Surface);
+void GDI2BlitSurfaceToSurface(SURFACE *Dst, SURFACE *Src);
 void GDI2RenderCharacter(SURFACE *Surface, font_t *Font, char chr);
 void GDI2Commit(DISPLAY *Display);
 void GDI2ClearSurface(SURFACE *Surface);
