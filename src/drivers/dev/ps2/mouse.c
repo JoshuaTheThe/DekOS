@@ -34,7 +34,7 @@ void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
         {
                 if (cursor_saved)
                 {
-                        mouseRestorePixels(prev_save_x, prev_save_y);
+                        //mouseRestorePixels(prev_save_x, prev_save_y);
                         cursor_saved = 0;
                 }
 
@@ -47,14 +47,14 @@ void mouseFetch(int *mx, int *my, int *prev_mx, int *prev_my, uint8_t *buttons)
                 *mx = *mx < 0 ? 0 : (*mx >= (int)iDim[0] ? (int)iDim[0] - 1 : *mx);
                 *my = *my < 0 ? 0 : (*my >= (int)iDim[1] ? (int)iDim[1] - 1 : *my);
 
-                mouseSavePixels(*mx, *my);
+                //mouseSavePixels(*mx, *my);
                 prev_save_x = *mx;
                 prev_save_y = *my;
                 cursor_saved = 1;
 
-                RenderSetFont(&cursors);
-                RenderChar(fbRes, mouse_icon, *mx, *my, 0x00000000, 0xFFFFFFFF);
-                RenderSetFont(&font_8x8);
+                //RenderSetFont(&cursors);
+                //RenderChar(fbRes, mouse_icon, *mx, *my, 0x00000000, 0xFFFFFFFF);
+                //RenderSetFont(&font_8x8);
                 *prev_mx = *mx;
                 *prev_my = *my;
 
