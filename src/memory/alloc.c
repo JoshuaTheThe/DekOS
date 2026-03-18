@@ -136,7 +136,7 @@ void *kmalloc(const char *file, size_t line, size_t size)
 
         if (region.size == 0)
         {
-                panic("Failed to allocate %d bytes, %s:%d\n", size, file, line);
+                panic("Failed to allocate %d bytes, [%s:%d] \n", size, file, line);
         }
 
         *(size_t *)region.ptr = size;
@@ -147,7 +147,7 @@ void kfree(const char *file, size_t line, void *p)
 {
         if (p == NULL)
         {
-                panic("cannot free null %s:%d\n", file, line);
+                panic("cannot free null [%s:%d] \n", file, line);
                 return;
         }
 

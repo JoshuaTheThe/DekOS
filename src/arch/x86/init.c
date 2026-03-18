@@ -144,46 +144,29 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         RenderSetFont(&font_8x8);
         zmain();
         fmain();
-        
-        fbRes = ResourceCreateK(NULL, RESOURCE_TYPE_BITMAP_IMAGE, 0, schedGetKernelPid(), NULL);
-        printf(" [DEBUG] sizeof(KRNLRES)=%d, offsetof(rid)=%d\n",
-               sizeof(KRNLRES), offsetof(KRNLRES, rid));
-
-        if (!fbRes)
-        {
-                printf(" [ERROR] Could not create framebuffer resource\n");
-                sysHang();
-        }
+        //      Create Framebuffer Resource
+        fbRes = ResourceCreateK(
+                        NULL,
+                        RESOURCE_TYPE_BITMAP_IMAGE,
+                        0,
+                        schedGetKernelPid(),
+                        NULL);
         fbRes->Region.ptr = (uint32_t *)mbi->framebuffer_addr;
         fbRes->Region.size = mbi->framebuffer_width * mbi->framebuffer_height * (mbi->framebuffer_bpp / 8);
         fbRes->OnHeap = FALSE;
-
         DISPLAY *Display = malloc(sizeof(Display));
-        // TODO - kernel panic
-        if(!Display)
-                while(1) cli();
         const size_t pixels = mbi->framebuffer_width * mbi->framebuffer_height;
         const size_t bytes = pixels * (mbi->framebuffer_bpp / 8);
         Display->Framebuffer = malloc(bytes);
-        if (!Display->Framebuffer)
-                while(1) cli();
         Display->DepthBuffer = NULL;
         Display->FOV = 1;
         Display->W = mbi->framebuffer_width;
         Display->H = mbi->framebuffer_height;
         Display->BPP = mbi->framebuffer_bpp;
         Display->Front = (uint32_t *)mbi->framebuffer_addr;
-        printf(" [INFO] created frame buffer of Rid %d\n", fbRes->rid);
         int nDim[3] = {mbi->framebuffer_width, mbi->framebuffer_height, 1};
         BOOL aDim[3] = {TRUE, TRUE, TRUE};
         RenderSetDim(nDim, aDim);
-
-        if (!iso9660Init())
-        {
-                printf("Could not initialize ISO9660 Driver\n");
-                sysHang();
-        }
-
         if (!ps2_keyboard_present())
         {
                 printf("Keyboard is not present, please plug one in\n");
@@ -213,12 +196,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         SMInit();
         SMChange(4); /* Secondary ATA */
         FatTest(SMGetDrive());
-
-        //        for (int i = 0; i < kernel_symbols_count; ++i)
-        //        {
-        //                printf(" [INFO] Kernel Function '%s' present at %p\n", kernel_symbols[i].name, kernel_symbols[i].address);
-        //        }
-
         SMGetDrive()->WriteFile(SMGetDrive(), "balls.txt", "balls", 5);
 
         /** Brought back the ancient EnneaOS fetch cause its cool */
@@ -321,7 +298,6 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         outw(0xB004, 0x2000);
         outw(0x604, 0x2000);
         outw(0x4004, 0x3400);
-
         outb(0x20, 0x11);
         outb(0xA0, 0x11);
         outb(0x21, 0x20);
@@ -332,9 +308,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         outb(0xA1, 0x01);
         outb(0x21, 0x0);
         outb(0xA1, 0x0);
-
         outb(0x64, 0xFE);
-
         cli();
         hlt();
 }

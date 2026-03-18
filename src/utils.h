@@ -14,20 +14,16 @@
 #define panic(fmt, ...) do { printf( " [PANIC]" fmt, ##__VA_ARGS__); cli(); while(1); } while(0)
 #define malloc(size) kmalloc(__func__, __LINE__, size)
 #define free(p) kfree(__func__, __LINE__, p)
-#define assert(expr) if (!expr) panic(" assertion failed at %s:%d\n", __FILE__,__LINE__);
-
-#define DEBUG
+#define assert(expr) if (!expr) panic(" assertion failed at [%s:%d] \n", __FILE__,__LINE__);
 
 #ifdef DEBUG
 #define TRACE_PARAMS        const char *__func_name, int __line
 #define TRACE_ARGS          __func_name, __line
 #define TRACE_CALL          __FILE__, __LINE__
-#define TRACE_FMT           "[%s:%d] "
 #else
-#define TRACE_PARAMS        void
+#define TRACE_PARAMS        
 #define TRACE_ARGS          
 #define TRACE_CALL          
-#define TRACE_FMT           ""
 #endif
 
 #define cli() __asm volatile("cli")
