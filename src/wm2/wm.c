@@ -2,9 +2,10 @@
 #include        <wm2/wm.h>
 #include        <wm2/px.h>
 #include        <memory/string.h>
+#include        <drivers/dev/ps2/ps2.h>
 
 // should probably make this a getter
-extern DWORD mx, my, mbuttons;
+extern DWORD mx, my, mbuttons, pmx, pmy;
 
 static
 U0      SaveBackground(DISPLAY *Display, SURFACE *Surface, U32 *SaveBuf){
@@ -53,6 +54,7 @@ RECT Rect = {
 };
 
 //      Redraw Window's Contents if required
+__attribute__((__used__))
 static
 bool    WM_2_Draw(WM_2_Window *Window)
 {
@@ -113,47 +115,17 @@ U0      WM_2_PrimaryProc(U0){
         MouseSurface->Y = my;
         MouseSurface->Z = 1000.0;
         MouseSurface->BPP = 32;
-        WM_2_Window *Window = malloc(sizeof(WM_2_Window));
-        Window->PrimarySurface.Buffer      = malloc(256*256*sizeof(int));
-        Window->PrimarySurface.DepthBuffer = NULL;
-        Window->PrimarySurface.FOV         = 1.0;
-        Window->PrimarySurface.Z           = 1.0;
-        Window->PrimarySurface.W           = 256;
-        Window->PrimarySurface.H           = 256;
-        Window->PrimarySurface.X           = 256;
-        Window->PrimarySurface.Y           = 256;
-        Window->PrimarySurface.BPP         = 32;
-        Window->IsWindow = true;
-        Window->IsDirty  = true;
-        Window->Parent   = NULL;
-        Window->Children = NULL;
-        Window->Next     = NULL;
-        Window->Prev     = NULL;
         PXRender(MouseSurface, Image);
         uint32_t *MouseSave = malloc(Image->Header.W * Image->Header.H * sizeof(uint32_t));
         
         /* Initial full draw */
         GDI2ClearDisplay(Display);
-        WM_2_Draw(Window);
-        GDI2BlitSurface(Display, &Window->PrimarySurface);
         SaveBackground(Display, MouseSurface, MouseSave);
         GDI2Commit(Display);
 
         for (;;){
-                bool needs_commit = false;
-                needs_commit |= Window->IsDirty;
-                WM_2_Draw(Window);
+                mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
                 bool mouse_moved = ((U32)MouseSurface->X != mx || (U32)MouseSurface->Y != my);
-                if (needs_commit){
-                        RestoreBackground(Display, MouseSurface, MouseSave); /* undraw mouse first */
-                        GDI2ClearDisplay(Display);
-                        GDI2BlitSurface(Display, &Window->PrimarySurface);
-                        /* re-save background at current mouse pos after window reblit */
-                        SaveBackground(Display, MouseSurface, MouseSave);
-                        GDI2BlitSurface(Display, MouseSurface);
-                        GDI2Commit(Display);
-                }
-
                 if (mouse_moved){
                         RestoreBackground(Display, MouseSurface, MouseSave);
                         GDI2PartialCommit(Display, MouseSurface);

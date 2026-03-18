@@ -14,11 +14,15 @@
 
 typedef struct InDispObj {
         SURFACE PrimarySurface;
+        U32    *Behind;
         bool    IsWindow,IsDirty;
         struct  InDispObj
                 *Parent,
                 *Children,
-                *Next,*Prev;
+                *NextSibling,*PrevSibling;
+        bool  (*OnDraw)(struct InDispObj *Self);
+        void  (*OnClick)(struct InDispObj *Self, I32 x, I32 y, U32 buttons);
+        void  (*OnMove)(struct InDispObj *Self, I32 x, I32 y);
 }       InDispObj;
 
 typedef InDispObj DispObject;
