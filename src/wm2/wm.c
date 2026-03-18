@@ -8,6 +8,33 @@
 extern DWORD mx, my, mbuttons, pmx, pmy;
 
 static DispObject RootObject;
+static DispObject *HoveredObject = NULL;
+static SURFACE *MouseSurface = NULL;
+static uint32_t *MouseSave = NULL;
+
+static
+DispObject *WM_2_HitTest(I32 x, I32 y){
+        DispObject *Obj = RootObject.Children;
+        DispObject *Hit = NULL;
+        float       HitZ = -1.0f;
+        while (Obj){
+                I32 ox = Obj->PrimarySurface.X;
+                I32 oy = Obj->PrimarySurface.Y;
+                I32 ow = Obj->PrimarySurface.W;
+                I32 oh = Obj->PrimarySurface.H;
+
+                if (x >= ox && x < ox + ow &&
+                    y >= oy && y < oy + oh){
+                        /* higher Z wins */
+                        if (Obj->PrimarySurface.Z > HitZ){
+                                HitZ = Obj->PrimarySurface.Z;
+                                Hit  = Obj;
+                        }
+                }
+                Obj = Obj->NextSibling;
+        }
+        return Hit;
+}
 
 static
 U0      SaveBackground(DISPLAY *Display, SURFACE *Surface, U32 *SaveBuf){
@@ -84,11 +111,29 @@ bool    WM_2_Draw(WM_2_Window *Window)
         return drawn > 0;
 }
 
-U0      WM_2_MoveDisplayObject(DISPLAY *Display, DispObject *Object, U32 X, U32 Y){
-        RestoreBackground(Display, &Object->PrimarySurface, Object->Behind);
+U0 WM_2_MoveDisplayObject(DISPLAY *Display, DispObject *Object, U32 X, U32 Y){
+        RestoreBackground(Display, MouseSurface, MouseSave);
+        SURFACE OldSurface = Object->PrimarySurface;
+        DispObject *Obj = RootObject.Children;
+        while (Obj){
+                RestoreBackground(Display, &Obj->PrimarySurface, Obj->Behind);
+                Obj = Obj->NextSibling;
+        }
+
+        GDI2PartialCommit(Display, &OldSurface);
         Object->PrimarySurface.X = X;
         Object->PrimarySurface.Y = Y;
-        SaveBackground(Display, &Object->PrimarySurface, Object->Behind);
+        Obj = RootObject.Children;
+        while (Obj){
+                SaveBackground(Display, &Obj->PrimarySurface, Obj->Behind);
+                GDI2BlitSurface(Display, &Obj->PrimarySurface);
+                GDI2PartialCommit(Display, &Obj->PrimarySurface);
+                Obj = Obj->NextSibling;
+        }
+
+        SaveBackground(Display, MouseSurface, MouseSave);
+        GDI2BlitSurface(Display, MouseSurface);
+        GDI2PartialCommit(Display, MouseSurface);
 }
 
 U0      WM_2_RegisterDisplayObject(DispObject *Object){
@@ -145,7 +190,7 @@ U0      WM_2_PrimaryProc(U0){
                 Display->BPP >> 3,
                 (uint32_t)Display->Front,
                 (uint32_t)Display->Framebuffer);
-        SURFACE *MouseSurface = malloc(sizeof(SURFACE));
+        MouseSurface = malloc(sizeof(SURFACE));
         MouseSurface->Buffer = malloc(Image->Header.W * Image->Header.H * sizeof(int));
         printf(" [INFO] Created %dx%dx%d buffer\n", Image->Header.W, Image->Header.H, sizeof(int));
         MouseSurface->DepthBuffer = NULL;
@@ -157,7 +202,7 @@ U0      WM_2_PrimaryProc(U0){
         MouseSurface->Z = 1000.0;
         MouseSurface->BPP = 32;
         PXRender(MouseSurface, Image);
-        uint32_t *MouseSave = malloc(Image->Header.W * Image->Header.H * sizeof(uint32_t));
+        MouseSave = malloc(Image->Header.W * Image->Header.H * sizeof(uint32_t));
         
         /* Initial full draw */
         GDI2ClearDisplay(Display);
@@ -167,13 +212,25 @@ U0      WM_2_PrimaryProc(U0){
         for (;;){
                 bool redrawn = WM_2_Draw(RootObject.Children);
                 if (redrawn){
+                        RestoreBackground(Display, MouseSurface, MouseSave);
                         DispObject *Obj = RootObject.Children;
                         while (Obj){
+                                RestoreBackground(Display, &Obj->PrimarySurface, Obj->Behind);
+                                Obj = Obj->NextSibling;
+                        }
+
+                        Obj = RootObject.Children;
+                        while (Obj){
+                                SaveBackground(Display, &Obj->PrimarySurface, Obj->Behind);
                                 GDI2BlitSurface(Display, &Obj->PrimarySurface);
                                 GDI2PartialCommit(Display, &Obj->PrimarySurface);
                                 Obj = Obj->NextSibling;
                         }
-                }                
+
+                        SaveBackground(Display, MouseSurface, MouseSave);
+                        GDI2BlitSurface(Display, MouseSurface);
+                        GDI2PartialCommit(Display, MouseSurface);
+                }
 
                 mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
                 bool mouse_moved = ((U32)MouseSurface->X != mx || (U32)MouseSurface->Y != my);
@@ -185,6 +242,13 @@ U0      WM_2_PrimaryProc(U0){
                         SaveBackground(Display, MouseSurface, MouseSave);
                         GDI2BlitSurface(Display, MouseSurface);
                         GDI2PartialCommit(Display, MouseSurface);
+                }
+
+                if (mbuttons & MOUSE_MIDDLE_BUTTON && !HoveredObject){
+                        HoveredObject = WM_2_HitTest(mx, my);
+                }else if (!(mbuttons & MOUSE_MIDDLE_BUTTON) && HoveredObject){
+                        WM_2_MoveDisplayObject(Display, HoveredObject, mx, my);
+                        HoveredObject = NULL;
                 }
         }
 
