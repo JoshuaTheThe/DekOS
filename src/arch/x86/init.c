@@ -281,7 +281,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
         }
 
-        //PROCID  Wm = WM_2_Initialise(Display);
+        PROCID  Wm = WM_2_Initialise(Display);
         /*PROCID Wm = WMInit();
         KRNLRES *Window;
         if (Wm.num == 0 || !Wm.valid)
@@ -359,8 +359,8 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 sti();
                 if (fbRes->Owner.num == 0)
                 {
-                        //ResourceHandoverK(fbRes, Wm);
-                        display();
+                        ResourceHandoverK(fbRes, Wm);
+                        //display();
                 }
                 hlt();
         }

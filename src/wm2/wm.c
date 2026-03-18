@@ -1,5 +1,6 @@
 
 #include        <wm2/wm.h>
+#include        <wm2/px.h>
 
 // should probably make this a getter
 extern DWORD mx, my, mbuttons;
@@ -30,6 +31,15 @@ bool    WM_2_Draw(WM_2_Window *Window)
 
 //      Background Process
 U0      WM_2_PrimaryProc(U0){
+        //      Load Cursor
+        SYSFILE *fp = FOpen("system/cursor.px", 16, FILE_READABLE | FILE_PRESENT);
+        if(!fp){
+                printf(" [ERROR] Could not open cursor file\n");
+                while(1);
+        }
+
+        PXLoad(fp);
+        FClose(fp);
         DISPLAY *Display=NULL;
         size_t   arg_c=0;
         schedGrabArgs((char ***)&Display, &arg_c);
@@ -69,6 +79,8 @@ U0      WM_2_PrimaryProc(U0){
 }
 
 PROCID  WM_2_Initialise(DISPLAY *Display){
+        pushf();
+        cli();
         uint8_t *stack = malloc(8192);
         PROCID procid = schedCreateProcess(
                         "wm/2",
@@ -82,6 +94,7 @@ PROCID  WM_2_Initialise(DISPLAY *Display){
                         0);
         schedGetProcessN(procid)->argv = (char **)Display;
         schedGetProcessN(procid)->argc = 1;
+        popf();
         return procid;
 }
 

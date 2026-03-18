@@ -10,7 +10,7 @@
 #define         WM2_IDO_H
 
 #include        <wm/gdi2.h>
-#include        <wm2/def.H>
+#include        <wm2/def.h>
 
 typedef struct InDispObj {
         SURFACE PrimarySurface;
