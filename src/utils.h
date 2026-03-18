@@ -8,8 +8,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 #define __VER__ "a1.3"
+#define panic(fmt, ...) do { printf( " [PANIC]" fmt, ##__VA_ARGS__); cli(); while(1); } while(0)
+#define malloc(size) kmalloc(__func__, __LINE__, size)
+#define free(p) kfree(__func__, __LINE__, p)
 
 #define cli() __asm volatile("cli")
 #define sti() __asm volatile("sti")

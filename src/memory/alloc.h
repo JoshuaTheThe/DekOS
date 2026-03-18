@@ -33,8 +33,8 @@ extern uintptr_t _heap_end;
 extern uintptr_t _heap_map_start;
 extern uintptr_t _heap_map_end;
 
-void *malloc(size_t);
-void free(void*);
+void *kmalloc(const char *func, size_t line, size_t);
+void kfree(const char *func, size_t line, void*);
 region_t m_map(size_t size);
 void memInit(size_t memory_size);
 void u_map(region_t region);

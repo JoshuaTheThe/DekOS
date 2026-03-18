@@ -19,5 +19,6 @@
 - [ ] Finish TODO
 - [ ] Migrate to GDI/2
 
-# Rewrite Critical Sections in Rust
+# Rewrite Critical Sections in Rust or increase safety of C features
+## As in, panic over silent failure, make wrapper macros that provide line and file
 - [] title

@@ -124,7 +124,7 @@ void u_map(region_t region)
         }
 }
 
-void *malloc(size_t size)
+void *kmalloc(const char *file, size_t line, size_t size)
 {
         size_t header_size = sizeof(size_t);
         if (header_size < ALLOC_ALIGNMENT)
@@ -136,17 +136,18 @@ void *malloc(size_t size)
 
         if (region.size == 0)
         {
-                return NULL;
+                panic("Failed to allocate %d bytes, %s:%d\n", size, file, line);
         }
 
         *(size_t *)region.ptr = size;
         return (void *)((uint8_t *)region.ptr + header_size);
 }
 
-void free(void *p)
+void kfree(const char *file, size_t line, void *p)
 {
         if (p == NULL)
         {
+                panic("cannot free null %s:%d\n", file, line);
                 return;
         }
 
