@@ -2,7 +2,7 @@
 #include        <wm2/wm.h>
 
 DispObject     *CreateDisplayObject(U32 X, U32 Y, U32 W, U32 H, U8 BPP){
-        DispObject *Object = malloc(sizeof(DispObject));
+        DispObject *Object            = malloc(sizeof(DispObject));
         Object->Behind                = malloc(W * H * (BPP >> 3));
         Object->PrimarySurface.Buffer = malloc(W * H * (BPP >> 3));
         Object->PrimarySurface.W      = W;
@@ -19,4 +19,11 @@ DispObject     *CreateDisplayObject(U32 X, U32 Y, U32 W, U32 H, U8 BPP){
         Object->IsDirty     = false;
         Object->IsWindow    = false;
         return      Object;
+}
+
+void    DestroyDisplayObject(DispObject *Object){
+        free(Object->Behind);
+        free(Object->PrimarySurface.Buffer);
+        free(Object);
+        return;
 }

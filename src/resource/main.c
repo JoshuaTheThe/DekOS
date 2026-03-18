@@ -515,12 +515,7 @@ KRNLRES *ResourceCreateK(KRNLRES *rpParentResource,
         /**
          * Validate input
          */
-        if (!schedValidatePid(idOwner) ||
-            !ResourceIsValidType(rtType))
-        {
-                *result = RESULT_INVALID_ARGUMENTS;
-                return (KRNLRES *)NULL;
-        }
+        assert(schedValidatePid(idOwner) && ResourceIsValidType(rtType));
 
         /**
          * Memory allocation for data and null check.

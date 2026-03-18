@@ -28,5 +28,8 @@ typedef struct InDispObj {
 typedef InDispObj DispObject;
 typedef struct InDispObj WM_2_Window;
 
+void    DestroyDisplayObject(DispObject *Object);
+DispObject     *CreateDisplayObject(U32 X, U32 Y, U32 W, U32 H, U8 BPP);
+        
 #endif
 

@@ -14,6 +14,7 @@
 #define panic(fmt, ...) do { printf( " [PANIC]" fmt, ##__VA_ARGS__); cli(); while(1); } while(0)
 #define malloc(size) kmalloc(__func__, __LINE__, size)
 #define free(p) kfree(__func__, __LINE__, p)
+#define assert(expr) if (!expr) panic(" assertion failed at %s:%d\n", __FILE__,__LINE__);
 
 #define cli() __asm volatile("cli")
 #define sti() __asm volatile("sti")
