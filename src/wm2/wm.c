@@ -3,6 +3,7 @@
 #include        <wm2/px.h>
 #include        <memory/string.h>
 #include        <drivers/dev/ps2/ps2.h>
+#include        <drivers/math.h>
 
 // should probably make this a getter
 extern DWORD mx, my, mbuttons, pmx, pmy;
@@ -111,16 +112,16 @@ bool    WM_2_Draw(WM_2_Window *Window)
         return drawn > 0;
 }
 
-U0 WM_2_MoveDisplayObject(DISPLAY *Display, DispObject *Object, U32 X, U32 Y){
+U0      WM_2_MoveDisplayObject(DISPLAY *Display, DispObject *Object, U32 X, U32 Y){
         RestoreBackground(Display, MouseSurface, MouseSave);
-        SURFACE OldSurface = Object->PrimarySurface;
         DispObject *Obj = RootObject.Children;
         while (Obj){
                 RestoreBackground(Display, &Obj->PrimarySurface, Obj->Behind);
+                GDI2PartialCommit(Display, &Obj->PrimarySurface);
                 Obj = Obj->NextSibling;
         }
-
-        GDI2PartialCommit(Display, &OldSurface);
+        U32 OldX = Object->PrimarySurface.X,
+            OldY = Object->PrimarySurface.Y;
         Object->PrimarySurface.X = X;
         Object->PrimarySurface.Y = Y;
         Obj = RootObject.Children;
@@ -130,7 +131,13 @@ U0 WM_2_MoveDisplayObject(DISPLAY *Display, DispObject *Object, U32 X, U32 Y){
                 GDI2PartialCommit(Display, &Obj->PrimarySurface);
                 Obj = Obj->NextSibling;
         }
-
+        SURFACE UnionSurface = {
+                .X = minu(OldX, X),
+                .Y = minu(OldY, Y),
+                .W = Object->PrimarySurface.W + abs((I32)X - (I32)OldX),
+                .H = Object->PrimarySurface.H + abs((I32)Y - (I32)OldY),
+        };
+        GDI2PartialCommit(Display, &UnionSurface);
         SaveBackground(Display, MouseSurface, MouseSave);
         GDI2BlitSurface(Display, MouseSurface);
         GDI2PartialCommit(Display, MouseSurface);
@@ -246,8 +253,15 @@ U0      WM_2_PrimaryProc(U0){
 
                 if (mbuttons & MOUSE_MIDDLE_BUTTON && !HoveredObject){
                         HoveredObject = WM_2_HitTest(mx, my);
+                        if(HoveredObject){
+                                HoveredObject->MXOffset = (I32)mx - (I32)HoveredObject->PrimarySurface.X;
+                                HoveredObject->MYOffset = (I32)my - (I32)HoveredObject->PrimarySurface.Y;
+                        }
                 }else if (!(mbuttons & MOUSE_MIDDLE_BUTTON) && HoveredObject){
-                        WM_2_MoveDisplayObject(Display, HoveredObject, mx, my);
+                        WM_2_MoveDisplayObject(Display,
+                                               HoveredObject,
+                                               (I32)mx - HoveredObject->MXOffset,
+                                               (I32)my - HoveredObject->MYOffset);
                         HoveredObject = NULL;
                 }
         }

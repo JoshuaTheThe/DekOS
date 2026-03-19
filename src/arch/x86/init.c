@@ -259,13 +259,15 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
         }
 
         PROCID  Wm = WM_2_Initialise(Display);
+        for(U32 i = 0; i < 8; ++i){
+                WM_2_Window *Window = CreateDisplayObject(0, 0, 256, 256, 32);
+                GDI2ClearSurface(&Window->PrimarySurface);
+                Window->IsDirty = true;
+                Window->IsWindow = true;
+                WM_2_RegisterDisplayObject(Window);
+        }
         sti();
-        WM_2_Window *Window = CreateDisplayObject(0, 0, 256, 256, 32);
-        GDI2ClearSurface(&Window->PrimarySurface);
-        Window->IsDirty = true;
-        Window->IsWindow = true;
-        WM_2_RegisterDisplayObject(Window);
-
+        
         while (true)
         {
                 static uint64_t last_cleanup = 0;

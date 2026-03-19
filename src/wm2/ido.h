@@ -14,7 +14,9 @@
 
 typedef struct InDispObj {
         SURFACE PrimarySurface;
+        I32     MXOffset,MYOffset;
         U32    *Behind;
+        float  *BehindZ;
         bool    IsWindow,IsDirty;
         struct  InDispObj
                 *Parent,
