@@ -6,7 +6,7 @@
 #include <tty/output.h>
 
 extern KRNLRES grResources;
-extern DWORD mx, my, mbuttons;
+extern DWORD mx, my, mbuttons, pmx, pmy;
 extern KRNLRES *fbRes;
 
 KRNLRES *BackBuffer;
@@ -365,6 +365,7 @@ void WMAction(KRNLRES *P)
  */
 void WMIterate(void)
 {
+        mouseFetch((int *)&mx, (int *)&my, (int *)&pmx, (int *)&pmy, (uint8_t *)&mbuttons);
         KRNLRES *P = Windows->FirstChild;
         if (!P)
                 return;

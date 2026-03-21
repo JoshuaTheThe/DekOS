@@ -45,6 +45,8 @@
 #include <tty/tty.h>
 #include <arch/x86/pde.h>
 
+#define OLD_WM
+
 void sysHang(void);
 
 typedef enum
@@ -258,6 +260,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
         }
 
+#ifndef OLD_WM
         PROCID  Wm = WM_2_Initialise(Display);
         for(U32 i = 0; i < 8; ++i){
                 WM_2_Window *Window = CreateDisplayObject(0, 0, 256, 256, 32);
@@ -266,6 +269,52 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 Window->IsWindow = true;
                 WM_2_RegisterDisplayObject(Window);
         }
+#else
+        PROCID Wm = WMInit();
+        KRNLRES *Window;
+        if (Wm.num == 0 || !Wm.valid)
+        {
+                printf(" [ERROR] Failed to start window manager\n");\
+        }
+        else
+        {
+                const size_t Padding = IniGet(&Cfg, "wm_padding") ? atoi(IniGet(&Cfg, "wm_padding"), NULL) : WINDOW_PADDING_DEFAULT;
+                const size_t Thickness = IniGet(&Cfg, "wm_thickness") ? atoi(IniGet(&Cfg, "wm_thickness"), NULL) : WINDOW_THICKNESS_DEFAULT;
+                const RGBA Outer = IniGet(&Cfg, "wm_outer") ? GDI2RGBAFromDWORD(strthex(IniGet(&Cfg, "wm_outer"))) : WINDOW_OUTER_DEFAULT;
+                const RGBA Inner = IniGet(&Cfg, "wm_inner") ? GDI2RGBAFromDWORD(strthex(IniGet(&Cfg, "wm_inner"))) : WINDOW_INNER_DEFAULT;
+                const RGBA Border = IniGet(&Cfg, "wm_border") ? GDI2RGBAFromDWORD(strthex(IniGet(&Cfg, "wm_border"))) : WINDOW_BORDER_DEFAULT;
+                const DWORD TitleBarHeight = IniGet(&Cfg, "wm_titlebar_height") ? atoi(IniGet(&Cfg, "wm_titlebar_height"), NULL) : WINDOW_TITLEBAR_HEIGHT_DEFAULT;
+                Window = WMCreateWindow("system",
+                                        WINDOW_POSITION_DEFAULT_X,
+                                        WINDOW_POSITION_DEFAULT_Y,
+                                        TTY_W * systemfont->char_width,
+                                        Thickness * 2 + Padding * 2 + TitleBarHeight * 2 + (TTY_H + 1) * systemfont->char_height,
+                                        Padding,
+                                        Thickness,
+                                        TitleBarHeight,
+                                        Outer,
+                                        Inner,
+                                        Border);
+                KRNLRES *Element = WMCreateElement(Window, 0, 0, TTY_W * systemfont->char_width, (TTY_H + 1) * systemfont->char_height, WINDOW_ELEMENT_TEXT);
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Font = systemfont;
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Columns = TTY_W;
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Lines = TTY_H;
+
+                extern uint32_t tty_bg;
+                extern uint32_t tty_fg;
+
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Fg = GDI2RGBAFromDWORD(tty_fg);
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Bg = GDI2RGBAFromDWORD(tty_bg);
+
+                char **p = malloc(TTY_H * sizeof(char *));
+                for (size_t i = 0; i < TTY_H; ++i)
+                {
+                        p[i] = system_output[i];
+                }
+                ((ELEMENT *)Element->Region.ptr)->ElementData.Text.Text = p;
+                ResourceHandoverK(fbRes, Wm);
+        }
+#endif
         sti();
         
         while (true)
