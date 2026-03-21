@@ -45,7 +45,7 @@
 #include <tty/tty.h>
 #include <arch/x86/pde.h>
 
-#define OLD_WM
+#define OLD_WM 0
 
 void sysHang(void);
 
@@ -260,7 +260,7 @@ void kmain(uint32_t magic, uint32_t mbinfo_ptr)
                 }
         }
 
-#ifndef OLD_WM
+#if OLD_WM!=1
         PROCID  Wm = WM_2_Initialise(Display);
         for(U32 i = 0; i < 8; ++i){
                 WM_2_Window *Window = CreateDisplayObject(0, 0, 256, 256, 32);
